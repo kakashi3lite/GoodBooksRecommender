@@ -1,0 +1,285 @@
+# Security scanning configuration for OWASP ZAP
+# This configuration provides comprehensive security testing rules
+
+# ZAP Baseline Scan Configuration
+scan_config:
+  target_url: "http://localhost:8000"
+  scan_type: "baseline"
+  
+  # Authentication configuration
+  authentication:
+    method: "form"
+    login_url: "/auth/login"
+    username_field: "email"
+    password_field: "password"
+    username: "test@example.com"
+    password: "testpassword123"
+    
+  # Session management
+  session:
+    script: "httpsender/HttpSender.js"
+    
+  # Context configuration
+  contexts:
+    - name: "GoodBooks API"
+      urls:
+        - "http://localhost:8000/api/.*"
+        - "http://localhost:8000/auth/.*"
+      exclude_urls:
+        - "http://localhost:8000/api/health"
+        - "http://localhost:8000/docs"
+        
+  # Active scan configuration
+  active_scan:
+    policy: "Default Policy"
+    strength: "Medium"
+    threshold: "Medium"
+    
+  # Passive scan configuration  
+  passive_scan:
+    enabled: true
+    
+  # Spider configuration
+  spider:
+    max_depth: 5
+    max_children: 10
+    
+  # AJAX Spider configuration
+  ajax_spider:
+    enabled: true
+    max_duration: 5
+    
+  # Custom rules
+  custom_rules:
+    - name: "SQL Injection Detection"
+      pattern: ".*error.*sql.*"
+      risk: "High"
+      
+    - name: "XSS Detection"
+      pattern: "<script[^>]*>.*?</script>"
+      risk: "High"
+      
+    - name: "Information Disclosure"
+      pattern: ".*stack.*trace.*|.*debug.*info.*"
+      risk: "Medium"
+      
+  # Report configuration
+  reporting:
+    format: ["json", "html", "xml"]
+    include_passed: false
+    include_details: true
+    
+  # Scan policy
+  scan_policy:
+    rules:
+      - id: 10015  # Directoy Browsing
+        threshold: "Medium"
+        strength: "Medium"
+        
+      - id: 10016  # Web Browser XSS Protection Not Enabled
+        threshold: "Low"
+        strength: "Medium"
+        
+      - id: 10017  # Cross-Domain JavaScript Source File Inclusion
+        threshold: "Medium"
+        strength: "Medium"
+        
+      - id: 10019  # Content-Type Header Missing
+        threshold: "Low"
+        strength: "Medium"
+        
+      - id: 10020  # X-Frame-Options Header Scanner
+        threshold: "Medium"  
+        strength: "Medium"
+        
+      - id: 10021  # X-Content-Type-Options Header Missing
+        threshold: "Low"
+        strength: "Medium"
+        
+      - id: 10023  # Information Disclosure - Debug Error Messages
+        threshold: "Low"
+        strength: "Medium"
+        
+      - id: 10024  # Information Disclosure - Sensitive Information in URL
+        threshold: "Medium"
+        strength: "Medium"
+        
+      - id: 10025  # Information Disclosure - Sensitive Information in HTTP Referrer Header
+        threshold: "Medium"
+        strength: "Medium"
+        
+      - id: 10026  # HTTP Parameter Override
+        threshold: "Medium"
+        strength: "Medium"
+        
+      - id: 10027  # Information Disclosure - Suspicious Comments
+        threshold: "Low"
+        strength: "Medium"
+        
+      - id: 10028  # Open Redirect
+        threshold: "Medium"
+        strength: "Medium"
+        
+      - id: 10029  # Cookie Poisoning
+        threshold: "Medium"
+        strength: "Medium"
+        
+      - id: 10030  # User Controllable Charset
+        threshold: "Medium"
+        strength: "Medium"
+        
+      - id: 10031  # User Controllable HTML Element Attribute (Potential XSS)
+        threshold: "Medium"
+        strength: "Medium"
+        
+      - id: 10032  # Viewstate Scanner
+        threshold: "Medium"
+        strength: "Medium"
+        
+      - id: 10033  # Directory Browsing
+        threshold: "Medium"
+        strength: "Medium"
+        
+      - id: 10034  # Heartbleed OpenSSL Vulnerability
+        threshold: "High"
+        strength: "Medium"
+        
+      - id: 10035  # Strict-Transport-Security Header Scanner
+        threshold: "Low"
+        strength: "Medium"
+        
+      - id: 10036  # HTTP Server Response Header Scanner
+        threshold: "Low"
+        strength: "Medium"
+        
+      - id: 10037  # Server Leaks Information via "X-Powered-By" HTTP Response Header Field(s)
+        threshold: "Low"
+        strength: "Medium"
+        
+      - id: 10038  # Content Security Policy (CSP) Header Not Set
+        threshold: "Medium"
+        strength: "Medium"
+        
+      - id: 10040  # Secure Cookie Check
+        threshold: "Low"
+        strength: "Medium"
+        
+      - id: 10041  # HTTP to HTTPS Insecure Transition in Form Post
+        threshold: "Medium"
+        strength: "Medium"
+        
+      - id: 10042  # HTTPS to HTTP Insecure Transition in Form Post
+        threshold: "Medium"
+        strength: "Medium"
+        
+      - id: 10043  # User Controllable JavaScript Event (XSS)
+        threshold: "Medium"
+        strength: "Medium"
+        
+      - id: 10044  # Big Redirect Detected (Potential Sensitive Information Leak)
+        threshold: "Medium"
+        strength: "Medium"
+        
+      - id: 10045  # Source Code Disclosure - /WEB-INF folder
+        threshold: "High"
+        strength: "Medium"
+        
+      - id: 10047  # HTTPS Content Available via HTTP
+        threshold: "Medium"
+        strength: "Medium"
+        
+      - id: 10048  # Remote Code Execution - Shell Shock
+        threshold: "High"
+        strength: "Medium"
+        
+      - id: 10049  # Content Cacheability
+        threshold: "Low"
+        strength: "Medium"
+        
+      - id: 10050  # Retrieved from Cache
+        threshold: "Medium"
+        strength: "Medium"
+        
+      - id: 10051  # Relative Path Confusion
+        threshold: "Medium"
+        strength: "Medium"
+        
+      - id: 10052  # X-ChromeLogger-Data (XCOLD) Header Information Leak
+        threshold: "Medium"
+        strength: "Medium"
+        
+      - id: 10054  # Cookie without SameSite Attribute
+        threshold: "Low"
+        strength: "Medium"
+        
+      - id: 10055  # CSP Scanner
+        threshold: "Medium"
+        strength: "Medium"
+        
+      - id: 10056  # X-Debug-Token Information Leak
+        threshold: "Medium"
+        strength: "Medium"
+        
+      - id: 10057  # Username Hash Found
+        threshold: "Low"
+        strength: "Medium"
+        
+      - id: 10061  # X-AspNet-Version Response Header Scanner
+        threshold: "Low"
+        strength: "Medium"
+        
+      - id: 10062  # PII Scanner
+        threshold: "High"
+        strength: "Medium"
+        
+      - id: 10063  # Feature Policy Header Not Set
+        threshold: "Low"
+        strength: "Medium"
+        
+      - id: 10096  # Timestamp Disclosure
+        threshold: "Low"
+        strength: "Medium"
+        
+      - id: 10097  # Hash Disclosure
+        threshold: "Low"
+        strength: "Medium"
+        
+      - id: 10098  # Cross-Domain Misconfiguration
+        threshold: "Medium"
+        strength: "Medium"
+        
+      - id: 10099  # Source Code Disclosure
+        threshold: "High"
+        strength: "Medium"
+        
+      - id: 10104  # User Agent Fuzzer
+        threshold: "Medium"
+        strength: "Medium"
+        
+      - id: 10105  # Weak Authentication Method
+        threshold: "Medium"
+        strength: "Medium"
+        
+      - id: 10106  # HTTP Only Site
+        threshold: "Medium"
+        strength: "Medium"
+        
+      - id: 10107  # Httpoxy - Proxy Header Misuse
+        threshold: "Medium"
+        strength: "Medium"
+        
+      - id: 10108  # Reverse Tabnabbing
+        threshold: "Medium"
+        strength: "Medium"
+        
+      - id: 10109  # Modern Web Application
+        threshold: "Low"
+        strength: "Medium"
+        
+      - id: 10110  # Dangerous JS Functions
+        threshold: "Low"
+        strength: "Medium"
+        
+      - id: 10202  # Absence of Anti-CSRF Tokens
+        threshold: "Medium"
+        strength: "Medium"

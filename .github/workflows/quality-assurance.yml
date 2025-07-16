@@ -1,0 +1,422 @@
+name: 🔍 Repository Quality Assurance
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run quality checks daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: '3.10'
+  NODE_VERSION: '18'
+
+jobs:
+  # ============================================================================
+  # Code Quality & Security
+  # ============================================================================
+  quality-checks:
+    name: 🧹 Code Quality & Security
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for better analysis
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: 📦 Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: 🎨 Code Formatting (Black)
+        run: |
+          black --check --diff src/ tests/
+          echo "✅ Code formatting check passed"
+
+      - name: 📋 Import Sorting (isort)
+        run: |
+          isort --check-only --diff src/ tests/
+          echo "✅ Import sorting check passed"
+
+      - name: 🔍 Code Linting (flake8)
+        run: |
+          flake8 src/ tests/ --statistics
+          echo "✅ Code linting passed"
+
+      - name: 🏷️ Type Checking (mypy)
+        run: |
+          mypy src/ --ignore-missing-imports
+          echo "✅ Type checking passed"
+
+      - name: 🔒 Security Scan (bandit)
+        run: |
+          bandit -r src/ -f json -o bandit-report.json || true
+          bandit -r src/ --severity-level medium
+          echo "✅ Security scanning completed"
+
+      - name: 🛡️ Dependency Security (safety)
+        run: |
+          safety check --json --output safety-report.json || true
+          safety check
+          echo "✅ Dependency security check completed"
+
+      - name: 📊 Upload Security Reports
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: security-reports
+          path: |
+            bandit-report.json
+            safety-report.json
+
+  # ============================================================================
+  # Testing & Coverage
+  # ============================================================================
+  test-suite:
+    name: 🧪 Test Suite & Coverage
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11']
+    
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: --health-cmd redis-cli ping --health-interval 10s --health-timeout 5s --health-retries 5
+      
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: testdb
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: 📦 Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: 🔧 Setup Test Environment
+        run: |
+          cp .env.example .env.test
+          echo "DATABASE_URL=postgresql://postgres:testpass@localhost:5432/testdb" >> .env.test
+          echo "REDIS_URL=redis://localhost:6379" >> .env.test
+
+      - name: 🧪 Run Unit Tests
+        run: |
+          pytest tests/unit/ -v --tb=short
+          echo "✅ Unit tests passed"
+
+      - name: 🔗 Run Integration Tests
+        run: |
+          pytest tests/integration/ -v --tb=short
+          echo "✅ Integration tests passed"
+
+      - name: 🌐 Run API Tests
+        run: |
+          pytest tests/api/ -v --tb=short
+          echo "✅ API tests passed"
+
+      - name: 📊 Generate Coverage Report
+        run: |
+          pytest --cov=src --cov-report=xml --cov-report=html --cov-fail-under=85
+          echo "✅ Coverage report generated"
+
+      - name: 📈 Upload Coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+
+      - name: 📊 Upload Coverage Reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-reports-${{ matrix.python-version }}
+          path: htmlcov/
+
+  # ============================================================================
+  # Documentation Quality
+  # ============================================================================
+  documentation-checks:
+    name: 📚 Documentation Quality
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: 📖 Install Documentation Tools
+        run: |
+          npm install -g markdownlint-cli2
+          npm install -g markdown-link-check
+          pip install codespell
+
+      - name: 📝 Markdown Linting
+        run: |
+          markdownlint-cli2 "**/*.md" "#node_modules"
+          echo "✅ Markdown linting passed"
+
+      - name: 🔗 Link Validation
+        run: |
+          find . -name "*.md" -not -path "./node_modules/*" | xargs -I {} markdown-link-check {} --config .markdown-link-check.json
+          echo "✅ Link validation completed"
+
+      - name: 🔤 Spell Checking
+        run: |
+          codespell --skip="*.git,*.json,*.pyc,__pycache__,*.png,*.jpg,*.svg" .
+          echo "✅ Spell checking completed"
+
+      - name: 📋 Documentation Coverage Check
+        run: |
+          python scripts/check_doc_coverage.py
+          echo "✅ Documentation coverage verified"
+
+  # ============================================================================
+  # Performance Testing
+  # ============================================================================
+  performance-tests:
+    name: ⚡ Performance Testing
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: testdb
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: 📦 Install Dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install locust pytest-benchmark
+
+      - name: 🚀 Start Application
+        run: |
+          uvicorn src.api.main:app --host 0.0.0.0 --port 8000 &
+          sleep 10
+          curl -f http://localhost:8000/health || exit 1
+        env:
+          DATABASE_URL: postgresql://postgres:testpass@localhost:5432/testdb
+          REDIS_URL: redis://localhost:6379
+
+      - name: ⚡ Load Testing
+        run: |
+          locust -f tests/performance/locustfile.py --host=http://localhost:8000 \
+                 --users=50 --spawn-rate=5 --run-time=60s --headless \
+                 --csv=performance-results
+          echo "✅ Load testing completed"
+
+      - name: 📊 Performance Benchmarks
+        run: |
+          pytest tests/performance/test_benchmarks.py --benchmark-only --benchmark-json=benchmark.json
+          echo "✅ Benchmarking completed"
+
+      - name: 📈 Upload Performance Reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: performance-reports
+          path: |
+            performance-results*
+            benchmark.json
+
+  # ============================================================================
+  # Security Scanning
+  # ============================================================================
+  security-scanning:
+    name: 🛡️ Advanced Security Scanning
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🔍 CodeQL Analysis
+        uses: github/codeql-action/init@v2
+        with:
+          languages: python
+
+      - name: 🏗️ Autobuild
+        uses: github/codeql-action/autobuild@v2
+
+      - name: 📊 Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+
+      - name: 🔒 Trivy Vulnerability Scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: 📋 Upload Trivy Results
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  # ============================================================================
+  # Docker Image Security
+  # ============================================================================
+  docker-security:
+    name: 🐳 Docker Security Scan
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🏗️ Build Docker Image
+        run: |
+          docker build -t goodbooks-test:${{ github.sha }} .
+
+      - name: 🔍 Scan Docker Image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'goodbooks-test:${{ github.sha }}'
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          severity: 'CRITICAL,HIGH'
+
+      - name: 🧹 Cleanup
+        if: always()
+        run: |
+          docker rmi goodbooks-test:${{ github.sha }} || true
+
+  # ============================================================================
+  # Repository Health Check
+  # ============================================================================
+  repo-health:
+    name: 🏥 Repository Health
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: 📊 Repository Statistics
+        run: |
+          echo "## Repository Health Report" > health-report.md
+          echo "Generated: $(date)" >> health-report.md
+          echo "" >> health-report.md
+          
+          echo "### Code Statistics" >> health-report.md
+          echo "- Total Python files: $(find src/ -name "*.py" | wc -l)" >> health-report.md
+          echo "- Lines of code: $(find src/ -name "*.py" -exec wc -l {} + | tail -1 | awk '{print $1}')" >> health-report.md
+          echo "- Total tests: $(find tests/ -name "test_*.py" | wc -l)" >> health-report.md
+          
+          echo "" >> health-report.md
+          echo "### Documentation Statistics" >> health-report.md
+          echo "- Documentation files: $(find docs/ -name "*.md" | wc -l)" >> health-report.md
+          echo "- README files: $(find . -name "README*.md" | wc -l)" >> health-report.md
+          
+          echo "" >> health-report.md
+          echo "### Dependency Health" >> health-report.md
+          pip install pip-audit
+          pip-audit --format=json --output=audit.json || true
+          
+          cat health-report.md
+
+      - name: 📋 Upload Health Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: repository-health-report
+          path: |
+            health-report.md
+            audit.json
+
+  # ============================================================================
+  # Status Summary
+  # ============================================================================
+  status-summary:
+    name: 📋 Quality Status Summary
+    runs-on: ubuntu-latest
+    needs: [quality-checks, test-suite, documentation-checks]
+    if: always()
+    steps:
+      - name: 📊 Generate Status Summary
+        run: |
+          echo "## Quality Assurance Summary" > summary.md
+          echo "Run ID: ${{ github.run_id }}" >> summary.md
+          echo "Commit: ${{ github.sha }}" >> summary.md
+          echo "Branch: ${{ github.ref }}" >> summary.md
+          echo "" >> summary.md
+          
+          echo "### Job Results" >> summary.md
+          echo "- Code Quality: ${{ needs.quality-checks.result }}" >> summary.md
+          echo "- Test Suite: ${{ needs.test-suite.result }}" >> summary.md
+          echo "- Documentation: ${{ needs.documentation-checks.result }}" >> summary.md
+          
+          if [[ "${{ needs.quality-checks.result }}" == "success" && \
+                "${{ needs.test-suite.result }}" == "success" && \
+                "${{ needs.documentation-checks.result }}" == "success" ]]; then
+            echo "" >> summary.md
+            echo "✅ **All quality checks passed!**" >> summary.md
+          else
+            echo "" >> summary.md
+            echo "❌ **Some quality checks failed. Please review the results.**" >> summary.md
+          fi
+          
+          cat summary.md
+
+      - name: 📤 Upload Summary
+        uses: actions/upload-artifact@v3
+        with:
+          name: quality-summary
+          path: summary.md
