@@ -1,0 +1,117 @@
+{{ define "__subject" }}
+[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .GroupLabels.SortedPairs.Values | join " " }} {{ if gt (len .CommonLabels) (len .GroupLabels) }}({{ with .CommonLabels.Remove .GroupLabels.Names }}{{ .Values | join " " }}{{ end }}){{ end }}
+{{ end }}
+
+{{ define "__description" }}
+{{ range $i, $alert := .Alerts }}
+{{ if $i }}
+
+{{ end }}
+**Alert:** {{ $alert.Annotations.alertname }}{{ if $alert.Labels.severity }} - {{ $alert.Labels.severity }}{{ end }}
+
+**Description:** {{ $alert.Annotations.description }}
+
+**Details:**
+{{ range $key, $value := $alert.Labels }}{{ if not (eq $key "alertname") }}• {{ $key }}: {{ $value }}
+{{ end }}{{ end }}
+{{ end }}
+{{ end }}
+
+{{ define "__text_alert_list" }}{{ range . }}
+**Alert:** {{ .Annotations.summary }}
+{{ if .Labels.severity }}**Severity:** {{ .Labels.severity }}{{ end }}
+{{ if .Labels.instance }}**Instance:** {{ .Labels.instance }}{{ end }}
+**Description:** {{ .Annotations.description }}
+{{ if .Annotations.runbook_url }}**Runbook:** {{ .Annotations.runbook_url }}{{ end }}
+{{ end }}{{ end }}
+
+{{ define "slack.goodbooks.title" }}
+{{ if eq .Status "firing" }}🔥 FIRING{{ else }}✅ RESOLVED{{ end }} - {{ .GroupLabels.alertname }}
+{{ end }}
+
+{{ define "slack.goodbooks.text" }}
+{{ if eq .Status "firing" }}
+🚨 **Alert Status:** FIRING
+{{ else }}
+✅ **Alert Status:** RESOLVED
+{{ end }}
+
+**Service:** {{ .GroupLabels.service }}
+**Environment:** {{ .GroupLabels.environment | default "production" }}
+**Cluster:** {{ .GroupLabels.cluster | default "main" }}
+
+{{ range .Alerts }}
+{{ if .Annotations.summary }}**Summary:** {{ .Annotations.summary }}{{ end }}
+{{ if .Annotations.description }}**Description:** {{ .Annotations.description }}{{ end }}
+{{ if .Labels.instance }}**Instance:** {{ .Labels.instance }}{{ end }}
+{{ if .Annotations.runbook_url }}**Runbook:** {{ .Annotations.runbook_url }}{{ end }}
+
+{{ end }}
+
+**Monitoring Links:**
+• [Dashboard](http://grafana:3000/d/goodbooks-overview)
+• [Logs](http://kibana:5601/app/discover)
+• [Metrics](http://prometheus:9090/graph)
+{{ end }}
+
+{{ define "email.goodbooks.subject" }}
+{{ if eq .Status "firing" }}🚨 {{ else }}✅ {{ end }}{{ .GroupLabels.alertname }} - {{ .GroupLabels.service }}
+{{ end }}
+
+{{ define "email.goodbooks.html" }}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .header { background-color: {{ if eq .Status "firing" }}#d32f2f{{ else }}#4caf50{{ end }}; color: white; padding: 20px; text-align: center; }
+        .content { padding: 20px; }
+        .alert-box { border-left: 4px solid {{ if eq .Status "firing" }}#f44336{{ else }}#4caf50{{ end }}; padding: 10px; margin: 10px 0; background-color: #f9f9f9; }
+        .severity-critical { border-left-color: #d32f2f; background-color: #ffebee; }
+        .severity-high { border-left-color: #f57c00; background-color: #fff8e1; }
+        .severity-warning { border-left-color: #fbc02d; background-color: #fffde7; }
+        .severity-info { border-left-color: #1976d2; background-color: #e3f2fd; }
+        .details { background-color: #f5f5f5; padding: 15px; margin: 15px 0; border-radius: 5px; }
+        .button { display: inline-block; padding: 10px 20px; margin: 5px; background-color: #1976d2; color: white; text-decoration: none; border-radius: 5px; }
+        .footer { text-align: center; padding: 20px; font-size: 12px; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>{{ if eq .Status "firing" }}🚨 Alert Firing{{ else }}✅ Alert Resolved{{ end }}</h1>
+        <h2>{{ .GroupLabels.alertname }}</h2>
+    </div>
+    
+    <div class="content">
+        <div class="details">
+            <strong>Service:</strong> {{ .GroupLabels.service }}<br>
+            <strong>Environment:</strong> {{ .GroupLabels.environment | default "production" }}<br>
+            <strong>Cluster:</strong> {{ .GroupLabels.cluster | default "main" }}<br>
+            <strong>Status:</strong> {{ .Status | toUpper }}<br>
+            <strong>Started:</strong> {{ range .Alerts }}{{ .StartsAt.Format "2006-01-02 15:04:05 UTC" }}{{ end }}
+        </div>
+        
+        {{ range .Alerts }}
+        <div class="alert-box severity-{{ .Labels.severity | default "info" }}">
+            <h3>{{ .Annotations.summary | default .Labels.alertname }}</h3>
+            {{ if .Annotations.description }}<p><strong>Description:</strong> {{ .Annotations.description }}</p>{{ end }}
+            {{ if .Labels.instance }}<p><strong>Instance:</strong> {{ .Labels.instance }}</p>{{ end }}
+            {{ if .Annotations.runbook_url }}<p><strong>Runbook:</strong> <a href="{{ .Annotations.runbook_url }}">{{ .Annotations.runbook_url }}</a></p>{{ end }}
+        </div>
+        {{ end }}
+        
+        <div style="text-align: center; margin: 20px 0;">
+            <a href="http://grafana:3000/d/goodbooks-overview" class="button">View Dashboard</a>
+            <a href="http://kibana:5601/app/discover" class="button">View Logs</a>
+            <a href="http://prometheus:9090/graph" class="button">View Metrics</a>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>This alert was generated by the GoodBooks Recommender monitoring system.</p>
+        <p>For support, please contact the operations team.</p>
+    </div>
+</body>
+</html>
+{{ end }}

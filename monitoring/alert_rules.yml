@@ -1,0 +1,182 @@
+groups:
+  - name: goodbooks_api_alerts
+    rules:
+      # High error rate alert
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+          service: goodbooks-api
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value | humanizePercentage }} for the past 5 minutes"
+
+      # High latency alert
+      - alert: HighLatency
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+          service: goodbooks-api
+        annotations:
+          summary: "High latency detected"
+          description: "95th percentile latency is {{ $value }}s for the past 5 minutes"
+
+      # Service down alert
+      - alert: ServiceDown
+        expr: up{job="goodbooks-api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: goodbooks-api
+        annotations:
+          summary: "GoodBooks API service is down"
+          description: "Instance {{ $labels.instance }} has been down for more than 1 minute"
+
+      # High memory usage
+      - alert: HighMemoryUsage
+        expr: process_resident_memory_bytes / 1024 / 1024 / 1024 > 1
+        for: 5m
+        labels:
+          severity: warning
+          service: goodbooks-api
+        annotations:
+          summary: "High memory usage detected"
+          description: "Memory usage is {{ $value | humanize }}GB for instance {{ $labels.instance }}"
+
+      # Redis connection failures
+      - alert: RedisConnectionFailures
+        expr: increase(redis_connection_errors_total[5m]) > 5
+        for: 2m
+        labels:
+          severity: warning
+          service: goodbooks-api
+        annotations:
+          summary: "Redis connection failures detected"
+          description: "{{ $value }} Redis connection failures in the past 5 minutes"
+
+      # Model loading failures
+      - alert: ModelLoadingFailures
+        expr: increase(ml_model_load_errors_total[10m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+          service: goodbooks-api
+        annotations:
+          summary: "ML model loading failures detected"
+          description: "{{ $value }} model loading failures in the past 10 minutes"
+
+      # Cache miss rate too high
+      - alert: HighCacheMissRate
+        expr: rate(cache_misses_total[5m]) / rate(cache_requests_total[5m]) > 0.8
+        for: 10m
+        labels:
+          severity: warning
+          service: goodbooks-api
+        annotations:
+          summary: "High cache miss rate detected"
+          description: "Cache miss rate is {{ $value | humanizePercentage }} for the past 5 minutes"
+
+  - name: infrastructure_alerts
+    rules:
+      # Redis down
+      - alert: RedisDown
+        expr: up{job="redis"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: redis
+        annotations:
+          summary: "Redis is down"
+          description: "Redis instance {{ $labels.instance }} has been down for more than 1 minute"
+
+      # PostgreSQL down
+      - alert: PostgreSQLDown
+        expr: up{job="postgres"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: postgresql
+        annotations:
+          summary: "PostgreSQL is down"
+          description: "PostgreSQL instance {{ $labels.instance }} has been down for more than 1 minute"
+
+      # NGINX down
+      - alert: NginxDown
+        expr: up{job="nginx"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: nginx
+        annotations:
+          summary: "NGINX is down"
+          description: "NGINX instance {{ $labels.instance }} has been down for more than 1 minute"
+
+      # High disk usage
+      - alert: HighDiskUsage
+        expr: (node_filesystem_size_bytes - node_filesystem_free_bytes) / node_filesystem_size_bytes > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "High disk usage detected"
+          description: "Disk usage is {{ $value | humanizePercentage }} on {{ $labels.instance }}"
+
+      # High CPU usage
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance)(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 10m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "High CPU usage detected"
+          description: "CPU usage is {{ $value | humanizePercentage }} on {{ $labels.instance }}"
+
+      # High memory usage (system)
+      - alert: HighSystemMemoryUsage
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes > 0.9
+        for: 5m
+        labels:
+          severity: critical
+          service: system
+        annotations:
+          summary: "High system memory usage detected"
+          description: "Memory usage is {{ $value | humanizePercentage }} on {{ $labels.instance }}"
+
+  - name: business_metrics_alerts
+    rules:
+      # Low recommendation quality
+      - alert: LowRecommendationQuality
+        expr: avg_over_time(recommendation_quality_score[1h]) < 0.7
+        for: 15m
+        labels:
+          severity: warning
+          service: goodbooks-api
+        annotations:
+          summary: "Low recommendation quality detected"
+          description: "Average recommendation quality score is {{ $value }} over the past hour"
+
+      # High recommendation latency
+      - alert: HighRecommendationLatency
+        expr: histogram_quantile(0.95, rate(recommendation_duration_seconds_bucket[5m])) > 5
+        for: 5m
+        labels:
+          severity: warning
+          service: goodbooks-api
+        annotations:
+          summary: "High recommendation latency detected"
+          description: "95th percentile recommendation latency is {{ $value }}s"
+
+      # No recent user interactions
+      - alert: NoUserInteractions
+        expr: increase(user_interactions_total[1h]) == 0
+        for: 30m
+        labels:
+          severity: warning
+          service: goodbooks-api
+        annotations:
+          summary: "No user interactions detected"
+          description: "No user interactions recorded in the past hour"

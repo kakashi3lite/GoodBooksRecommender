@@ -1,0 +1,142 @@
+{
+  "index_patterns": ["goodbooks-*"],
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 0,
+    "index": {
+      "lifecycle": {
+        "name": "goodbooks-policy",
+        "rollover_alias": "goodbooks-logs"
+      }
+    }
+  },
+  "mappings": {
+    "properties": {
+      "@timestamp": {
+        "type": "date"
+      },
+      "timestamp": {
+        "type": "date"
+      },
+      "level": {
+        "type": "keyword"
+      },
+      "logger": {
+        "type": "keyword"
+      },
+      "message": {
+        "type": "text",
+        "analyzer": "standard"
+      },
+      "correlation_id": {
+        "type": "keyword"
+      },
+      "trace_id": {
+        "type": "keyword"
+      },
+      "service_name": {
+        "type": "keyword"
+      },
+      "environment": {
+        "type": "keyword"
+      },
+      "log_type": {
+        "type": "keyword"
+      },
+      "component": {
+        "type": "keyword"
+      },
+      "operation": {
+        "type": "keyword"
+      },
+      "duration_ms": {
+        "type": "float"
+      },
+      "response_time_category": {
+        "type": "keyword"
+      },
+      "user_id": {
+        "type": "keyword"
+      },
+      "client_ip": {
+        "type": "ip"
+      },
+      "geoip": {
+        "properties": {
+          "location": {
+            "type": "geo_point"
+          },
+          "country_name": {
+            "type": "keyword"
+          },
+          "city_name": {
+            "type": "keyword"
+          },
+          "region_name": {
+            "type": "keyword"
+          }
+        }
+      },
+      "user_agent": {
+        "properties": {
+          "name": {
+            "type": "keyword"
+          },
+          "version": {
+            "type": "keyword"
+          },
+          "os": {
+            "type": "keyword"
+          },
+          "device": {
+            "type": "keyword"
+          }
+        }
+      },
+      "exception": {
+        "properties": {
+          "type": {
+            "type": "keyword"
+          },
+          "message": {
+            "type": "text"
+          },
+          "traceback": {
+            "type": "text"
+          }
+        }
+      },
+      "ml": {
+        "properties": {
+          "model_name": {
+            "type": "keyword"
+          },
+          "operation_type": {
+            "type": "keyword"
+          },
+          "result_count": {
+            "type": "integer"
+          }
+        }
+      },
+      "security_event": {
+        "type": "keyword"
+      },
+      "severity": {
+        "type": "keyword"
+      },
+      "action": {
+        "type": "keyword"
+      },
+      "audit_log": {
+        "type": "boolean"
+      },
+      "security_log": {
+        "type": "boolean"
+      },
+      "performance_log": {
+        "type": "boolean"
+      }
+    }
+  }
+}

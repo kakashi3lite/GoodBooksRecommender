@@ -1,0 +1,351 @@
+version: '3.8'
+
+services:
+  # Application Services
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: goodbooks-api
+    environment:
+      - ENVIRONMENT=production
+      - LOG_LEVEL=INFO
+      - LOG_FORMAT=json
+      - ELASTICSEARCH_ENABLED=true
+      - ELASTICSEARCH_HOST=elasticsearch:9200
+      - TRACING_ENABLED=true
+      - JAEGER_ENDPOINT=http://jaeger:14268/api/traces
+      - PROMETHEUS_METRICS_ENABLED=true
+      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=postgresql://goodbooks:password@postgres:5432/goodbooks
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+      - postgres
+      - elasticsearch
+      - jaeger
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - monitoring
+      - app-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Database Services
+  postgres:
+    image: postgres:15
+    container_name: goodbooks-postgres
+    environment:
+      POSTGRES_DB: goodbooks
+      POSTGRES_USER: goodbooks
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./monitoring/postgres-init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: goodbooks-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+      - ./redis.conf:/usr/local/etc/redis/redis.conf
+    command: redis-server /usr/local/etc/redis/redis.conf
+    networks:
+      - app-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Monitoring Stack
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: goodbooks-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./monitoring/alert_rules.yml:/etc/prometheus/alert_rules.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+    networks:
+      - monitoring
+    restart: unless-stopped
+    depends_on:
+      - alertmanager
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: goodbooks-alertmanager
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+      - ./monitoring/alertmanager/templates:/etc/alertmanager/templates
+      - alertmanager_data:/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+    networks:
+      - monitoring
+    restart: unless-stopped
+    environment:
+      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL:-}
+      - SLACK_CRITICAL_CHANNEL=${SLACK_CRITICAL_CHANNEL:-#alerts-critical}
+      - SLACK_ALERTS_CHANNEL=${SLACK_ALERTS_CHANNEL:-#alerts}
+      - SLACK_INFO_CHANNEL=${SLACK_INFO_CHANNEL:-#monitoring}
+      - SLACK_TEST_CHANNEL=${SLACK_TEST_CHANNEL:-#alerts-test}
+      - CRITICAL_EMAIL=${CRITICAL_EMAIL:-admin@goodbooks-recommender.com}
+      - TEAM_EMAIL=${TEAM_EMAIL:-team@goodbooks-recommender.com}
+      - GRAFANA_HOST=${GRAFANA_HOST:-localhost:3000}
+      - KIBANA_HOST=${KIBANA_HOST:-localhost:5601}
+      - PROMETHEUS_HOST=${PROMETHEUS_HOST:-localhost:9090}
+      - PAGERDUTY_SERVICE_KEY=${PAGERDUTY_SERVICE_KEY:-}
+      - SMTP_HOST=${SMTP_HOST:-localhost:587}
+      - SMTP_FROM=${SMTP_FROM:-alerts@goodbooks-recommender.com}
+      - SMTP_USERNAME=${SMTP_USERNAME:-}
+      - SMTP_PASSWORD=${SMTP_PASSWORD:-}
+      - WEBHOOK_USERNAME=${WEBHOOK_USERNAME:-webhook}
+      - WEBHOOK_PASSWORD=${WEBHOOK_PASSWORD:-webhook123}
+    depends_on:
+      - goodbooks-webhook
+
+  # Alert Webhook Service for testing and monitoring notifications
+  goodbooks-webhook:
+    build:
+      context: .
+      dockerfile: monitoring/Dockerfile.webhook
+    container_name: goodbooks-webhook
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./logs:/app/logs
+      - ./monitoring:/app/monitoring
+    environment:
+      - LOG_LEVEL=INFO
+    networks:
+      - monitoring
+      - app-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: goodbooks-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel,grafana-worldmap-panel
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+    networks:
+      - monitoring
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+
+  # ELK Stack for Log Aggregation
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: goodbooks-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - xpack.security.enabled=false
+      - xpack.security.enrollment.enabled=false
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - monitoring
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.11.0
+    container_name: goodbooks-logstash
+    ports:
+      - "5044:5044"
+      - "5000:5000/tcp"
+      - "5000:5000/udp"
+      - "9600:9600"
+    volumes:
+      - ./monitoring/logstash/pipeline:/usr/share/logstash/pipeline
+      - ./monitoring/logstash/config:/usr/share/logstash/config
+      - ./logs:/app/logs:ro
+    networks:
+      - monitoring
+    restart: unless-stopped
+    depends_on:
+      - elasticsearch
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.0
+    container_name: goodbooks-kibana
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - XPACK_SECURITY_ENABLED=false
+    volumes:
+      - kibana_data:/usr/share/kibana/data
+    networks:
+      - monitoring
+    restart: unless-stopped
+    depends_on:
+      - elasticsearch
+
+  # Distributed Tracing
+  jaeger:
+    image: jaegertracing/all-in-one:1.50
+    container_name: goodbooks-jaeger
+    ports:
+      - "16686:16686"  # Jaeger UI
+      - "14268:14268"  # HTTP collector
+      - "14250:14250"  # gRPC collector
+      - "6831:6831/udp"  # UDP agent
+      - "6832:6832/udp"  # UDP agent
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    networks:
+      - monitoring
+    restart: unless-stopped
+
+  # Exporters for additional metrics
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: goodbooks-node-exporter
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    networks:
+      - monitoring
+    restart: unless-stopped
+
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    container_name: goodbooks-redis-exporter
+    ports:
+      - "9121:9121"
+    environment:
+      - REDIS_ADDR=redis://redis:6379
+    networks:
+      - monitoring
+    restart: unless-stopped
+    depends_on:
+      - redis
+
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: goodbooks-postgres-exporter
+    ports:
+      - "9187:9187"
+    environment:
+      - DATA_SOURCE_NAME=postgresql://goodbooks:password@postgres:5432/goodbooks?sslmode=disable
+    networks:
+      - monitoring
+    restart: unless-stopped
+    depends_on:
+      - postgres
+
+  # NGINX for load balancing and reverse proxy
+  nginx:
+    image: nginx:alpine
+    container_name: goodbooks-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl
+      - ./logs/nginx:/var/log/nginx
+    networks:
+      - monitoring
+      - app-network
+    restart: unless-stopped
+    depends_on:
+      - api
+
+  nginx-exporter:
+    image: nginx/nginx-prometheus-exporter:latest
+    container_name: goodbooks-nginx-exporter
+    ports:
+      - "9113:9113"
+    command:
+      - -nginx.scrape-uri=http://nginx:80/nginx_status
+    networks:
+      - monitoring
+    restart: unless-stopped
+    depends_on:
+      - nginx
+
+  # Backup and maintenance
+  backup:
+    image: postgres:15
+    container_name: goodbooks-backup
+    volumes:
+      - ./backups:/backups
+      - ./scripts/backup.sh:/backup.sh
+    networks:
+      - app-network
+    restart: "no"
+    depends_on:
+      - postgres
+    profiles:
+      - backup
+
+volumes:
+  postgres_data:
+  redis_data:
+  prometheus_data:
+  grafana_data:
+  alertmanager_data:
+  elasticsearch_data:
+  kibana_data:
+
+networks:
+  monitoring:
+    driver: bridge
+  app-network:
+    driver: bridge

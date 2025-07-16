@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="GoodBooks Recommender Dashboard - AI-powered book recommendation system">
+    <meta name="keywords" content="books, recommendations, AI, machine learning, reading">
+    <meta name="author" content="GoodBooks Recommender Team">
+    
+    <!-- Content Security Policy -->
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self';
+        script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net;
+        style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+        font-src 'self' https://fonts.gstatic.com;
+        img-src 'self' data: https:;
+        connect-src 'self' ws: wss:;
+        base-uri 'self';
+        form-action 'self';
+        frame-ancestors 'none';
+        object-src 'none';
+        upgrade-insecure-requests;
+    ">
+    
+    <!-- Security headers -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block">
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+    
+    <title>GoodBooks Recommender Dashboard</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
+    
+    <!-- Dashboard Styles -->
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/responsive.css">
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="js/utils.js" as="script">
+    <link rel="preload" href="js/api.js" as="script">
+    
+    <!-- Performance monitoring -->
+    <script>
+        // Performance monitoring
+        window.addEventListener('load', () => {
+            if ('performance' in window) {
+                const loadTime = performance.timing.loadEventEnd - performance.timing.navigationStart;
+                console.log(`Page loaded in ${loadTime}ms`);
+            }
+        });
+    </script>
+</head>
+
+<body>
+    <!-- Header Navigation -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <!-- Logo -->
+                <a href="/" class="logo">
+                    <span class="logo-icon">📚</span>
+                    <span>GoodBooks</span>
+                </a>
+                
+                <!-- Mobile Menu Toggle -->
+                <button class="mobile-menu-toggle" aria-label="Toggle menu">
+                    ☰
+                </button>
+                
+                <!-- Navigation Menu -->
+                <nav class="nav-menu">
+                    <a href="/" class="nav-link active" data-page="home">
+                        🏠 Home
+                    </a>
+                    <a href="/search" class="nav-link" data-page="search">
+                        🔍 Search
+                    </a>
+                    <a href="/recommendations" class="nav-link" data-page="recommendations">
+                        🎯 Recommendations
+                    </a>
+                    <a href="/analytics" class="nav-link" data-page="analytics">
+                        📊 Analytics
+                    </a>
+                </nav>
+                
+                <!-- Header Actions -->
+                <div class="header-actions">
+                    <button class="btn btn-sm btn-ghost" id="theme-toggle" title="Toggle theme">
+                        🌙
+                    </button>
+                    <div class="status-indicator status-healthy" id="connection-status">
+                        <span>●</span>
+                        <span>Online</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Content will be dynamically loaded here -->
+        <div class="container">
+            <div class="loading-screen">
+                <div class="text-center">
+                    <div class="loading"></div>
+                    <p class="text-muted">Loading dashboard...</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="modal-overlay" style="display: none;">
+        <div class="loading-content">
+            <div class="loading"></div>
+            <p>Loading...</p>
+        </div>
+    </div>
+
+    <!-- Service Worker Registration -->
+    <script>
+        // Register service worker for offline functionality
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('SW registered: ', registration);
+                    })
+                    .catch(registrationError => {
+                        console.log('SW registration failed: ', registrationError);
+                    });
+            });
+        }
+    </script>
+
+    <!-- Application Scripts -->
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/components.js"></script>
+    <script src="js/charts.js"></script>
+    <script src="js/app.js"></script>
+
+    <!-- Additional Features -->
+    <script>
+        // Theme toggle functionality
+        document.addEventListener('DOMContentLoaded', () => {
+            const themeToggle = document.getElementById('theme-toggle');
+            const connectionStatus = document.getElementById('connection-status');
+            
+            // Theme toggle
+            if (themeToggle) {
+                themeToggle.addEventListener('click', () => {
+                    document.body.classList.toggle('dark-theme');
+                    const isDark = document.body.classList.contains('dark-theme');
+                    themeToggle.textContent = isDark ? '☀️' : '🌙';
+                    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+                });
+                
+                // Load saved theme
+                const savedTheme = localStorage.getItem('theme');
+                if (savedTheme === 'dark') {
+                    document.body.classList.add('dark-theme');
+                    themeToggle.textContent = '☀️';
+                }
+            }
+            
+            // Connection status monitoring
+            function updateConnectionStatus() {
+                if (connectionStatus) {
+                    if (navigator.onLine) {
+                        connectionStatus.className = 'status-indicator status-healthy';
+                        connectionStatus.innerHTML = '<span>●</span><span>Online</span>';
+                    } else {
+                        connectionStatus.className = 'status-indicator status-error';
+                        connectionStatus.innerHTML = '<span>●</span><span>Offline</span>';
+                    }
+                }
+            }
+            
+            window.addEventListener('online', updateConnectionStatus);
+            window.addEventListener('offline', updateConnectionStatus);
+            updateConnectionStatus();
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Ctrl/Cmd + K for search
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                if (window.app) {
+                    window.app.loadPage('search');
+                }
+            }
+            
+            // Ctrl/Cmd + H for home
+            if ((e.ctrlKey || e.metaKey) && e.key === 'h') {
+                e.preventDefault();
+                if (window.app) {
+                    window.app.loadPage('home');
+                }
+            }
+            
+            // Ctrl/Cmd + R for recommendations
+            if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+                e.preventDefault();
+                if (window.app) {
+                    window.app.loadPage('recommendations');
+                }
+            }
+        });
+
+        // Error boundary
+        window.addEventListener('error', (event) => {
+            console.error('Global error:', event.error);
+            
+            // Show user-friendly error message
+            if (window.Alert) {
+                Alert.show('An unexpected error occurred. Please refresh the page.', 'error');
+            }
+        });
+
+        // Unhandled promise rejections
+        window.addEventListener('unhandledrejection', (event) => {
+            console.error('Unhandled promise rejection:', event.reason);
+            event.preventDefault();
+            
+            if (window.Alert) {
+                Alert.show('A network error occurred. Please check your connection.', 'warning');
+            }
+        });
+
+        // Performance monitoring
+        window.addEventListener('load', () => {
+            // Monitor Core Web Vitals
+            if ('web-vital' in window) {
+                // This would integrate with real performance monitoring
+                console.log('Performance monitoring enabled');
+            }
+            
+            // Monitor memory usage
+            if ('memory' in performance) {
+                setInterval(() => {
+                    const memory = performance.memory;
+                    if (memory.usedJSHeapSize > memory.jsHeapSizeLimit * 0.9) {
+                        console.warn('High memory usage detected');
+                    }
+                }, 30000);
+            }
+        });
+    </script>
+
+    <!-- Analytics (placeholder for future integration) -->
+    <script>
+        // Google Analytics or other analytics would go here
+        // This is disabled by default for privacy
+        
+        // Example:
+        // gtag('config', 'GA_TRACKING_ID');
+    </script>
+
+    <!-- Accessibility improvements -->
+    <script>
+        // Skip link for keyboard navigation
+        document.addEventListener('DOMContentLoaded', () => {
+            const skipLink = document.createElement('a');
+            skipLink.href = '#main-content';
+            skipLink.textContent = 'Skip to main content';
+            skipLink.className = 'skip-link';
+            skipLink.style.cssText = `
+                position: absolute;
+                top: -40px;
+                left: 6px;
+                background: var(--primary-color);
+                color: white;
+                padding: 8px;
+                text-decoration: none;
+                border-radius: 4px;
+                z-index: 9999;
+                transition: top 0.3s;
+            `;
+            
+            skipLink.addEventListener('focus', () => {
+                skipLink.style.top = '6px';
+            });
+            
+            skipLink.addEventListener('blur', () => {
+                skipLink.style.top = '-40px';
+            });
+            
+            document.body.insertBefore(skipLink, document.body.firstChild);
+        });
+
+        // Announce page changes for screen readers
+        function announcePageChange(pageName) {
+            const announcement = document.createElement('div');
+            announcement.setAttribute('aria-live', 'polite');
+            announcement.setAttribute('aria-atomic', 'true');
+            announcement.style.cssText = `
+                position: absolute;
+                left: -10000px;
+                width: 1px;
+                height: 1px;
+                overflow: hidden;
+            `;
+            announcement.textContent = `Navigated to ${pageName} page`;
+            document.body.appendChild(announcement);
+            
+            setTimeout(() => {
+                document.body.removeChild(announcement);
+            }, 1000);
+        }
+    </script>
+
+    <!-- Print styles -->
+    <style media="print">
+        .header,
+        .mobile-menu-toggle,
+        .btn,
+        .nav-menu {
+            display: none !important;
+        }
+        
+        .main-content {
+            margin-top: 0 !important;
+        }
+        
+        body {
+            background: white !important;
+            color: black !important;
+        }
+        
+        .card {
+            border: 1px solid #000 !important;
+            box-shadow: none !important;
+            page-break-inside: avoid;
+        }
+    </style>
+</body>
+</html>

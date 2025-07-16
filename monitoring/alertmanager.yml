@@ -1,0 +1,234 @@
+global:
+  # SMTP configuration for email notifications
+  smtp_smarthost: '${SMTP_HOST:localhost:587}'
+  smtp_from: '${SMTP_FROM:alerts@goodbooks-recommender.com}'
+  smtp_auth_username: '${SMTP_USERNAME:""}'
+  smtp_auth_password: '${SMTP_PASSWORD:""}'
+  smtp_require_tls: true
+  # Global resolve timeout
+  resolve_timeout: 5m
+
+# Templates for custom notification formats
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+# Routing tree for alert distribution
+route:
+  group_by: ['alertname', 'cluster', 'service', 'severity']
+  group_wait: 10s
+  group_interval: 30s
+  repeat_interval: 12h
+  receiver: 'default-receiver'
+  
+  routes:
+  # Critical alerts - immediate notification via all channels
+  - match:
+      severity: critical
+    receiver: 'critical-alerts'
+    group_wait: 5s
+    group_interval: 10s
+    repeat_interval: 30m
+    
+  # High priority alerts - Slack + email
+  - match:
+      severity: high
+    receiver: 'high-alerts'
+    group_wait: 30s
+    repeat_interval: 1h
+    
+  # Warning alerts - Slack only during business hours
+  - match:
+      severity: warning
+    receiver: 'warning-alerts'
+    repeat_interval: 4h
+    
+  # Info alerts - minimal notifications
+  - match:
+      severity: info
+    receiver: 'info-alerts'
+    repeat_interval: 24h
+    
+  # Test alerts - separate channel for testing
+  - match:
+      alertname: 'TestAlert'
+    receiver: 'test-alerts'
+    group_wait: 1s
+    repeat_interval: 5m
+
+receivers:
+# Default receiver (webhook for monitoring)
+- name: 'default-receiver'
+  webhook_configs:
+  - url: 'http://goodbooks-webhook:5001/alerts'
+    send_resolved: true
+    http_config:
+      basic_auth:
+        username: '${WEBHOOK_USERNAME:webhook}'
+        password: '${WEBHOOK_PASSWORD:webhook123}'
+
+# Critical alerts - all notification channels
+- name: 'critical-alerts'
+  email_configs:
+  - to: '${CRITICAL_EMAIL:admin@goodbooks-recommender.com}'
+    subject: '🚨 CRITICAL ALERT: {{ .GroupLabels.alertname }} - {{ .GroupLabels.service }}'
+    headers:
+      Priority: 'urgent'
+    body: |
+      🚨 CRITICAL ALERT 🚨
+      
+      Alert: {{ .GroupLabels.alertname }}
+      Service: {{ .GroupLabels.service }}
+      Severity: {{ .GroupLabels.severity }}
+      Cluster: {{ .GroupLabels.cluster }}
+      Started: {{ range .Alerts }}{{ .StartsAt.Format "2006-01-02 15:04:05" }}{{ end }}
+      
+      📋 Details:
+      {{ range .Alerts }}
+      • Instance: {{ .Labels.instance }}
+      • Description: {{ .Annotations.description }}
+      • Summary: {{ .Annotations.summary }}
+      • Runbook: {{ .Annotations.runbook_url }}
+      {{ end }}
+      
+      🔗 Links:
+      • Dashboard: http://${GRAFANA_HOST:localhost:3000}/d/goodbooks-overview
+      • Logs: http://${KIBANA_HOST:localhost:5601}/app/discover
+      • Metrics: http://${PROMETHEUS_HOST:localhost:9090}/graph
+      
+      This is a critical alert that requires immediate attention!
+    send_resolved: true
+  
+  slack_configs:
+  - api_url: '${SLACK_WEBHOOK_URL}'
+    channel: '${SLACK_CRITICAL_CHANNEL:#alerts-critical}'
+    title: '🚨 CRITICAL: {{ .GroupLabels.alertname }}'
+    title_link: 'http://${GRAFANA_HOST:localhost:3000}/d/goodbooks-overview'
+    color: 'danger'
+    text: |
+      *Service:* {{ .GroupLabels.service }}
+      *Severity:* {{ .GroupLabels.severity }}
+      *Cluster:* {{ .GroupLabels.cluster }}
+      
+      {{ range .Alerts }}
+      *Instance:* `{{ .Labels.instance }}`
+      *Description:* {{ .Annotations.description }}
+      {{ if .Annotations.runbook_url }}*Runbook:* {{ .Annotations.runbook_url }}{{ end }}
+      {{ end }}
+    actions:
+    - type: button
+      text: 'View Dashboard'
+      url: 'http://${GRAFANA_HOST:localhost:3000}/d/goodbooks-overview'
+    - type: button
+      text: 'View Logs'
+      url: 'http://${KIBANA_HOST:localhost:5601}/app/discover'
+    send_resolved: true
+  
+  # PagerDuty integration for critical alerts
+  pagerduty_configs:
+  - service_key: '${PAGERDUTY_SERVICE_KEY}'
+    description: 'CRITICAL: {{ .GroupLabels.alertname }} - {{ .GroupLabels.service }}'
+    details:
+      cluster: '{{ .GroupLabels.cluster }}'
+      service: '{{ .GroupLabels.service }}'
+      severity: '{{ .GroupLabels.severity }}'
+
+# High priority alerts
+- name: 'high-alerts'
+  email_configs:
+  - to: '${TEAM_EMAIL:team@goodbooks-recommender.com}'
+    subject: '⚠️ HIGH: {{ .GroupLabels.alertname }} - {{ .GroupLabels.service }}'
+    body: |
+      ⚠️ HIGH PRIORITY ALERT ⚠️
+      
+      Alert: {{ .GroupLabels.alertname }}
+      Service: {{ .GroupLabels.service }}
+      Severity: {{ .GroupLabels.severity }}
+      
+      {{ range .Alerts }}
+      Instance: {{ .Labels.instance }}
+      Description: {{ .Annotations.description }}
+      {{ end }}
+      
+      Dashboard: http://${GRAFANA_HOST:localhost:3000}/d/goodbooks-overview
+    send_resolved: true
+  
+  slack_configs:
+  - api_url: '${SLACK_WEBHOOK_URL}'
+    channel: '${SLACK_ALERTS_CHANNEL:#alerts}'
+    title: '⚠️ HIGH: {{ .GroupLabels.alertname }}'
+    color: 'warning'
+    text: |
+      *Service:* {{ .GroupLabels.service }}
+      {{ range .Alerts }}
+      *Description:* {{ .Annotations.description }}
+      {{ end }}
+    send_resolved: true
+
+# Warning alerts
+- name: 'warning-alerts'
+  slack_configs:
+  - api_url: '${SLACK_WEBHOOK_URL}'
+    channel: '${SLACK_ALERTS_CHANNEL:#alerts}'
+    title: '⚠️ WARNING: {{ .GroupLabels.alertname }}'
+    color: '#ffcc00'
+    text: |
+      *Service:* {{ .GroupLabels.service }}
+      {{ range .Alerts }}
+      *Description:* {{ .Annotations.description }}
+      {{ end }}
+    send_resolved: true
+
+# Info alerts
+- name: 'info-alerts'
+  slack_configs:
+  - api_url: '${SLACK_WEBHOOK_URL}'
+    channel: '${SLACK_INFO_CHANNEL:#monitoring}'
+    title: 'ℹ️ INFO: {{ .GroupLabels.alertname }}'
+    color: 'good'
+    text: |
+      *Service:* {{ .GroupLabels.service }}
+      {{ range .Alerts }}
+      *Description:* {{ .Annotations.description }}
+      {{ end }}
+    send_resolved: true
+
+# Test alerts - for testing alert functionality
+- name: 'test-alerts'
+  slack_configs:
+  - api_url: '${SLACK_WEBHOOK_URL}'
+    channel: '${SLACK_TEST_CHANNEL:#alerts-test}'
+    title: '🧪 TEST ALERT: {{ .GroupLabels.alertname }}'
+    color: '#00ff00'
+    text: |
+      This is a test alert to verify notification channels are working.
+      
+      *Timestamp:* {{ range .Alerts }}{{ .StartsAt.Format "2006-01-02 15:04:05" }}{{ end }}
+      *Service:* {{ .GroupLabels.service }}
+      {{ range .Alerts }}
+      *Description:* {{ .Annotations.description }}
+      {{ end }}
+    send_resolved: true
+  
+  webhook_configs:
+  - url: 'http://goodbooks-webhook:5001/test-alerts'
+    send_resolved: true
+
+# Inhibition rules to suppress lower priority alerts when higher priority ones are firing
+inhibit_rules:
+- source_match:
+    severity: 'critical'
+  target_match:
+    severity: 'high'
+  equal: ['alertname', 'cluster', 'service']
+
+- source_match:
+    severity: 'critical'
+  target_match:
+    severity: 'warning'
+  equal: ['alertname', 'cluster', 'service']
+
+- source_match:
+    severity: 'high'
+  target_match:
+    severity: 'warning'
+  equal: ['alertname', 'cluster', 'service']

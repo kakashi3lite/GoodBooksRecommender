@@ -1,0 +1,351 @@
+/* GoodBooks Recommender Dashboard - Responsive Design */
+
+/* ===== MOBILE FIRST APPROACH ===== */
+
+/* Base styles (mobile) are defined in dashboard.css */
+
+/* ===== TABLET STYLES (768px and up) ===== */
+@media (min-width: 768px) {
+  .container {
+    padding: 0 2rem;
+  }
+  
+  .dashboard-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .nav-menu {
+    display: flex;
+  }
+  
+  .mobile-menu {
+    display: none;
+  }
+  
+  .book-card-header {
+    flex-direction: row;
+  }
+  
+  .book-cover {
+    width: 80px;
+    height: 120px;
+  }
+  
+  .form-row {
+    flex-direction: row;
+  }
+  
+  .result-item {
+    flex-direction: row;
+  }
+  
+  .filters-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .modal {
+    width: 80%;
+    margin: 0;
+  }
+}
+
+/* ===== DESKTOP STYLES (1024px and up) ===== */
+@media (min-width: 1024px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .main-content {
+    padding: 3rem 0;
+  }
+  
+  .filters-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  .chart-container {
+    height: 400px;
+  }
+  
+  .modal {
+    width: 60%;
+    max-width: 800px;
+  }
+}
+
+/* ===== LARGE DESKTOP STYLES (1280px and up) ===== */
+@media (min-width: 1280px) {
+  .container {
+    max-width: 1400px;
+  }
+  
+  .dashboard-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  .filters-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+/* ===== MOBILE NAVIGATION ===== */
+.mobile-menu-toggle {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--text-primary);
+  cursor: pointer;
+  padding: 0.5rem;
+}
+
+@media (max-width: 767px) {
+  .mobile-menu-toggle {
+    display: block;
+  }
+  
+  .nav-menu {
+    position: fixed;
+    top: var(--header-height);
+    left: -100%;
+    width: 100%;
+    height: calc(100vh - var(--header-height));
+    background: var(--bg-primary);
+    flex-direction: column;
+    padding: 2rem;
+    transition: left var(--transition-normal);
+    z-index: 999;
+    border-top: 1px solid var(--border-color);
+  }
+  
+  .nav-menu.active {
+    left: 0;
+  }
+  
+  .nav-link {
+    padding: 1rem;
+    width: 100%;
+    text-align: center;
+    border-bottom: 1px solid var(--border-color);
+  }
+  
+  .header-actions {
+    display: none;
+  }
+}
+
+/* ===== PRINT STYLES ===== */
+@media print {
+  .header,
+  .nav-menu,
+  .btn,
+  .mobile-menu-toggle {
+    display: none !important;
+  }
+  
+  .main-content {
+    margin-top: 0;
+  }
+  
+  .card {
+    border: 1px solid #000;
+    box-shadow: none;
+    page-break-inside: avoid;
+  }
+  
+  .page-title {
+    color: #000;
+  }
+  
+  .chart-container {
+    height: 300px;
+  }
+  
+  * {
+    background: white !important;
+    color: black !important;
+  }
+}
+
+/* ===== HIGH CONTRAST MODE ===== */
+@media (prefers-contrast: high) {
+  :root {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f0f0f0;
+    --text-primary: #000000;
+    --text-secondary: #333333;
+    --border-color: #666666;
+    --primary-color: #0000ff;
+    --success-color: #008000;
+    --error-color: #ff0000;
+    --warning-color: #ff8000;
+  }
+  
+  .card {
+    border-width: 2px;
+  }
+  
+  .btn {
+    border-width: 2px;
+  }
+}
+
+/* ===== REDUCED MOTION ===== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .loading {
+    animation: none;
+    border-left-color: var(--primary-color);
+  }
+  
+  .skeleton {
+    animation: none;
+    background: var(--bg-tertiary);
+  }
+}
+
+/* ===== DARK MODE SUPPORT ===== */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-primary: #1e293b;
+    --bg-secondary: #0f172a;
+    --bg-tertiary: #334155;
+    --text-primary: #f8fafc;
+    --text-secondary: #cbd5e1;
+    --text-muted: #94a3b8;
+    --border-color: #475569;
+    --border-hover: #64748b;
+  }
+  
+  .form-input,
+  .form-select,
+  .form-textarea {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+  }
+  
+  .book-cover-placeholder {
+    background: var(--bg-secondary);
+  }
+  
+  .genre-tag {
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+  }
+  
+  .status-indicator {
+    background: var(--bg-secondary);
+  }
+}
+
+/* ===== TOUCH DEVICE OPTIMIZATIONS ===== */
+@media (hover: none) and (pointer: coarse) {
+  .btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  .form-input,
+  .form-select {
+    min-height: 44px;
+  }
+  
+  .nav-link {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .book-card:hover {
+    transform: none;
+  }
+  
+  .card:hover {
+    box-shadow: var(--shadow-sm);
+  }
+  
+  .tooltip:hover::before,
+  .tooltip:hover::after {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+/* ===== LANDSCAPE ORIENTATION (MOBILE) ===== */
+@media (max-width: 767px) and (orientation: landscape) {
+  .main-content {
+    padding: 1rem 0;
+  }
+  
+  .page-title {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+  }
+  
+  .dashboard-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+  
+  .chart-container {
+    height: 200px;
+  }
+}
+
+/* ===== VERY SMALL SCREENS (320px and up) ===== */
+@media (max-width: 359px) {
+  .container {
+    padding: 0 0.5rem;
+  }
+  
+  .card {
+    padding: 0.75rem;
+  }
+  
+  .btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.75rem;
+  }
+  
+  .page-title {
+    font-size: 1.25rem;
+  }
+  
+  .book-cover,
+  .book-cover-placeholder {
+    width: 60px;
+    height: 90px;
+  }
+  
+  .result-cover {
+    width: 50px;
+    height: 75px;
+  }
+}
+
+/* ===== VERY LARGE SCREENS (1920px and up) ===== */
+@media (min-width: 1920px) {
+  .container {
+    max-width: 1600px;
+  }
+  
+  .dashboard-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+  
+  .chart-container {
+    height: 500px;
+  }
+  
+  .main-content {
+    padding: 4rem 0;
+  }
+}

@@ -1,10 +1,13 @@
-# Deployment Guide
+# Production Infrastructure Deployment Guide
 
-Comprehensive deployment guide for the GoodBooks Recommender system across different environments.
+This guide covers the complete deployment of GoodBooks Recommender for production with high availability, scalability, and comprehensive monitoring.
 
 ## 📋 Table of Contents
 
-- [Deployment Overview](#-deployment-overview)
+- [Phase 1: Infrastructure Scaling](#phase-1-infrastructure-scaling)
+- [Phase 2: Redis Cluster Setup](#phase-2-redis-cluster-setup)
+- [Phase 3: Load Balancer Configuration](#phase-3-load-balancer-configuration)
+- [Phase 4: Monitoring Dashboards](#phase-4-monitoring-dashboards)
 - [Environment Setup](#-environment-setup)
 - [Docker Deployment](#-docker-deployment)
 - [Kubernetes Deployment](#-kubernetes-deployment)
@@ -14,6 +17,235 @@ Comprehensive deployment guide for the GoodBooks Recommender system across diffe
 - [Performance Tuning](#-performance-tuning)
 - [Backup & Recovery](#-backup--recovery)
 - [Troubleshooting](#-troubleshooting)
+
+## Phase 1: Infrastructure Scaling
+
+### Architecture Overview
+
+```mermaid
+graph TB
+    Internet[Internet] --> LB[NGINX Load Balancer]
+    
+    LB --> API1[API Instance 1]
+    LB --> API2[API Instance 2]
+    LB --> API3[API Instance 3]
+    
+    API1 --> RC[Redis Cluster]
+    API2 --> RC
+    API3 --> RC
+    
+    API1 --> DB[PostgreSQL Primary]
+    API2 --> DB
+    API3 --> DB
+    
+    DB --> DBR[PostgreSQL Replica]
+    
+    Prom[Prometheus] --> API1
+    Prom --> API2
+    Prom --> API3
+    Prom --> RC
+    Prom --> DB
+    Prom --> LB
+    
+    Grafana --> Prom
+    AlertManager --> Prom
+    
+    style RC fill:#ff9999
+    style DB fill:#99ccff
+    style LB fill:#99ff99
+```
+
+## Phase 2: Redis Cluster Setup
+
+### Managed Redis Services (Recommended)
+
+#### AWS ElastiCache
+```bash
+# Create Redis cluster with failover
+aws elasticache create-replication-group \
+    --replication-group-id goodbooks-redis-cluster \
+    --description "GoodBooks Redis Cluster" \
+    --num-cache-clusters 3 \
+    --cache-node-type cache.r6g.large \
+    --engine redis \
+    --engine-version 7.0 \
+    --port 6379 \
+    --parameter-group-name default.redis7 \
+    --subnet-group-name goodbooks-subnet-group \
+    --security-group-ids sg-redis-cluster \
+    --automatic-failover-enabled \
+    --multi-az-enabled \
+    --at-rest-encryption-enabled \
+    --transit-encryption-enabled
+```
+
+#### Environment Configuration for Managed Redis
+```bash
+# .env for managed Redis
+REDIS_CLUSTER_ENABLED=true
+REDIS_CLUSTER_NODES=cluster-endpoint:6379
+REDIS_PASSWORD=your-secure-redis-password
+REDIS_SSL=true
+ENVIRONMENT=production
+```
+
+### Self-Hosted Redis Cluster
+
+See detailed setup in [REDIS_CLUSTER_GUIDE.md](./REDIS_CLUSTER_GUIDE.md)
+
+## Phase 3: Load Balancer Configuration
+
+### Cloud Load Balancers (Recommended)
+
+#### AWS Application Load Balancer
+```bash
+# Create target group
+aws elbv2 create-target-group \
+    --name goodbooks-api-targets \
+    --protocol HTTP \
+    --port 8000 \
+    --vpc-id vpc-xxxxx \
+    --health-check-path /health \
+    --health-check-interval-seconds 30 \
+    --healthy-threshold-count 2 \
+    --unhealthy-threshold-count 3
+
+# Create load balancer
+aws elbv2 create-load-balancer \
+    --name goodbooks-alb \
+    --subnets subnet-xxxxx subnet-yyyyy \
+    --security-groups sg-alb \
+    --scheme internet-facing
+```
+
+#### Health Check Configuration
+```json
+{
+  "HealthCheckPath": "/health",
+  "HealthCheckProtocol": "HTTP",
+  "HealthCheckIntervalSeconds": 30,
+  "HealthCheckTimeoutSeconds": 5,
+  "HealthyThresholdCount": 2,
+  "UnhealthyThresholdCount": 3,
+  "Matcher": {
+    "HttpCode": "200"
+  }
+}
+```
+
+### Self-Hosted NGINX Load Balancer
+
+The NGINX configuration is already provided in `nginx/nginx.conf`.
+
+#### Enable Load Balancing
+```bash
+# Start with load balancer
+docker-compose --profile proxy up -d
+
+# Scale API instances
+docker-compose up -d --scale api=3
+
+# Verify load balancing
+for i in {1..10}; do 
+    curl -s http://localhost/health | jq .instance_id
+done
+```
+
+## Phase 4: Monitoring Dashboards
+
+### Start Complete Monitoring Stack
+```bash
+# Start all monitoring services
+docker-compose --profile monitoring up -d
+
+# Verify all targets are up
+curl http://localhost:9090/api/v1/targets | jq '.data.activeTargets[] | {job: .labels.job, health: .health}'
+```
+
+### Access Monitoring Services
+- **Prometheus**: http://localhost:9090
+- **Grafana**: http://localhost:3000 (admin/admin)
+- **AlertManager**: http://localhost:9093
+
+### Key Monitoring Dashboards
+
+#### 1. Application Performance Dashboard
+- Request rate and latency percentiles
+- Error rates by endpoint
+- Cache hit/miss ratios
+- Recommendation quality metrics
+
+#### 2. Infrastructure Dashboard
+- CPU, Memory, Disk usage
+- Network I/O
+- Container health and restarts
+- Database connection pools
+
+#### 3. Business Metrics Dashboard
+- User interactions over time
+- Popular books and genres
+- Recommendation acceptance rates
+- A/B test performance
+
+### Alert Configuration
+
+The system includes pre-configured alerts for:
+- **Critical**: Service down, high error rates, model failures
+- **Warning**: High latency, resource usage, cache issues
+
+#### Test Alerts
+```bash
+# Trigger a test alert
+docker-compose exec prometheus wget -qO- http://localhost:9090/api/v1/admin/tsdb/delete_series?match[]={__name__=~".+"}
+
+# Check alert status
+curl http://localhost:9093/api/v1/alerts
+```
+
+## Quick Deployment Commands
+
+### Development with Monitoring
+```bash
+# Start everything for development
+docker-compose --profile monitoring up -d
+
+# Check all services
+docker-compose ps
+curl http://localhost/health
+```
+
+### Production Deployment
+```bash
+# Set production environment
+export ENVIRONMENT=production
+export DEBUG=false
+
+# Use managed services
+export REDIS_CLUSTER_ENABLED=true
+export REDIS_CLUSTER_NODES="your-redis-cluster-endpoint:6379"
+export DATABASE_URL="postgresql://user:pass@rds-endpoint:5432/goodbooks"
+
+# Start production stack
+docker-compose --profile monitoring --profile proxy up -d
+
+# Verify production readiness
+curl http://localhost/health | jq .
+curl http://localhost/metrics | grep -E "(http_requests_total|recommendation_duration)"
+```
+
+### Scaling Commands
+```bash
+# Scale API horizontally
+docker-compose up -d --scale api=5
+
+# Monitor scaling
+watch 'docker-compose ps api'
+
+# Test load distribution
+for i in {1..20}; do 
+    curl -s http://localhost/health | jq -r .instance_id | sort | uniq -c
+done
+```
 
 ## 🚀 Deployment Overview
 
