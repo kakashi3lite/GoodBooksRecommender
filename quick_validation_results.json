@@ -1,0 +1,53 @@
+{
+  "timestamp": "2025-07-17T17:14:28.832671",
+  "component_imports": {
+    "scorerag": {
+      "status": "success",
+      "class": "ScoreRAGProcessor"
+    },
+    "elearnfit": {
+      "status": "success",
+      "class": "ELearnFitOptimizer"
+    },
+    "gnr": {
+      "status": "success",
+      "class": "GenerativeNewsRecommender"
+    },
+    "particle_feed": {
+      "status": "success",
+      "class": "ParticleStyleFeedManager"
+    },
+    "personalization": {
+      "status": "success",
+      "class": "OptimizedPersonalizationEngine"
+    },
+    "master_engine": {
+      "status": "success",
+      "class": "SuperhumanNewsEngine"
+    }
+  },
+  "basic_functionality": {
+    "test_article_creation": {
+      "status": "success",
+      "article_id": "test_001"
+    },
+    "master_engine_instantiation": {
+      "status": "success",
+      "components_initialized": true
+    },
+    "performance_baseline": {
+      "status": "success",
+      "articles_created": 5,
+      "creation_time_ms": 0.04076957702636719,
+      "avg_time_per_article_ms": 0.008153915405273438
+    }
+  },
+  "overall_status": "excellent",
+  "summary": {
+    "import_success_rate": 1.0,
+    "functionality_success_rate": 1.0,
+    "overall_success_rate": 1.0,
+    "total_tests": 9,
+    "passed_tests": 9
+  }
+}

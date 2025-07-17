@@ -1,67 +1,40 @@
 {
-  "total_tests": 17,
-  "passed_tests": 9,
-  "failed_tests": 8,
-  "test_results": {
-    "Model Manager Tests": {
-      "total": 4,
-      "passed": 0,
-      "failed": 4,
-      "details": [
-        "Model Manager initialization: FAIL - 'Config' object has no attribute 'MODEL_DIR'",
-        "Hot-swap functionality: FAIL - cannot access local variable 'model_manager' where it is not associated with a value",
-        "Model health check: FAIL - cannot access local variable 'model_manager' where it is not associated with a value",
-        "Async model loading: FAIL - cannot access local variable 'model_manager' where it is not associated with a value"
-      ]
-    },
-    "MLflow Integration Tests": {
-      "total": 1,
-      "passed": 0,
-      "failed": 1,
-      "details": [
-        "MLflow registry initialization: FAIL - Experiment setup failed: \"Attempt to overwrite 'name' in LogRecord\""
-      ]
-    },
-    "A/B Testing Tests": {
-      "total": 1,
-      "passed": 0,
-      "failed": 1,
-      "details": [
-        "A/B Tester initialization: FAIL - argument should be a str or an os.PathLike object where __fspath__ returns a str, not 'Config'"
-      ]
-    },
-    "Vector Store Tests": {
-      "total": 4,
-      "passed": 4,
-      "failed": 0,
-      "details": [
-        "Vector store configuration: PASS",
-        "Distributed vector store init: PASS",
-        "Sharding configuration: PASS",
-        "Backend selection (faiss): PASS"
-      ]
-    },
-    "API Enhancement Tests": {
-      "total": 3,
-      "passed": 1,
-      "failed": 2,
-      "details": [
-        "Enhanced health endpoint: FAIL - Health endpoint missing components",
-        "Admin endpoints structure: PASS",
-        "Metrics endpoint: FAIL - Unexpected status code: 404"
-      ]
-    },
-    "Configuration Tests": {
-      "total": 4,
-      "passed": 4,
-      "failed": 0,
-      "details": [
-        "MLflow configuration: PASS",
-        "A/B testing configuration: PASS",
-        "Vector store configuration: PASS",
-        "File structure: PASS"
-      ]
+  "analytics": {
+    "status": "failed",
+    "duration_seconds": 0.001371622085571289,
+    "details": {}
+  },
+  "cache": {
+    "status": "failed",
+    "duration_seconds": 0.0002949237823486328,
+    "details": {}
+  },
+  "health": {
+    "status": "passed",
+    "duration_seconds": 0.0002923011779785156,
+    "details": {}
+  },
+  "batch_processing": {
+    "status": "passed",
+    "duration_seconds": 0.0001590251922607422,
+    "details": {
+      "status": "success",
+      "engine_created": true,
+      "max_concurrent_tasks": 2
     }
   },
-  "summary": "Overall: 9/17 tests passed (52.9%)"
+  "integration": {
+    "status": "failed",
+    "duration_seconds": 4.152777910232544,
+    "details": {}
+  },
+  "summary": {
+    "total_tests": 5,
+    "passed_tests": 2,
+    "failed_tests": 3,
+    "error_tests": 0,
+    "success_rate_percent": 40.0,
+    "overall_status": "failed",
+    "timestamp": "2025-07-16T22:20:49.030390"
+  }
 }

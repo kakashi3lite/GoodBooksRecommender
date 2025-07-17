@@ -1,0 +1,79 @@
+{
+  "analytics": {
+    "status": "FAILED",
+    "duration": 0.0003643035888671875,
+    "result": {
+      "success": false,
+      "error": "'RealTimeAnalytics' object has no attribute 'cleanup'"
+    }
+  },
+  "cache": {
+    "status": "PASSED",
+    "duration": 0.00013113021850585938,
+    "result": {
+      "success": true,
+      "l1_working": true,
+      "ml_working": true,
+      "stats_available": true
+    }
+  },
+  "health": {
+    "status": "PASSED",
+    "duration": 0.00019073486328125,
+    "result": {
+      "success": true,
+      "report_available": true,
+      "summary_available": true
+    }
+  },
+  "batch": {
+    "status": "PASSED",
+    "duration": 0.0004305839538574219,
+    "result": {
+      "success": true,
+      "batch_submitted": true,
+      "status_available": true
+    }
+  },
+  "ml_ab": {
+    "status": "FAILED",
+    "duration": 6.4373016357421875e-06,
+    "result": {
+      "success": false,
+      "error": "MLABTester.__init__() got an unexpected keyword argument 'redis_client'"
+    }
+  },
+  "performance": {
+    "status": "PASSED",
+    "duration": 1.049041748046875e-05,
+    "result": {
+      "success": true,
+      "created": true
+    }
+  },
+  "optimization": {
+    "status": "PASSED",
+    "duration": 1.5497207641601562e-05,
+    "result": {
+      "success": true,
+      "created": true
+    }
+  },
+  "integration": {
+    "status": "PASSED",
+    "duration": 3.5762786865234375e-06,
+    "result": {
+      "success": true,
+      "created": true
+    }
+  },
+  "summary": {
+    "total": 8,
+    "passed": 6,
+    "failed": 2,
+    "errors": 0,
+    "success_rate": 75.0,
+    "overall": "FAILED",
+    "duration": 0.0
+  }
+}

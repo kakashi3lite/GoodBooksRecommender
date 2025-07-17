@@ -1,0 +1,536 @@
+{
+  "validation_summary": {
+    "total_tests": 74,
+    "passed": 65,
+    "failed": 0,
+    "warnings": 9,
+    "pass_rate": 87.8,
+    "success_rate": 100.0,
+    "overall_status": "PASS"
+  },
+  "validation_date": "2025-07-17T10:15:08.411225",
+  "total_tests": 74,
+  "passed": 65,
+  "failed": 0,
+  "warnings": 9,
+  "tests": [
+    {
+      "name": "File Exists: index.html",
+      "status": "PASS",
+      "message": "Found at dashboard/index.html",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.412074"
+    },
+    {
+      "name": "File Exists: wireframes.md",
+      "status": "PASS",
+      "message": "Found at dashboard/wireframes.md",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.412169"
+    },
+    {
+      "name": "File Exists: design-system.css",
+      "status": "PASS",
+      "message": "Found at dashboard/css/design-system.css",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.412261"
+    },
+    {
+      "name": "File Exists: brightness-control.css",
+      "status": "PASS",
+      "message": "Found at dashboard/css/brightness-control.css",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.412342"
+    },
+    {
+      "name": "File Exists: theme-toggle.css",
+      "status": "PASS",
+      "message": "Found at dashboard/css/theme-toggle.css",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.412463"
+    },
+    {
+      "name": "File Exists: book-card.css",
+      "status": "PASS",
+      "message": "Found at dashboard/css/book-card.css",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.412589"
+    },
+    {
+      "name": "File Exists: kindle-dashboard.css",
+      "status": "PASS",
+      "message": "Found at dashboard/css/kindle-dashboard.css",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.412690"
+    },
+    {
+      "name": "File Exists: modals.css",
+      "status": "PASS",
+      "message": "Found at dashboard/css/modals.css",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.412790"
+    },
+    {
+      "name": "File Exists: theme-manager.js",
+      "status": "PASS",
+      "message": "Found at dashboard/js/theme-manager.js",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.412903"
+    },
+    {
+      "name": "File Exists: brightness-controller.js",
+      "status": "PASS",
+      "message": "Found at dashboard/js/brightness-controller.js",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.413088"
+    },
+    {
+      "name": "File Exists: book-card.js",
+      "status": "PASS",
+      "message": "Found at dashboard/js/book-card.js",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.413228"
+    },
+    {
+      "name": "File Exists: kindle-dashboard.js",
+      "status": "PASS",
+      "message": "Found at dashboard/js/kindle-dashboard.js",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.413351"
+    },
+    {
+      "name": "File Exists: KINDLE_DASHBOARD_GUIDE.md",
+      "status": "PASS",
+      "message": "Found at docs/KINDLE_DASHBOARD_GUIDE.md",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.413488"
+    },
+    {
+      "name": "HTML Meta: charset",
+      "status": "PASS",
+      "message": "Meta tag present",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.516715"
+    },
+    {
+      "name": "HTML Meta: name",
+      "status": "PASS",
+      "message": "Meta tag present",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.516827"
+    },
+    {
+      "name": "HTML Meta: name",
+      "status": "PASS",
+      "message": "Meta tag present",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.516883"
+    },
+    {
+      "name": "HTML Meta: http-equiv",
+      "status": "PASS",
+      "message": "Meta tag present",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.516933"
+    },
+    {
+      "name": "HTML CSS: Kindle Dashboard",
+      "status": "PASS",
+      "message": "Kindle dashboard CSS included",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.516973"
+    },
+    {
+      "name": "HTML JS: Kindle Dashboard",
+      "status": "PASS",
+      "message": "Kindle dashboard JS included",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.517009"
+    },
+    {
+      "name": "HTML Container",
+      "status": "PASS",
+      "message": "Dashboard container present",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.517044"
+    },
+    {
+      "name": "CSS Syntax: dashboard/css/design-system.css",
+      "status": "PASS",
+      "message": "Balanced braces",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.527185"
+    },
+    {
+      "name": "CSS Variables: dashboard/css/design-system.css",
+      "status": "PASS",
+      "message": "Contains CSS custom properties",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.527634"
+    },
+    {
+      "name": "CSS Syntax: dashboard/css/brightness-control.css",
+      "status": "PASS",
+      "message": "Balanced braces",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.535932"
+    },
+    {
+      "name": "CSS Variables: dashboard/css/brightness-control.css",
+      "status": "WARN",
+      "message": "No CSS custom properties found",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.536071"
+    },
+    {
+      "name": "CSS Syntax: dashboard/css/theme-toggle.css",
+      "status": "PASS",
+      "message": "Balanced braces",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.545498"
+    },
+    {
+      "name": "CSS Variables: dashboard/css/theme-toggle.css",
+      "status": "WARN",
+      "message": "No CSS custom properties found",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.545683"
+    },
+    {
+      "name": "CSS Syntax: dashboard/css/book-card.css",
+      "status": "PASS",
+      "message": "Balanced braces",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.555637"
+    },
+    {
+      "name": "CSS Variables: dashboard/css/book-card.css",
+      "status": "WARN",
+      "message": "No CSS custom properties found",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.555765"
+    },
+    {
+      "name": "CSS Syntax: dashboard/css/kindle-dashboard.css",
+      "status": "PASS",
+      "message": "Balanced braces",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.563607"
+    },
+    {
+      "name": "CSS Variables: dashboard/css/kindle-dashboard.css",
+      "status": "WARN",
+      "message": "No CSS custom properties found",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.563742"
+    },
+    {
+      "name": "CSS Syntax: dashboard/css/modals.css",
+      "status": "PASS",
+      "message": "Balanced braces",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.572623"
+    },
+    {
+      "name": "CSS Variables: dashboard/css/modals.css",
+      "status": "PASS",
+      "message": "Contains CSS custom properties",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.572745"
+    },
+    {
+      "name": "JS Syntax: dashboard/js/theme-manager.js",
+      "status": "PASS",
+      "message": "Balanced brackets and parentheses",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.591544"
+    },
+    {
+      "name": "JS Classes: dashboard/js/theme-manager.js",
+      "status": "PASS",
+      "message": "Contains class definitions",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.591784"
+    },
+    {
+      "name": "JS Syntax: dashboard/js/brightness-controller.js",
+      "status": "PASS",
+      "message": "Balanced brackets and parentheses",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.608443"
+    },
+    {
+      "name": "JS Classes: dashboard/js/brightness-controller.js",
+      "status": "PASS",
+      "message": "Contains class definitions",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.608632"
+    },
+    {
+      "name": "JS Syntax: dashboard/js/book-card.js",
+      "status": "PASS",
+      "message": "Balanced brackets and parentheses",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.625153"
+    },
+    {
+      "name": "JS Classes: dashboard/js/book-card.js",
+      "status": "PASS",
+      "message": "Contains class definitions",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.625283"
+    },
+    {
+      "name": "JS Syntax: dashboard/js/kindle-dashboard.js",
+      "status": "PASS",
+      "message": "Balanced brackets and parentheses",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.642198"
+    },
+    {
+      "name": "JS Classes: dashboard/js/kindle-dashboard.js",
+      "status": "PASS",
+      "message": "Contains class definitions",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.642321"
+    },
+    {
+      "name": "Design System: Light Theme",
+      "status": "PASS",
+      "message": "Contains :root[data-theme=\"light\"]",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.642867"
+    },
+    {
+      "name": "Design System: Dark Theme",
+      "status": "PASS",
+      "message": "Contains :root[data-theme=\"dark\"]",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.643038"
+    },
+    {
+      "name": "Design System: Color Variables",
+      "status": "PASS",
+      "message": "Contains --bg-primary",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.643129"
+    },
+    {
+      "name": "Design System: Text Variables",
+      "status": "PASS",
+      "message": "Contains --text-primary",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.643263"
+    },
+    {
+      "name": "Design System: Font Variables",
+      "status": "PASS",
+      "message": "Contains --font-serif",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.643392"
+    },
+    {
+      "name": "Design System: Spacing Variables",
+      "status": "PASS",
+      "message": "Contains --space-",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.643473"
+    },
+    {
+      "name": "Design System: Border Radius",
+      "status": "PASS",
+      "message": "Contains --radius-",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.643545"
+    },
+    {
+      "name": "Design System: Shadow Variables",
+      "status": "PASS",
+      "message": "Contains --shadow-",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.643601"
+    },
+    {
+      "name": "Accessibility: ARIA Labels",
+      "status": "PASS",
+      "message": "Found aria-label",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.644041"
+    },
+    {
+      "name": "Accessibility: Alt Text",
+      "status": "WARN",
+      "message": "Missing alt=",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.644113"
+    },
+    {
+      "name": "Accessibility: Role Attributes",
+      "status": "WARN",
+      "message": "Missing role=",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.644181"
+    },
+    {
+      "name": "Accessibility: Tab Index",
+      "status": "WARN",
+      "message": "Missing tabindex",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.644299"
+    },
+    {
+      "name": "Accessibility: Focus Management",
+      "status": "PASS",
+      "message": "Found focus",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.644361"
+    },
+    {
+      "name": "Accessibility CSS: design-system.css",
+      "status": "PASS",
+      "message": "Contains focus styles",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.644602"
+    },
+    {
+      "name": "Accessibility CSS: theme-toggle.css",
+      "status": "PASS",
+      "message": "Contains focus styles",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.644830"
+    },
+    {
+      "name": "Accessibility CSS: brightness-control.css",
+      "status": "PASS",
+      "message": "Contains focus styles",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.645181"
+    },
+    {
+      "name": "Responsive: dashboard/css/kindle-dashboard.css",
+      "status": "PASS",
+      "message": "Found 5 media queries",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.645653"
+    },
+    {
+      "name": "Flexible Units: dashboard/css/kindle-dashboard.css",
+      "status": "PASS",
+      "message": "Uses rem, em, %, vh, fr",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.645726"
+    },
+    {
+      "name": "Responsive: dashboard/css/book-card.css",
+      "status": "PASS",
+      "message": "Found 5 media queries",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.645984"
+    },
+    {
+      "name": "Flexible Units: dashboard/css/book-card.css",
+      "status": "PASS",
+      "message": "Uses rem, em, %, fr",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.646064"
+    },
+    {
+      "name": "Kindle Feature: Brightness Control",
+      "status": "PASS",
+      "message": "Implements brightness",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.646809"
+    },
+    {
+      "name": "Kindle Feature: Auto Brightness",
+      "status": "PASS",
+      "message": "Implements auto",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.646918"
+    },
+    {
+      "name": "Kindle Feature: Slider Component",
+      "status": "PASS",
+      "message": "Implements slider",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.647027"
+    },
+    {
+      "name": "Kindle Feature: Time-based Adjustment",
+      "status": "PASS",
+      "message": "Implements time",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.647136"
+    },
+    {
+      "name": "Kindle Feature: Smooth Transitions",
+      "status": "PASS",
+      "message": "Implements transition",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.647240"
+    },
+    {
+      "name": "Kindle Theme: E-ink Simulation",
+      "status": "PASS",
+      "message": "Contains e-ink references",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.647600"
+    },
+    {
+      "name": "Performance: Preload Resources",
+      "status": "PASS",
+      "message": "Uses preload",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.647932"
+    },
+    {
+      "name": "Performance: Font Display",
+      "status": "PASS",
+      "message": "Uses font-display",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.647990"
+    },
+    {
+      "name": "Performance: Lazy Loading",
+      "status": "WARN",
+      "message": "Missing loading=\"lazy\"",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.648039"
+    },
+    {
+      "name": "Performance: Async Scripts",
+      "status": "WARN",
+      "message": "Missing async",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.648092"
+    },
+    {
+      "name": "Performance: Defer Scripts",
+      "status": "PASS",
+      "message": "Uses defer",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.648138"
+    },
+    {
+      "name": "Documentation: Kindle Dashboard Guide",
+      "status": "PASS",
+      "message": "Comprehensive (1683 words)",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.665518"
+    },
+    {
+      "name": "Documentation: Wireframes",
+      "status": "PASS",
+      "message": "Comprehensive (2371 words)",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.674394"
+    },
+    {
+      "name": "Documentation: Dashboard README",
+      "status": "PASS",
+      "message": "Comprehensive (374 words)",
+      "details": {},
+      "timestamp": "2025-07-17T10:15:08.682619"
+    }
+  ]
+}
