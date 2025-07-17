@@ -1,0 +1,16 @@
+{
+  "dashboard": {
+    "title": "Health Monitoring",
+    "panels": [
+      {
+        "title": "Sample Panel",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(http_requests_total[5m])"
+          }
+        ]
+      }
+    ]
+  }
+}

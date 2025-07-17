@@ -1,0 +1,16 @@
+{
+  "dashboard": {
+    "title": "Enhanced Features Overview",
+    "panels": [
+      {
+        "title": "Sample Panel",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(http_requests_total[5m])"
+          }
+        ]
+      }
+    ]
+  }
+}

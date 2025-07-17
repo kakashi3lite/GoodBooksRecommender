@@ -1,0 +1,16 @@
+experiments:
+- description: Compare collaborative filtering vs hybrid approach
+  max_duration_days: 30
+  minimum_sample_size: 1000
+  name: recommendation_algorithm_comparison
+  success_metrics:
+  - ctr
+  - conversion_rate
+  traffic_split:
+    control: 0.5
+    treatment: 0.5
+  variants:
+  - model_id: collaborative_filter_v1
+    name: control
+  - model_id: hybrid_model_v2
+    name: treatment

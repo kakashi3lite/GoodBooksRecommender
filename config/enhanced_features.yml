@@ -1,0 +1,35 @@
+ab_testing:
+  experiment_config_path: C:\Users\Swanand\CascadeProjects\GoodBooksRecommender\config\ab_experiments.yml
+  redis_url: redis://localhost:6379
+analytics:
+  batch_size: 100
+  flush_interval: 30
+  redis_url: redis://localhost:6379
+  retention_hours: 24
+batch_processing:
+  max_workers: 4
+  queue_maxsize: 1000
+  redis_url: redis://localhost:6379
+  result_ttl: 3600
+cache:
+  default_ttl: 3600
+  l1_cache_size: 1000
+  l1_cache_ttl: 300
+  redis_url: redis://localhost:6379
+  warming_enabled: true
+health:
+  alert_threshold: 0.8
+  check_interval: 30
+  dependency_timeout: 10.0
+model_optimization:
+  auto_retrain_threshold: 0.1
+  optimization_interval_hours: 24
+  strategies:
+  - hyperparameter_tuning
+  - feature_selection
+performance_monitoring:
+  alert_thresholds:
+    accuracy: 0.8
+    error_rate: 0.05
+    latency_ms: 500
+  metrics_window_size: 1000
