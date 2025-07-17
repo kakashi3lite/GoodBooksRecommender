@@ -1,0 +1,532 @@
+/**
+ * 🚀 Futuristic Book Dashboard - Advanced Animations & AI Integration
+ * Chain-of-Thought: Creating immersive 3D interactions with AI-powered recommendations
+ * Memory: Retaining Kindle-inspired base while adding futuristic elements
+ */
+
+/* ===================================
+   🎨 FUTURISTIC DESIGN TOKENS
+   =================================== */
+
+:root {
+  /* Enhanced Color Palette with Gradients */
+  --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  --gradient-accent: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  --gradient-neural: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+  
+  /* AI-Themed Colors */
+  --ai-primary: #00D4FF;
+  --ai-secondary: #FF6B6B;
+  --ai-accent: #4ECDC4;
+  --ai-neural: #45B7D1;
+  --ai-glow: rgba(0, 212, 255, 0.3);
+  
+  /* Animation Timings */
+  --animation-fast: 150ms;
+  --animation-medium: 300ms;
+  --animation-slow: 500ms;
+  --animation-ultra: 800ms;
+  
+  /* 3D Transform Values */
+  --transform-lift: translateY(-8px) scale(1.02);
+  --transform-tilt: perspective(1000px) rotateX(5deg) rotateY(5deg);
+  --transform-float: translateY(-4px) rotate(1deg);
+  
+  /* Glow Effects */
+  --glow-soft: 0 0 20px var(--ai-glow);
+  --glow-medium: 0 0 30px var(--ai-glow), 0 0 60px var(--ai-glow);
+  --glow-strong: 0 0 40px var(--ai-glow), 0 0 80px var(--ai-glow), 0 0 120px var(--ai-glow);
+  
+  /* Neural Network Patterns */
+  --neural-dot-size: 2px;
+  --neural-line-width: 1px;
+  --neural-animation-duration: 3s;
+}
+
+/* ===================================
+   🎭 3D HOVER-ANIMATED BOOK CARDS
+   =================================== */
+
+.book-card-futuristic {
+  position: relative;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  cursor: pointer;
+  transition: all var(--animation-medium) cubic-bezier(0.4, 0, 0.2, 1);
+  transform-style: preserve-3d;
+  overflow: hidden;
+  
+  /* Chain-of-Thought: Base state should feel stable and inviting */
+  border: 1px solid var(--border-subtle);
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.1),
+    0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.book-card-futuristic::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--gradient-neural);
+  opacity: 0;
+  transition: opacity var(--animation-medium) ease-out;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.book-card-futuristic:hover {
+  /* Chain-of-Thought: Hover should create depth and focus without being jarring */
+  transform: var(--transform-lift);
+  box-shadow: 
+    0 12px 32px rgba(0, 0, 0, 0.15),
+    0 8px 16px rgba(0, 0, 0, 0.1),
+    var(--glow-soft);
+  border-color: var(--ai-primary);
+}
+
+.book-card-futuristic:hover::before {
+  opacity: 0.05;
+}
+
+.book-card-futuristic:active {
+  transform: translateY(-2px) scale(0.98);
+  transition-duration: var(--animation-fast);
+}
+
+/* AI Recommendation Badge */
+.ai-recommendation-badge {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  background: var(--gradient-primary);
+  color: white;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  z-index: 2;
+  
+  /* Memory: Badge should pulse to indicate AI activity */
+  animation: aiPulse 2s ease-in-out infinite;
+}
+
+@keyframes aiPulse {
+  0%, 100% { 
+    box-shadow: var(--glow-soft); 
+    transform: scale(1);
+  }
+  50% { 
+    box-shadow: var(--glow-medium); 
+    transform: scale(1.05);
+  }
+}
+
+/* Book Cover with 3D Tilt Effect */
+.book-cover-3d {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: transform var(--animation-medium) ease-out;
+  transform-style: preserve-3d;
+}
+
+.book-card-futuristic:hover .book-cover-3d {
+  transform: var(--transform-tilt);
+}
+
+.book-cover-3d img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: filter var(--animation-medium) ease-out;
+}
+
+.book-card-futuristic:hover .book-cover-3d img {
+  filter: brightness(1.1) contrast(1.05) saturate(1.1);
+}
+
+/* ===================================
+   🌙 ENHANCED THEME TRANSITIONS
+   =================================== */
+
+.theme-transition-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--bg-primary);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 9999;
+  transition: opacity var(--animation-slow) ease-in-out;
+}
+
+.theme-transition-overlay.active {
+  opacity: 1;
+}
+
+/* Chain-of-Thought: Theme switching should feel like natural lighting change */
+.theme-switching {
+  transition: 
+    background-color var(--animation-ultra) ease-in-out,
+    color var(--animation-ultra) ease-in-out,
+    border-color var(--animation-slow) ease-in-out,
+    box-shadow var(--animation-slow) ease-in-out;
+}
+
+/* ===================================
+   📊 ANIMATED PROGRESS RINGS
+   =================================== */
+
+.progress-ring {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  transform: rotate(-90deg);
+}
+
+.progress-ring-circle {
+  fill: none;
+  stroke: var(--border-medium);
+  stroke-width: 3;
+  stroke-linecap: round;
+  transition: all var(--animation-medium) ease-out;
+}
+
+.progress-ring-progress {
+  fill: none;
+  stroke: var(--ai-primary);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 0 100;
+  transition: stroke-dasharray var(--animation-slow) ease-out;
+  filter: drop-shadow(0 0 8px var(--ai-glow));
+}
+
+/* Reading Progress Animation */
+.reading-progress[data-progress="25"] .progress-ring-progress {
+  stroke-dasharray: 25 100;
+}
+
+.reading-progress[data-progress="50"] .progress-ring-progress {
+  stroke-dasharray: 50 100;
+}
+
+.reading-progress[data-progress="75"] .progress-ring-progress {
+  stroke-dasharray: 75 100;
+}
+
+.reading-progress[data-progress="100"] .progress-ring-progress {
+  stroke-dasharray: 100 100;
+  stroke: var(--ai-accent);
+  animation: progressComplete 1s ease-out;
+}
+
+@keyframes progressComplete {
+  0% { stroke: var(--ai-primary); }
+  50% { 
+    stroke: var(--ai-accent); 
+    filter: drop-shadow(0 0 16px var(--ai-glow));
+  }
+  100% { stroke: var(--ai-accent); }
+}
+
+/* ===================================
+   🎠 INTERACTIVE CAROUSEL
+   =================================== */
+
+.book-carousel {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  /* Memory: Carousel should feel smooth and responsive */
+  touch-action: pan-x;
+}
+
+.carousel-track {
+  display: flex;
+  transition: transform var(--animation-slow) cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  will-change: transform;
+}
+
+.carousel-slide {
+  flex: 0 0 auto;
+  width: 280px;
+  margin-right: var(--space-4);
+  transition: opacity var(--animation-medium) ease-out;
+}
+
+.carousel-slide:not(.active) {
+  opacity: 0.7;
+  transform: scale(0.95);
+}
+
+.carousel-slide.active {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Carousel Navigation */
+.carousel-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  transition: all var(--animation-fast) ease-out;
+  z-index: 3;
+  
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.carousel-nav:hover {
+  background: rgba(255, 255, 255, 1);
+  transform: translateY(-50%) scale(1.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.carousel-nav.prev {
+  left: var(--space-2);
+}
+
+.carousel-nav.next {
+  right: var(--space-2);
+}
+
+/* ===================================
+   🤖 AI TOOLTIP OVERLAYS
+   =================================== */
+
+.ai-tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--gradient-primary);
+  color: white;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  max-width: 250px;
+  z-index: 1000;
+  
+  /* Chain-of-Thought: Tooltip should appear smoothly and feel intelligent */
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(-50%) translateY(-8px);
+  transition: all var(--animation-medium) cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.15),
+    var(--glow-soft);
+}
+
+.ai-tooltip::before {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: var(--ai-primary);
+}
+
+.ai-tooltip.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* AI Thinking Animation */
+.ai-thinking {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.ai-thinking::after {
+  content: '';
+  width: 4px;
+  height: 4px;
+  background: currentColor;
+  border-radius: 50%;
+  animation: aiThinking 1.5s ease-in-out infinite;
+}
+
+@keyframes aiThinking {
+  0%, 20% { opacity: 0; }
+  40% { opacity: 1; }
+  60%, 100% { opacity: 0; }
+}
+
+/* ===================================
+   ⚡ ENHANCED BRIGHTNESS SLIDER
+   =================================== */
+
+.brightness-slider-futuristic {
+  position: relative;
+  width: 100%;
+  height: 8px;
+  background: var(--border-medium);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  cursor: pointer;
+  transition: all var(--animation-medium) ease-out;
+}
+
+.brightness-slider-futuristic::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: var(--gradient-accent);
+  border-radius: var(--radius-full);
+  transition: width var(--animation-fast) ease-out;
+  box-shadow: var(--glow-soft);
+}
+
+.brightness-handle {
+  position: absolute;
+  top: 50%;
+  width: 20px;
+  height: 20px;
+  background: white;
+  border: 2px solid var(--ai-primary);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: all var(--animation-medium) ease-out;
+  cursor: grab;
+  
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.15),
+    var(--glow-soft);
+}
+
+.brightness-handle:hover {
+  transform: translate(-50%, -50%) scale(1.2);
+  box-shadow: 
+    0 4px 16px rgba(0, 0, 0, 0.2),
+    var(--glow-medium);
+}
+
+.brightness-handle:active {
+  cursor: grabbing;
+  transform: translate(-50%, -50%) scale(1.1);
+}
+
+/* Real-time Brightness Effect */
+.brightness-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, var(--brightness-overlay, 0));
+  pointer-events: none;
+  z-index: 999;
+  transition: background var(--animation-fast) ease-out;
+}
+
+/* ===================================
+   🌐 NEURAL NETWORK BACKGROUND
+   =================================== */
+
+.neural-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.neural-node {
+  position: absolute;
+  width: var(--neural-dot-size);
+  height: var(--neural-dot-size);
+  background: var(--ai-primary);
+  border-radius: 50%;
+  opacity: 0.3;
+  animation: neuralPulse var(--neural-animation-duration) ease-in-out infinite;
+}
+
+.neural-connection {
+  position: absolute;
+  height: var(--neural-line-width);
+  background: linear-gradient(90deg, transparent, var(--ai-primary), transparent);
+  opacity: 0.2;
+  animation: neuralFlow calc(var(--neural-animation-duration) * 2) linear infinite;
+}
+
+@keyframes neuralPulse {
+  0%, 100% { 
+    opacity: 0.1; 
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 0.4; 
+    transform: scale(1.5);
+  }
+}
+
+@keyframes neuralFlow {
+  0% { 
+    opacity: 0;
+    transform: scaleX(0);
+  }
+  50% { 
+    opacity: 0.3;
+    transform: scaleX(1);
+  }
+  100% { 
+    opacity: 0;
+    transform: scaleX(0);
+  }
+}
+
+/* ===================================
+   🎯 FORWARD-THINKING PLACEHOLDERS
+   =================================== */
+
+/* Future: Reading Notes Modal */
+.reading-notes-placeholder {
+  /* Hook for future note-taking system */
+  --notes-modal-ready: true;
+}
+
+/* Future: Community Comments */
+.community-feed-placeholder {
+  /* Hook for social features */
+  --community-ready: true;
+}
+
+/* Future: Advanced Analytics */
+.analytics-dashboard-placeholder {
+  /* Hook for reading analytics */
+  --analytics-ready: true;
+}
+
+/* Memory Consistency Markers */
+.component-memory {
+  /* Retain style choices across sessions */
+  --memory-brightness: var(--current-brightness, 75);
+  --memory-theme: var(--current-theme, 'light');
+  --memory-layout: var(--current-layout, 'grid');
+}

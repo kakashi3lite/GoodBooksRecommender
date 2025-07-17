@@ -1,0 +1,681 @@
+/**
+ * 🗄️ Modal and Notification Components
+ * Overlay components for settings, book details, and notifications
+ */
+
+/* ===================================
+   🎨 MODAL CSS CUSTOM PROPERTIES
+   =================================== */
+
+:root {
+  /* Modal Z-index */
+  --z-modal: 1000;
+  --z-modal-backdrop: 999;
+  
+  /* Modal Colors */
+  --modal-backdrop: rgba(0, 0, 0, 0.5);
+  --modal-blur: 4px;
+  
+  /* Modal Spacing */
+  --modal-padding: var(--space-6);
+  --modal-margin: var(--space-4);
+  --modal-border-radius: var(--radius-lg);
+  
+  /* Modal Transitions */
+  --modal-transition-duration: 0.2s;
+  --modal-transition-easing: ease-out;
+  
+  /* Modal Sizes */
+  --modal-width-sm: 400px;
+  --modal-width-md: 600px;
+  --modal-width-lg: 800px;
+  --modal-max-height: 90vh;
+}
+
+/* ===================================
+   📋 MODAL OVERLAY
+   =================================== */
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--z-modal);
+  backdrop-filter: blur(4px);
+  opacity: 0;
+  animation: fadeIn 0.2s ease-out forwards;
+  padding: var(--space-4);
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-overlay.closing {
+  animation: fadeOut 0.2s ease-in forwards;
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* ===================================
+   ⚙️ SETTINGS MODAL
+   =================================== */
+
+.settings-modal {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+  width: 100%;
+  max-width: 32rem;
+  max-height: 90vh;
+  overflow: hidden;
+  transform: scale(0.9) translateY(2rem);
+  animation: modalSlideIn 0.3s ease-out forwards;
+}
+
+@keyframes modalSlideIn {
+  to {
+    transform: scale(1) translateY(0);
+  }
+}
+
+.settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-5) var(--space-6);
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-secondary);
+}
+
+.settings-header h2 {
+  margin: 0;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+}
+
+.modal-close {
+  padding: var(--space-2);
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: var(--font-size-lg);
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  transition: var(--transition-all);
+}
+
+.modal-close:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.settings-content {
+  padding: var(--space-6);
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.settings-section {
+  margin-bottom: var(--space-8);
+}
+
+.settings-section:last-child {
+  margin-bottom: 0;
+}
+
+.settings-section h3 {
+  margin: 0 0 var(--space-4) 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.setting-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  transition: var(--transition-all);
+}
+
+.setting-item:hover {
+  background: var(--bg-hover);
+}
+
+.setting-item label {
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.setting-item input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--interactive-primary);
+}
+
+.setting-item select {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  min-width: 8rem;
+}
+
+.setting-item select:focus {
+  outline: none;
+  border-color: var(--interactive-primary);
+  box-shadow: 0 0 0 2px rgba(55, 65, 81, 0.1);
+}
+
+.settings-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  padding: var(--space-5) var(--space-6);
+  border-top: 1px solid var(--border-subtle);
+  background: var(--bg-secondary);
+}
+
+.btn-primary,
+.btn-secondary {
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: var(--transition-all);
+  border: 1px solid transparent;
+}
+
+.btn-primary {
+  background: var(--interactive-primary);
+  color: var(--text-inverse);
+}
+
+.btn-primary:hover {
+  background: var(--interactive-hover);
+}
+
+.btn-secondary {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border-color: var(--border-medium);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-strong);
+}
+
+/* ===================================
+   📖 BOOK DETAILS MODAL
+   =================================== */
+
+.book-details-modal {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+  width: 100%;
+  max-width: 40rem;
+  max-height: 90vh;
+  overflow: hidden;
+  transform: scale(0.9) translateY(2rem);
+  animation: modalSlideIn 0.3s ease-out forwards;
+  position: relative;
+}
+
+.book-details-modal .modal-close {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+  z-index: 1;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  border-radius: var(--radius-full);
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.book-details-content {
+  display: flex;
+  gap: var(--space-6);
+  padding: var(--space-6);
+}
+
+.book-details-cover {
+  flex: 0 0 10rem;
+}
+
+.book-details-cover img {
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+.book-details-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.book-details-info h2 {
+  margin: 0 0 var(--space-2) 0;
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  line-height: var(--line-height-tight);
+}
+
+.book-details-author {
+  margin: 0 0 var(--space-3) 0;
+  font-size: var(--font-size-lg);
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.book-details-rating {
+  margin-bottom: var(--space-3);
+  font-size: var(--font-size-sm);
+  color: var(--status-warning);
+  font-weight: var(--font-weight-medium);
+}
+
+.book-details-genres {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-bottom: var(--space-4);
+}
+
+.genre-tag {
+  padding: var(--space-1) var(--space-2);
+  background: var(--bg-accent);
+  color: var(--text-secondary);
+  font-size: var(--font-size-xs);
+  border-radius: var(--radius-sm);
+}
+
+.book-details-description {
+  margin-bottom: var(--space-6);
+  line-height: var(--line-height-relaxed);
+  color: var(--text-secondary);
+}
+
+.book-details-actions {
+  display: flex;
+  gap: var(--space-3);
+}
+
+/* ===================================
+   📖 READING OVERLAY
+   =================================== */
+
+.reading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--bg-primary);
+  z-index: var(--z-modal);
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+.reading-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-secondary);
+}
+
+.reading-close {
+  padding: var(--space-2);
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: var(--font-size-lg);
+  cursor: pointer;
+  border-radius: var(--radius-md);
+}
+
+.reading-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+}
+
+.reading-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.reading-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8);
+}
+
+.reading-page {
+  max-width: 40rem;
+  margin-bottom: var(--space-8);
+  line-height: var(--line-height-relaxed);
+}
+
+.reading-page h1 {
+  font-size: var(--font-size-2xl);
+  margin-bottom: var(--space-6);
+  color: var(--text-primary);
+  text-align: center;
+}
+
+.reading-page p {
+  margin-bottom: var(--space-4);
+  color: var(--text-primary);
+  text-align: justify;
+}
+
+.reading-navigation {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+.reading-prev,
+.reading-next {
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border-medium);
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  font-size: var(--font-size-lg);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: var(--transition-all);
+}
+
+.reading-prev:hover,
+.reading-next:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-strong);
+}
+
+.reading-progress {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  font-weight: var(--font-weight-medium);
+}
+
+/* ===================================
+   🔔 NOTIFICATIONS
+   =================================== */
+
+.notification {
+  position: fixed;
+  top: var(--space-4);
+  right: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  z-index: var(--z-tooltip);
+  max-width: 20rem;
+  transform: translateX(100%);
+  animation: slideInRight 0.3s ease-out forwards;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.notification.removing {
+  animation: slideOutRight 0.3s ease-in forwards;
+}
+
+@keyframes slideOutRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+.notification-info {
+  background: var(--status-info-bg);
+  color: var(--status-info);
+  border: 1px solid var(--status-info);
+}
+
+.notification-success {
+  background: var(--status-success-bg);
+  color: var(--status-success);
+  border: 1px solid var(--status-success);
+}
+
+.notification-warning {
+  background: var(--status-warning-bg);
+  color: var(--status-warning);
+  border: 1px solid var(--status-warning);
+}
+
+.notification-error {
+  background: var(--status-error-bg);
+  color: var(--status-error);
+  border: 1px solid var(--status-error);
+}
+
+/* ===================================
+   📱 MOBILE RESPONSIVE
+   =================================== */
+
+@media (max-width: 768px) {
+  .modal-overlay {
+    padding: var(--space-2);
+    align-items: flex-end;
+  }
+
+  .settings-modal,
+  .book-details-modal {
+    max-width: none;
+    width: 100%;
+    max-height: 80vh;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    transform: translateY(100%);
+    animation: slideUpMobile 0.3s ease-out forwards;
+  }
+
+  @keyframes slideUpMobile {
+    to {
+      transform: translateY(0);
+    }
+  }
+
+  .book-details-content {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .book-details-cover {
+    flex: none;
+  }
+
+  .reading-overlay {
+    padding: var(--space-2);
+  }
+
+  .reading-page {
+    padding: 0 var(--space-2);
+    max-width: none;
+  }
+
+  .notification {
+    position: fixed;
+    top: auto;
+    bottom: var(--space-4);
+    left: var(--space-4);
+    right: var(--space-4);
+    max-width: none;
+    transform: translateY(100%);
+    animation: slideUpNotification 0.3s ease-out forwards;
+  }
+
+  @keyframes slideUpNotification {
+    from {
+      transform: translateY(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  .notification.removing {
+    animation: slideDownNotification 0.3s ease-in forwards;
+  }
+
+  @keyframes slideDownNotification {
+    from {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    to {
+      transform: translateY(100%);
+      opacity: 0;
+    }
+  }
+}
+
+/* ===================================
+   ♿ ACCESSIBILITY IMPROVEMENTS
+   =================================== */
+
+/* Focus management */
+.modal-overlay:focus-within .modal-close:focus-visible {
+  outline: 2px solid var(--interactive-primary);
+  outline-offset: 2px;
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .modal-overlay {
+    background: rgba(0, 0, 0, 0.8);
+  }
+  
+  .settings-modal,
+  .book-details-modal {
+    border-width: 2px;
+  }
+  
+  .notification {
+    border-width: 2px;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .modal-overlay,
+  .settings-modal,
+  .book-details-modal,
+  .reading-overlay,
+  .notification {
+    animation: none !important;
+    transform: none !important;
+    transition: opacity 0.1s ease !important;
+  }
+}
+
+/* ===================================
+   🛠️ UTILITY CLASSES
+   =================================== */
+
+.modal-backdrop-blur {
+  backdrop-filter: blur(8px);
+}
+
+.modal-no-scroll {
+  overflow: hidden;
+}
+
+/* Prevent body scroll when modal is open */
+body.modal-open {
+  overflow: hidden;
+}
+
+/* Loading state for modals */
+.modal-loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.modal-loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 2rem;
+  height: 2rem;
+  border: 2px solid var(--border-subtle);
+  border-top: 2px solid var(--interactive-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  transform: translate(-50%, -50%);
+}
+
+@keyframes spin {
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}

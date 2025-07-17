@@ -1,39 +1,98 @@
 /**
- * GoodBooks Recommender Dashboard - Utility Functions
- * Helper functions and utilities for the dashboard
+ * GoodBooks Recommender Dashboard - Optimized Utility Functions
+ * High-performance helper functions with memoization and efficient algorithms
  */
 
 /**
- * Utility Functions
+ * Optimized Utility Functions with Memoization
  */
 const Utils = {
+  // Memoization cache for expensive operations
+  _memoCache: new Map(),
+  _memoMaxSize: 1000,
+
   /**
-   * Debounce function calls
+   * Memoized function wrapper for expensive computations
    */
-  debounce(func, wait, immediate = false) {
-    let timeout;
-    return function executedFunction(...args) {
-      const later = () => {
-        timeout = null;
-        if (!immediate) func(...args);
-      };
-      const callNow = immediate && !timeout;
-      clearTimeout(timeout);
-      timeout = setTimeout(later, wait);
-      if (callNow) func(...args);
+  memoize(fn, keyFn = (...args) => JSON.stringify(args)) {
+    return (...args) => {
+      const key = keyFn(...args);
+      
+      if (this._memoCache.has(key)) {
+        return this._memoCache.get(key);
+      }
+      
+      // Implement LRU cache behavior
+      if (this._memoCache.size >= this._memoMaxSize) {
+        const firstKey = this._memoCache.keys().next().value;
+        this._memoCache.delete(firstKey);
+      }
+      
+      const result = fn(...args);
+      this._memoCache.set(key, result);
+      return result;
     };
   },
 
   /**
-   * Throttle function calls
+   * High-performance debounce with immediate execution option
+   */
+  debounce(func, wait, immediate = false) {
+    let timeout;
+    let lastArgs;
+    let lastThis;
+    
+    const later = () => {
+      timeout = null;
+      if (!immediate && lastArgs) {
+        func.apply(lastThis, lastArgs);
+        lastArgs = null;
+      }
+    };
+
+    const debounced = function(...args) {
+      lastArgs = args;
+      lastThis = this;
+      
+      const callNow = immediate && !timeout;
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+      
+      if (callNow) {
+        func.apply(this, args);
+      }
+    };
+
+    debounced.cancel = () => {
+      clearTimeout(timeout);
+      timeout = null;
+      lastArgs = null;
+    };
+
+    return debounced;
+  },
+
+  /**
+   * Optimized throttle with trailing execution
    */
   throttle(func, limit) {
     let inThrottle;
-    return function executedFunction(...args) {
+    let lastFunc;
+    let lastRan;
+    
+    return function(...args) {
       if (!inThrottle) {
         func.apply(this, args);
+        lastRan = Date.now();
         inThrottle = true;
-        setTimeout(() => inThrottle = false, limit);
+      } else {
+        clearTimeout(lastFunc);
+        lastFunc = setTimeout(() => {
+          if ((Date.now() - lastRan) >= limit) {
+            func.apply(this, args);
+            lastRan = Date.now();
+          }
+        }, limit - (Date.now() - lastRan));
       }
     };
   },
@@ -431,74 +490,163 @@ class EventEmitter {
 }
 
 /**
- * Performance Monitor
+ * High-Performance Monitor with Resource Tracking
  */
 class PerformanceMonitor {
-  constructor() {
+  constructor(options = {}) {
     this.marks = new Map();
     this.measures = new Map();
+    this.resourceMetrics = new Map();
+    this.maxHistorySize = options.maxHistorySize || 100;
+    this.autoCleanup = options.autoCleanup !== false;
+    
+    // Use high-resolution time when available
+    this.now = performance.now ? performance.now.bind(performance) : Date.now;
+    
+    if (this.autoCleanup) {
+      this._setupAutoCleanup();
+    }
   }
 
   /**
-   * Start timing
+   * Setup automatic cleanup of old measurements
    */
-  start(name) {
-    this.marks.set(name, performance.now());
+  _setupAutoCleanup() {
+    setInterval(() => {
+      if (this.measures.size > this.maxHistorySize) {
+        const entries = Array.from(this.measures.entries());
+        const toDelete = entries.slice(0, entries.length - this.maxHistorySize);
+        toDelete.forEach(([key]) => this.measures.delete(key));
+      }
+    }, 60000); // Cleanup every minute
   }
 
   /**
-   * End timing and return duration
+   * Start timing with optional resource tracking
+   */
+  start(name, trackResources = false) {
+    const startTime = this.now();
+    
+    this.marks.set(name, {
+      startTime,
+      trackResources,
+      resourcesStart: trackResources ? this._captureResourceMetrics() : null
+    });
+  }
+
+  /**
+   * End timing and return comprehensive metrics
    */
   end(name) {
-    const startTime = this.marks.get(name);
-    if (!startTime) {
+    const endTime = this.now();
+    const markData = this.marks.get(name);
+    
+    if (!markData) {
       console.warn(`No start mark found for '${name}'`);
-      return 0;
+      return null;
     }
     
-    const duration = performance.now() - startTime;
-    this.measures.set(name, duration);
+    const duration = endTime - markData.startTime;
+    const metrics = {
+      duration,
+      startTime: markData.startTime,
+      endTime
+    };
+    
+    // Add resource metrics if tracking was enabled
+    if (markData.trackResources && markData.resourcesStart) {
+      const resourcesEnd = this._captureResourceMetrics();
+      metrics.resources = this._calculateResourceDiff(markData.resourcesStart, resourcesEnd);
+    }
+    
+    this.measures.set(name, metrics);
     this.marks.delete(name);
     
-    return duration;
+    return metrics;
   }
 
   /**
-   * Get measure
+   * Capture current resource metrics
    */
-  getMeasure(name) {
-    return this.measures.get(name) || 0;
+  _captureResourceMetrics() {
+    const memory = performance.memory ? {
+      usedJSHeapSize: performance.memory.usedJSHeapSize,
+      totalJSHeapSize: performance.memory.totalJSHeapSize,
+      jsHeapSizeLimit: performance.memory.jsHeapSizeLimit
+    } : null;
+
+    return {
+      memory,
+      timestamp: this.now()
+    };
   }
 
   /**
-   * Get all measures
+   * Calculate resource usage difference
    */
-  getAllMeasures() {
-    return Object.fromEntries(this.measures);
+  _calculateResourceDiff(start, end) {
+    const diff = {};
+    
+    if (start.memory && end.memory) {
+      diff.memoryDelta = end.memory.usedJSHeapSize - start.memory.usedJSHeapSize;
+      diff.memoryPeak = Math.max(start.memory.usedJSHeapSize, end.memory.usedJSHeapSize);
+    }
+    
+    return diff;
   }
 
   /**
-   * Clear all marks and measures
+   * Get comprehensive performance statistics
+   */
+  getStats() {
+    const durations = Array.from(this.measures.values()).map(m => m.duration);
+    
+    if (durations.length === 0) {
+      return null;
+    }
+
+    durations.sort((a, b) => a - b);
+    
+    return {
+      count: durations.length,
+      min: durations[0],
+      max: durations[durations.length - 1],
+      mean: durations.reduce((a, b) => a + b, 0) / durations.length,
+      median: durations[Math.floor(durations.length / 2)],
+      p95: durations[Math.floor(durations.length * 0.95)],
+      p99: durations[Math.floor(durations.length * 0.99)]
+    };
+  }
+
+  /**
+   * Time a function execution with automatic cleanup
+   */
+  async timeFunction(name, fn, options = {}) {
+    const measureKey = `${name}_${Date.now()}`;
+    this.start(measureKey, options.trackResources);
+    
+    try {
+      const result = await fn();
+      const metrics = this.end(measureKey);
+      
+      if (options.logResults !== false) {
+        console.log(`${name} completed in ${metrics.duration.toFixed(2)}ms`, metrics);
+      }
+      
+      return { result, metrics };
+    } catch (error) {
+      this.end(measureKey);
+      throw error;
+    }
+  }
+
+  /**
+   * Clear all measurements and marks
    */
   clear() {
     this.marks.clear();
     this.measures.clear();
-  }
-
-  /**
-   * Time a function execution
-   */
-  async timeFunction(name, fn) {
-    this.start(name);
-    try {
-      const result = await fn();
-      const duration = this.end(name);
-      console.log(`${name} took ${duration.toFixed(2)}ms`);
-      return result;
-    } catch (error) {
-      this.end(name);
-      throw error;
-    }
+    this.resourceMetrics.clear();
   }
 }
 

@@ -1,0 +1,464 @@
+/**
+ * 🔘 Theme Toggle Component
+ * Elegant theme switching with visual feedback
+ */
+
+/* ===================================
+   📍 THEME TOGGLE CONTAINER
+   =================================== */
+
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  transition: var(--transition-all);
+  position: relative;
+}
+
+.theme-toggle:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-medium);
+}
+
+/* ===================================
+   🎛️ TOGGLE BUTTONS
+   =================================== */
+
+.theme-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: var(--transition-all);
+  position: relative;
+  min-height: 2.25rem;
+  user-select: none;
+}
+
+.theme-option:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.theme-option:focus {
+  outline: 2px solid var(--interactive-primary);
+  outline-offset: 2px;
+}
+
+.theme-option.active {
+  background: var(--interactive-primary);
+  color: var(--text-inverse);
+  box-shadow: var(--shadow-sm);
+}
+
+.theme-option.active:hover {
+  background: var(--interactive-hover);
+}
+
+/* ===================================
+   🌞🌙 THEME ICONS
+   =================================== */
+
+.theme-icon {
+  width: 1rem;
+  height: 1rem;
+  transition: var(--transition-all);
+  flex-shrink: 0;
+}
+
+.theme-option:hover .theme-icon {
+  transform: scale(1.1);
+}
+
+.theme-option.active .theme-icon {
+  transform: scale(1.1);
+  filter: brightness(1.2);
+}
+
+/* Specific icon colors */
+.theme-option[data-theme="light"] .theme-icon {
+  color: var(--status-warning);
+}
+
+.theme-option[data-theme="dark"] .theme-icon {
+  color: var(--interactive-primary);
+}
+
+.theme-option[data-theme="system"] .theme-icon {
+  color: var(--text-secondary);
+}
+
+/* Active state icon colors */
+.theme-option[data-theme="light"].active .theme-icon {
+  color: var(--text-inverse);
+}
+
+.theme-option[data-theme="dark"].active .theme-icon {
+  color: var(--text-inverse);
+}
+
+.theme-option[data-theme="system"].active .theme-icon {
+  color: var(--text-inverse);
+}
+
+/* ===================================
+   📱 COMPACT TOGGLE VARIANT
+   =================================== */
+
+.theme-toggle.compact {
+  padding: var(--space-1);
+  gap: var(--space-1);
+}
+
+.theme-toggle.compact .theme-option {
+  padding: var(--space-2);
+  min-height: 2rem;
+}
+
+.theme-toggle.compact .theme-option .theme-label {
+  display: none;
+}
+
+.theme-toggle.compact .theme-icon {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+/* ===================================
+   🎯 RADIO BUTTON STYLE VARIANT
+   =================================== */
+
+.theme-toggle.radio-style {
+  background: var(--bg-secondary);
+  padding: var(--space-1);
+  gap: var(--space-1);
+  border-radius: var(--radius-xl);
+}
+
+.theme-toggle.radio-style .theme-option {
+  border-radius: var(--radius-lg);
+  padding: var(--space-2) var(--space-4);
+  font-weight: var(--font-weight-medium);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.theme-toggle.radio-style .theme-option.active {
+  background: var(--bg-primary);
+  box-shadow: 
+    var(--shadow-md),
+    0 0 0 1px var(--border-subtle);
+  transform: translateY(-1px);
+}
+
+/* ===================================
+   📊 DROPDOWN STYLE VARIANT
+   =================================== */
+
+.theme-toggle.dropdown {
+  position: relative;
+  background: var(--bg-tertiary);
+  cursor: pointer;
+  min-width: 8rem;
+}
+
+.theme-toggle.dropdown .theme-current {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  width: 100%;
+}
+
+.theme-toggle.dropdown .theme-dropdown-icon {
+  width: 0.875rem;
+  height: 0.875rem;
+  color: var(--text-secondary);
+  transition: var(--transition-all);
+}
+
+.theme-toggle.dropdown.open .theme-dropdown-icon {
+  transform: rotate(180deg);
+}
+
+.theme-toggle.dropdown .theme-options {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  z-index: var(--z-dropdown);
+  margin-top: var(--space-1);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-0.5rem);
+  transition: var(--transition-all);
+}
+
+.theme-toggle.dropdown.open .theme-options {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.theme-toggle.dropdown .theme-option {
+  width: 100%;
+  border-radius: 0;
+  justify-content: flex-start;
+}
+
+.theme-toggle.dropdown .theme-option:first-child {
+  border-top-left-radius: var(--radius-md);
+  border-top-right-radius: var(--radius-md);
+}
+
+.theme-toggle.dropdown .theme-option:last-child {
+  border-bottom-left-radius: var(--radius-md);
+  border-bottom-right-radius: var(--radius-md);
+}
+
+/* ===================================
+   📱 RESPONSIVE DESIGN
+   =================================== */
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .theme-toggle:not(.compact) {
+    gap: var(--space-2);
+    padding: var(--space-2);
+  }
+  
+  .theme-option {
+    padding: var(--space-2);
+    font-size: var(--font-size-xs);
+    min-height: 2rem;
+  }
+  
+  .theme-icon {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+  
+  /* Auto-compact on very small screens */
+  .theme-toggle.auto-compact .theme-label {
+    display: none;
+  }
+}
+
+/* Large screens */
+@media (min-width: 1024px) {
+  .theme-toggle {
+    padding: var(--space-3);
+    gap: var(--space-4);
+  }
+  
+  .theme-option {
+    padding: var(--space-3) var(--space-4);
+    font-size: var(--font-size-sm);
+  }
+  
+  .theme-icon {
+    width: 1.125rem;
+    height: 1.125rem;
+  }
+}
+
+/* ===================================
+   📍 SIZE VARIANTS
+   =================================== */
+
+.theme-toggle.size-sm {
+  padding: var(--space-1);
+  gap: var(--space-1);
+}
+
+.theme-toggle.size-sm .theme-option {
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--font-size-xs);
+  min-height: 1.75rem;
+}
+
+.theme-toggle.size-sm .theme-icon {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.theme-toggle.size-lg {
+  padding: var(--space-4);
+  gap: var(--space-4);
+}
+
+.theme-toggle.size-lg .theme-option {
+  padding: var(--space-3) var(--space-5);
+  font-size: var(--font-size-base);
+  min-height: 2.75rem;
+}
+
+.theme-toggle.size-lg .theme-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* ===================================
+   ♿ ACCESSIBILITY ENHANCEMENTS
+   =================================== */
+
+/* Screen reader only labels */
+.theme-toggle[aria-label]:not([aria-label=""]) .theme-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .theme-toggle {
+    border-width: 2px;
+  }
+  
+  .theme-option.active {
+    border: 2px solid var(--text-primary);
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .theme-toggle,
+  .theme-option,
+  .theme-icon,
+  .theme-options {
+    transition: none !important;
+    animation: none !important;
+  }
+  
+  .theme-toggle.dropdown .theme-dropdown-icon {
+    transition: none !important;
+  }
+}
+
+/* Keyboard navigation improvements */
+.theme-option:focus-visible {
+  outline: 2px solid var(--interactive-primary);
+  outline-offset: 2px;
+  z-index: 1;
+}
+
+/* ===================================
+   🎨 THEME VARIATIONS
+   =================================== */
+
+/* Light theme specific adjustments */
+:root[data-theme="light"] .theme-toggle {
+  box-shadow: var(--shadow-sm);
+}
+
+:root[data-theme="light"] .theme-toggle:hover {
+  box-shadow: var(--shadow-md);
+}
+
+:root[data-theme="light"] .theme-toggle.dropdown .theme-options {
+  box-shadow: var(--shadow-xl);
+}
+
+/* Dark theme specific adjustments */
+:root[data-theme="dark"] .theme-toggle {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+:root[data-theme="dark"] .theme-option.active {
+  box-shadow: 
+    var(--shadow-sm),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* ===================================
+   🔄 TRANSITION ANIMATIONS
+   =================================== */
+
+.theme-toggle.transitioning {
+  pointer-events: none;
+}
+
+.theme-toggle.transitioning .theme-option.active {
+  animation: theme-switch 0.3s ease-out;
+}
+
+@keyframes theme-switch {
+  0% {
+    transform: scale(1);
+    background: var(--interactive-primary);
+  }
+  50% {
+    transform: scale(1.05);
+    background: var(--interactive-hover);
+  }
+  100% {
+    transform: scale(1);
+    background: var(--interactive-primary);
+  }
+}
+
+/* ===================================
+   🛠️ UTILITY CLASSES
+   =================================== */
+
+.theme-toggle.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+.theme-toggle.loading .theme-option {
+  pointer-events: none;
+}
+
+.theme-toggle.loading .theme-option.active::after {
+  content: '';
+  position: absolute;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Hide labels when specified */
+.theme-toggle.no-labels .theme-label {
+  display: none;
+}
+
+/* Show only icons */
+.theme-toggle.icons-only .theme-label {
+  display: none;
+}
+
+.theme-toggle.icons-only .theme-option {
+  padding: var(--space-2);
+}

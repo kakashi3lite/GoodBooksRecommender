@@ -1,0 +1,235 @@
+/**
+ * 📊 Performance Panel Styling
+ * Chain-of-Thought: Create visually appealing debug interface for performance metrics
+ * Memory: Support for light/dark mode and consistent branding
+ * Forward-Thinking: Modular design for performance insights
+ */
+
+/* ===================================
+   🚀 PERFORMANCE PANEL
+   =================================== */
+
+.performance-panel {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 400px;
+  max-height: 600px;
+  background: var(--bg-primary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  border: 1px solid var(--border-subtle);
+  overflow: hidden;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-3);
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.panel-header h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: var(--font-size-lg);
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  transition: background-color var(--animation-fast);
+}
+
+.close-button:hover {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+/* Panel tabs */
+.panel-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-secondary);
+}
+
+.panel-tab {
+  flex: 1;
+  padding: var(--space-2) var(--space-3);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  border-bottom: 2px solid transparent;
+  transition: all var(--animation-fast);
+}
+
+.panel-tab:hover {
+  color: var(--text-primary);
+  background-color: var(--bg-hover);
+}
+
+.panel-tab.active {
+  color: var(--ai-primary);
+  font-weight: 600;
+  border-bottom: 2px solid var(--ai-primary);
+}
+
+.panel-content {
+  padding: var(--space-3);
+  overflow-y: auto;
+  flex-grow: 1;
+  font-family: monospace;
+  font-size: var(--font-size-xs);
+  color: var(--text-primary);
+  background: var(--bg-primary);
+}
+
+.panel-content pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.panel-footer {
+  padding: var(--space-2);
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-subtle);
+  text-align: center;
+}
+
+.panel-footer small {
+  color: var(--text-secondary);
+  font-size: var(--font-size-xs);
+}
+
+/* Performance mode indicators */
+.performance-smooth .panel-header {
+  border-bottom: 2px solid var(--ai-primary);
+}
+
+.performance-performance .panel-header {
+  border-bottom: 2px solid var(--ai-secondary);
+}
+
+.performance-battery .panel-header {
+  border-bottom: 2px solid var(--ai-neural);
+}
+
+/* ===================================
+   📊 OPTIMIZATION SUGGESTIONS
+   =================================== */
+
+.optimization-suggestions {
+  margin-top: var(--space-3);
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+}
+
+.optimization-suggestions h4 {
+  margin-top: 0;
+  margin-bottom: var(--space-2);
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+}
+
+.optimization-suggestions ul {
+  margin: 0;
+  padding-left: var(--space-4);
+  font-size: var(--font-size-xs);
+}
+
+.optimization-suggestions li {
+  margin-bottom: var(--space-2);
+  color: var(--text-secondary);
+}
+
+.optimization-suggestions li::marker {
+  color: var(--ai-primary);
+}
+
+/* Performance mode display */
+.performance-mode {
+  margin-top: var(--space-3);
+}
+
+.performance-mode h4 {
+  margin-top: 0;
+  margin-bottom: var(--space-1);
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+}
+
+.mode-value {
+  text-transform: capitalize;
+  color: var(--ai-primary);
+}
+
+.mode-description {
+  margin: var(--space-1) 0 0;
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+}
+
+/* Memory warning */
+.memory-warning {
+  margin-top: var(--space-3);
+  background: var(--warning-bg);
+  border-left: 3px solid var(--warning);
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+}
+
+.memory-warning p {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+}
+
+.memory-warning ul {
+  margin: var(--space-2) 0 0;
+  padding-left: var(--space-4);
+}
+
+.memory-warning li {
+  margin-bottom: var(--space-1);
+  font-size: var(--font-size-xs);
+}
+
+/* ===================================
+   📱 RESPONSIVE DESIGN
+   =================================== */
+
+@media (max-width: 768px) {
+  .performance-panel {
+    width: calc(100% - 40px);
+    max-height: 50vh;
+  }
+  
+  .panel-tab {
+    padding: var(--space-2) var(--space-1);
+    font-size: var(--font-size-xs);
+  }
+  
+  .sidebar-analytics {
+    display: none;
+  }
+}

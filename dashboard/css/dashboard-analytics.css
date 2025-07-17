@@ -1,0 +1,491 @@
+/**
+ * 📊 Dashboard Analytics Styling
+ * Chain-of-Thought: Create visually appealing analytics with clear data visualization
+ * Memory: Support for light/dark mode and consistent branding
+ * Forward-Thinking: Responsive design for all device sizes
+ */
+
+/* ===================================
+   📊 DASHBOARD ANALYTICS PANEL
+   =================================== */
+
+.dashboard-analytics-panel {
+  background: var(--bg-primary);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-lg);
+  margin-bottom: var(--space-6);
+}
+
+.analytics-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-6);
+}
+
+.analytics-title {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.analytics-timeframe {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+/* Analytics Grid Layout */
+.analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-gap: var(--space-4);
+}
+
+@media (max-width: 768px) {
+  .analytics-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ===================================
+   📈 ANALYTICS CARDS
+   =================================== */
+
+.analytics-card {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--animation-medium), box-shadow var(--animation-medium);
+}
+
+.analytics-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.analytics-card h3 {
+  font-size: var(--font-size-lg);
+  margin-top: 0;
+  margin-bottom: var(--space-4);
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: var(--space-2);
+}
+
+.analytics-card h4 {
+  font-size: var(--font-size-base);
+  margin-top: 0;
+  margin-bottom: var(--space-2);
+  color: var(--text-secondary);
+}
+
+/* Metric Containers */
+.metrics-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.metric-group {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-4);
+}
+
+.metric-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.metric-label {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+}
+
+.metric-value {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* AI Mode Indicator */
+.metric-value.ai-mode {
+  color: var(--ai-primary);
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+/* ===================================
+   📉 CHARTS AND VISUALIZATIONS
+   =================================== */
+
+.metric-chart {
+  margin-top: var(--space-2);
+}
+
+/* Personalization Score */
+.personalization-score {
+  position: relative;
+  height: 8px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-full);
+  margin-top: var(--space-2);
+}
+
+.score-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: var(--gradient-primary);
+  border-radius: var(--radius-full);
+}
+
+.score-text {
+  position: absolute;
+  top: -18px;
+  right: 0;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* Genre Analysis */
+.genre-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.genre-item {
+  display: grid;
+  grid-template-columns: 100px 1fr 40px;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.genre-name {
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+}
+
+.genre-bar-container {
+  height: 8px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.genre-bar {
+  height: 100%;
+  border-radius: var(--radius-full);
+}
+
+.genre-count {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-align: right;
+}
+
+/* AI Stats */
+.ai-stats {
+  margin-top: var(--space-2);
+}
+
+.stats-container {
+  display: flex;
+  justify-content: space-around;
+  margin-top: var(--space-4);
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.stat-circle {
+  width: 80px;
+  height: 80px;
+}
+
+.stat-circle svg {
+  width: 100%;
+  height: 100%;
+}
+
+.circle-bg {
+  fill: none;
+  stroke: var(--bg-tertiary);
+  stroke-width: 3.8;
+}
+
+.circle-fill {
+  fill: none;
+  stroke: var(--ai-primary);
+  stroke-width: 3.8;
+  stroke-linecap: round;
+}
+
+.circle-text {
+  font-size: 10px;
+  fill: var(--text-primary);
+  font-weight: 600;
+  text-anchor: middle;
+}
+
+.stat-label {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+}
+
+/* ===================================
+   🔄 COMPACT VIEW
+   =================================== */
+
+.dashboard-analytics-compact {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.dashboard-analytics-compact .analytics-title {
+  font-size: var(--font-size-base);
+  margin-bottom: var(--space-3);
+}
+
+.dashboard-analytics-compact .metrics-container {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-3);
+}
+
+.dashboard-analytics-compact .metric-item {
+  background: var(--bg-tertiary);
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+}
+
+.dashboard-analytics-compact .metric-label {
+  font-size: var(--font-size-xs);
+}
+
+.dashboard-analytics-compact .metric-value {
+  font-size: var(--font-size-base);
+}
+
+/* Recharts Overrides */
+.recharts-tooltip-wrapper .recharts-tooltip-item {
+  color: var(--text-primary) !important;
+}
+
+.recharts-default-tooltip {
+  background-color: var(--bg-primary) !important;
+  border-color: var(--border-subtle) !important;
+}
+
+/* ===================================
+   📊 ENHANCED DATA VISUALIZATIONS
+   =================================== */
+
+/* Smooth chart animations */
+.recharts-area, 
+.recharts-line,
+.recharts-bar {
+  transition: opacity var(--animation-medium);
+}
+
+/* Interactive chart elements */
+.recharts-layer:hover {
+  cursor: pointer;
+}
+
+/* Chart tooltip enhancements */
+.recharts-tooltip-wrapper {
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+}
+
+/* Performance visualization */
+.perf-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.perf-item {
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.perf-indicator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: var(--ai-primary);
+  transition: width var(--animation-slow);
+}
+
+.perf-icon {
+  font-size: 1.5rem;
+  margin-bottom: var(--space-2);
+  color: var(--text-secondary);
+}
+
+.perf-value {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.perf-label {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  margin: var(--space-1) 0 0;
+}
+
+/* Heat map visualization */
+.heat-map {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+  margin-top: var(--space-3);
+}
+
+.heat-cell {
+  aspect-ratio: 1;
+  border-radius: var(--radius-xs);
+  background-color: var(--bg-tertiary);
+  transition: transform var(--animation-fast), background-color var(--animation-medium);
+}
+
+.heat-cell:hover {
+  transform: scale(1.15);
+}
+
+.heat-cell[data-level="0"] { background-color: var(--bg-tertiary); }
+.heat-cell[data-level="1"] { background-color: var(--ai-level-1); }
+.heat-cell[data-level="2"] { background-color: var(--ai-level-2); }
+.heat-cell[data-level="3"] { background-color: var(--ai-level-3); }
+.heat-cell[data-level="4"] { background-color: var(--ai-level-4); }
+
+/* ===================================
+   📱 IMPROVED TABLET RESPONSIVENESS
+   =================================== */
+
+/* Tablet-specific layouts */
+@media (min-width: 481px) and (max-width: 768px) {
+  .analytics-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .metric-group {
+    grid-template-columns: repeat(2, 1fr);
+    grid-gap: var(--space-3);
+  }
+  
+  .analytics-card {
+    padding: var(--space-3);
+  }
+  
+  .analytics-title {
+    font-size: var(--font-size-lg);
+  }
+  
+  /* Improve chart height for better readability */
+  .metric-chart {
+    margin: var(--space-3) 0;
+  }
+  
+  .metric-chart .recharts-responsive-container {
+    height: 130px !important;
+  }
+  
+  /* Create two-column layout for genre items */
+  .genre-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-3);
+  }
+  
+  .genre-item {
+    grid-template-columns: minmax(70px, auto) 1fr 30px;
+    gap: var(--space-2);
+  }
+}
+
+/* ===================================
+   ♿ ACCESSIBILITY ENHANCEMENTS
+   =================================== */
+
+/* High contrast mode */
+@media (prefers-contrast: more) {
+  .analytics-card {
+    border: 2px solid var(--text-primary);
+  }
+  
+  .circle-fill {
+    stroke-width: 4.5;
+  }
+  
+  .personalization-score {
+    height: 12px;
+  }
+  
+  .genre-bar-container {
+    height: 12px;
+    border: 1px solid var(--text-primary);
+  }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .analytics-card:hover {
+    transform: none;
+  }
+  
+  .score-fill,
+  .genre-bar,
+  .circle-fill {
+    transition: none;
+  }
+  
+  .recharts-area, 
+  .recharts-line,
+  .recharts-bar {
+    transition: none;
+  }
+}
+
+/* Print styles for analytics reports */
+@media print {
+  .dashboard-analytics-panel {
+    background: transparent;
+    box-shadow: none;
+    break-inside: avoid;
+  }
+  
+  .analytics-card {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    box-shadow: none;
+    border: 1px solid #ddd;
+  }
+  
+  .analytics-grid {
+    display: block;
+  }
+}
