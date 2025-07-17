@@ -1,0 +1,348 @@
+/**
+ * 📖 Kindle Paperwhite-Inspired Design System
+ * Core CSS variables and design tokens for the GoodBooks Dashboard
+ */
+
+/* ===================================
+   🎨 CORE DESIGN TOKENS
+   =================================== */
+
+:root {
+  /* ===== Spacing Scale (8px base) ===== */
+  --space-0: 0;
+  --space-1: 0.25rem;    /* 4px */
+  --space-2: 0.5rem;     /* 8px */
+  --space-3: 0.75rem;    /* 12px */
+  --space-4: 1rem;       /* 16px */
+  --space-5: 1.25rem;    /* 20px */
+  --space-6: 1.5rem;     /* 24px */
+  --space-8: 2rem;       /* 32px */
+  --space-10: 2.5rem;    /* 40px */
+  --space-12: 3rem;      /* 48px */
+  --space-16: 4rem;      /* 64px */
+  --space-20: 5rem;      /* 80px */
+  
+  /* ===== Layout Dimensions ===== */
+  --header-height: 4rem;         /* 64px */
+  --sidebar-width: 18rem;        /* 288px */
+  --content-max-width: 75rem;    /* 1200px */
+  --book-card-width: 12rem;      /* 192px */
+  --book-card-height: 18rem;     /* 288px */
+  
+  /* ===== Border Radius ===== */
+  --radius-none: 0;
+  --radius-sm: 0.25rem;   /* 4px */
+  --radius-md: 0.5rem;    /* 8px */
+  --radius-lg: 0.75rem;   /* 12px */
+  --radius-xl: 1rem;      /* 16px */
+  --radius-2xl: 1.5rem;   /* 24px */
+  --radius-full: 9999px;
+  
+  /* ===== Shadows ===== */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  
+  /* ===== Typography Scale ===== */
+  --font-size-xs: 0.75rem;    /* 12px */
+  --font-size-sm: 0.875rem;   /* 14px */
+  --font-size-base: 1rem;     /* 16px */
+  --font-size-lg: 1.125rem;   /* 18px */
+  --font-size-xl: 1.25rem;    /* 20px */
+  --font-size-2xl: 1.5rem;    /* 24px */
+  --font-size-3xl: 1.875rem;  /* 30px */
+  --font-size-4xl: 2.25rem;   /* 36px */
+  
+  /* ===== Font Families ===== */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  --font-serif: 'Crimson Text', 'Times New Roman', serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', 'Monaco', monospace;
+  
+  /* ===== Font Weights ===== */
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  
+  /* ===== Line Heights ===== */
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+  
+  /* ===== Z-Index Scale ===== */
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
+  
+  /* ===== Transitions ===== */
+  --transition-fast: 150ms ease-in-out;
+  --transition-normal: 200ms ease-in-out;
+  --transition-slow: 300ms ease-in-out;
+  --transition-all: all var(--transition-normal);
+  
+  /* ===== Brightness Control ===== */
+  --brightness: 100%;
+  --brightness-filter: brightness(var(--brightness));
+  
+  /* ===== Responsive Breakpoints ===== */
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
+}
+
+/* ===================================
+   🌙 LIGHT THEME (Paper-white E-ink)
+   =================================== */
+
+:root[data-theme="light"] {
+  /* ===== Primary Backgrounds ===== */
+  --bg-primary: #FAFAF9;        /* Paper white */
+  --bg-secondary: #F5F5F4;      /* Slightly warmer white */
+  --bg-tertiary: #F0F0EF;       /* Card backgrounds */
+  --bg-accent: #E7E7E6;         /* Subtle accents */
+  --bg-hover: #E5E5E4;          /* Hover states */
+  --bg-active: #D6D3D1;         /* Active states */
+  
+  /* ===== Text Colors ===== */
+  --text-primary: #1C1B1A;      /* Deep charcoal */
+  --text-secondary: #57534E;    /* Medium gray */
+  --text-tertiary: #78716C;     /* Light gray */
+  --text-muted: #A8A29E;        /* Very light gray */
+  --text-inverse: #FAFAF9;      /* White text for dark backgrounds */
+  
+  /* ===== Interactive Elements ===== */
+  --interactive-primary: #374151;    /* Buttons, links */
+  --interactive-hover: #4B5563;      /* Hover states */
+  --interactive-active: #1F2937;     /* Active states */
+  --interactive-disabled: #D1D5DB;   /* Disabled states */
+  
+  /* ===== Borders & Dividers ===== */
+  --border-subtle: #E5E5E4;     /* Subtle borders */
+  --border-medium: #D6D3D1;     /* Medium borders */
+  --border-strong: #A8A29E;     /* Strong borders */
+  --border-interactive: #9CA3AF; /* Interactive borders */
+  
+  /* ===== Status Colors (Desaturated) ===== */
+  --status-success: #059669;
+  --status-success-bg: #ECFDF5;
+  --status-warning: #D97706;
+  --status-warning-bg: #FFFBEB;
+  --status-error: #DC2626;
+  --status-error-bg: #FEF2F2;
+  --status-info: #0284C7;
+  --status-info-bg: #F0F9FF;
+  
+  /* ===== Focus States ===== */
+  --focus-ring: 0 0 0 2px var(--interactive-primary);
+  --focus-ring-offset: 2px;
+}
+
+/* ===================================
+   🌑 DARK THEME (Low-light Friendly)
+   =================================== */
+
+:root[data-theme="dark"] {
+  /* ===== Primary Backgrounds ===== */
+  --bg-primary: #1E1E1E;        /* Deep charcoal */
+  --bg-secondary: #2A2A2A;      /* Lighter charcoal */
+  --bg-tertiary: #333333;       /* Card backgrounds */
+  --bg-accent: #404040;         /* Subtle accents */
+  --bg-hover: #4A4A4A;          /* Hover states */
+  --bg-active: #525252;         /* Active states */
+  
+  /* ===== Text Colors ===== */
+  --text-primary: #E0E0E0;      /* Soft white */
+  --text-secondary: #B8B8B8;    /* Medium gray */
+  --text-tertiary: #909090;     /* Light gray */
+  --text-muted: #686868;        /* Very light gray */
+  --text-inverse: #1E1E1E;      /* Dark text for light backgrounds */
+  
+  /* ===== Interactive Elements ===== */
+  --interactive-primary: #9CA3AF;    /* Buttons, links */
+  --interactive-hover: #D1D5DB;      /* Hover states */
+  --interactive-active: #F3F4F6;     /* Active states */
+  --interactive-disabled: #404040;   /* Disabled states */
+  
+  /* ===== Borders & Dividers ===== */
+  --border-subtle: #404040;     /* Subtle borders */
+  --border-medium: #525252;     /* Medium borders */
+  --border-strong: #737373;     /* Strong borders */
+  --border-interactive: #6B7280; /* Interactive borders */
+  
+  /* ===== Status Colors (Adjusted for dark mode) ===== */
+  --status-success: #10B981;
+  --status-success-bg: #064E3B;
+  --status-warning: #F59E0B;
+  --status-warning-bg: #78350F;
+  --status-error: #EF4444;
+  --status-error-bg: #7F1D1D;
+  --status-info: #3B82F6;
+  --status-info-bg: #1E3A8A;
+  
+  /* ===== Focus States ===== */
+  --focus-ring: 0 0 0 2px var(--interactive-primary);
+  --focus-ring-offset: 2px;
+}
+
+/* ===================================
+   🎛️ BRIGHTNESS ADJUSTMENT
+   =================================== */
+
+/* Apply brightness filter to main content areas */
+main,
+.dashboard-content,
+.book-grid,
+.recommendation-panel {
+  filter: var(--brightness-filter);
+  transition: filter var(--transition-normal);
+}
+
+/* Preserve original brightness for critical UI elements */
+.brightness-control,
+.theme-toggle,
+.settings-panel,
+.modal-overlay,
+.tooltip {
+  filter: none !important;
+}
+
+/* ===================================
+   🔄 THEME TRANSITIONS
+   =================================== */
+
+* {
+  transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform, filter;
+  transition-duration: var(--transition-normal);
+  transition-timing-function: ease-in-out;
+}
+
+/* Disable transitions for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .brightness-control *,
+  .theme-toggle *,
+  .modal * {
+    transition: none !important;
+  }
+}
+
+/* ===================================
+   📱 RESPONSIVE DESIGN UTILITIES
+   =================================== */
+
+/* Mobile-first breakpoint mixins (use with CSS @media) */
+@media (min-width: 640px) {
+  :root {
+    --sidebar-width: 20rem;
+    --book-card-width: 13rem;
+  }
+}
+
+@media (min-width: 768px) {
+  :root {
+    --header-height: 5rem;
+    --sidebar-width: 22rem;
+    --book-card-width: 14rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --sidebar-width: 24rem;
+    --book-card-width: 15rem;
+  }
+}
+
+/* ===================================
+   ♿ ACCESSIBILITY ENHANCEMENTS
+   =================================== */
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  :root {
+    --border-subtle: var(--border-strong);
+    --text-tertiary: var(--text-secondary);
+    --text-muted: var(--text-tertiary);
+  }
+}
+
+/* Focus visible improvements */
+:focus-visible {
+  outline: 2px solid var(--interactive-primary);
+  outline-offset: var(--focus-ring-offset);
+  box-shadow: var(--focus-ring);
+}
+
+/* Remove default focus styles when not using keyboard */
+:focus:not(:focus-visible) {
+  outline: none;
+  box-shadow: none;
+}
+
+/* ===================================
+   🔧 UTILITY CLASSES
+   =================================== */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.not-sr-only {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: 0;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+/* Theme transition helper */
+.theme-transition {
+  transition: all var(--transition-normal);
+}
+
+/* Brightness transition helper */
+.brightness-transition {
+  transition: filter var(--transition-normal);
+}
+
+/* Skip to main content link */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 6px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  padding: 8px;
+  text-decoration: none;
+  border-radius: var(--radius-md);
+  z-index: var(--z-tooltip);
+  transition: top var(--transition-fast);
+}
+
+.skip-link:focus {
+  top: 6px;
+}
