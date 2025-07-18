@@ -1,13 +1,10 @@
 /**
  * ⏳ Loading Screen Component
- * Chain-of-Thought: Engaging loading experience with AI initialization feedback
- * Memory: Show loading progress and system status
- * Forward-Thinking: Extensible for different loading states
+ * Enhanced loading experience with modern animations
  */
 
-import React from 'react'
 import { motion } from 'framer-motion'
-import { loadingSpinner, neuralPulse } from '@utils/animations'
+import React from 'react'
 
 interface LoadingScreenProps {
   message?: string
@@ -20,13 +17,35 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
   progress = 0,
   showProgress = false
 }) => {
+  const pulseVariants = {
+    animate: {
+      scale: [1, 1.1, 1],
+      transition: {
+        duration: 2,
+        repeat: Infinity,
+        ease: "easeInOut"
+      }
+    }
+  }
+
+  const spinnerVariants = {
+    animate: {
+      rotate: 360,
+      transition: {
+        duration: 1,
+        repeat: Infinity,
+        ease: "linear"
+      }
+    }
+  }
+
   return (
-    <div className="loading-screen">
-      <div className="loading-content">
+    <div className="fixed inset-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg z-50 flex items-center justify-center">
+      <div className="text-center p-8">
         {/* AI Brain Animation */}
         <motion.div 
-          className="loading-icon"
-          variants={neuralPulse}
+          className="text-6xl mb-4"
+          variants={pulseVariants}
           animate="animate"
         >
           🧠
@@ -34,14 +53,14 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
         
         {/* Spinning Loader */}
         <motion.div
-          className="loading-spinner"
-          variants={loadingSpinner}
+          className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full mx-auto mb-6"
+          variants={spinnerVariants}
           animate="animate"
         />
         
         {/* Loading Message */}
         <motion.h2
-          className="loading-message"
+          className="text-xl font-semibold text-gray-900 dark:text-white mb-4"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
@@ -64,21 +83,15 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
           </motion.div>
         )}
         
-        {/* Loading Steps */}
-        <div className="loading-steps">
-          <div className="loading-step active">
-            <span className="step-icon">🔧</span>
-            <span className="step-text">Initializing AI Systems</span>
-          </div>
-          <div className="loading-step">
-            <span className="step-icon">📚</span>
-            <span className="step-text">Loading Book Database</span>
-          </div>
-          <div className="loading-step">
-            <span className="step-icon">🎨</span>
-            <span className="step-text">Preparing Interface</span>
-          </div>
-        </div>
+        {/* Loading Tips */}
+        <motion.p
+          className="text-gray-600 dark:text-gray-400 text-sm mt-4 max-w-md"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1 }}
+        >
+          Initializing AI systems and preparing your personalized reading experience...
+        </motion.p>
       </div>
     </div>
   )
