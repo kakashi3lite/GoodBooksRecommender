@@ -3,32 +3,33 @@
  * Production-ready architecture with comprehensive AI integration
  */
 
-import React, { useEffect, Suspense, lazy } from 'react'
-import { Routes, Route } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
+import React, { Suspense, lazy, useEffect } from 'react'
 import { Toaster } from 'react-hot-toast'
+import { Route, Routes } from 'react-router-dom'
 
 // Redux hooks and actions
 import { useAppDispatch, useAppSelector } from './hooks/redux'
-import { 
-  initializeDashboard, 
-  trackPerformanceMetrics,
-  togglePerformancePanel 
+import {
+    initializeDashboard,
+    togglePerformancePanel,
+    trackPerformanceMetrics
 } from './stores/dashboard/dashboardSlice'
 
 // Core components
-import ErrorBoundary from './components/UI/ErrorBoundary'
-import LoadingScreen from './components/UI/LoadingScreen'
-import NavigationSidebar from './components/Navigation/NavigationSidebar'
 import AIAssistant from './components/AI/AIAssistant'
 import { DashboardAnalytics } from './components/Analytics/DashboardAnalytics'
 import { PerformancePanel } from './components/Analytics/PerformancePanel'
+import NavigationSidebar from './components/Navigation/NavigationSidebar'
+import ErrorBoundary from './components/UI/ErrorBoundary'
+import LoadingScreen from './components/UI/LoadingScreen'
 
 // Lazy load components for performance
 const Dashboard = lazy(() => import('./components/Dashboard/Dashboard'))
 const ReadingNotes = lazy(() => import('./components/Features/ReadingNotes'))
 const CommunityHub = lazy(() => import('./components/Features/CommunityHub'))
 const AdvancedAnalytics = lazy(() => import('./components/Features/AdvancedAnalytics'))
+const NewsDashboard = lazy(() => import('./components/News/NewsDashboard'))
 
 // Animation variants
 const fadeInOut = {
@@ -124,6 +125,7 @@ const AppShell: React.FC = () => {
               <Routes>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/news" element={<NewsDashboard />} />
                 <Route path="/notes" element={<ReadingNotes />} />
                 <Route path="/community" element={<CommunityHub />} />
                 <Route path="/analytics" element={<AdvancedAnalytics />} />
