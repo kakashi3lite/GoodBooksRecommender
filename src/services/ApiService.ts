@@ -1,7 +1,7 @@
 // API Service Layer Template
 // File: src/services/ApiService.ts
 
-import { APIResponse, Book, NewsItem, UserPreferences, NetworkError } from '../types';
+import { APIResponse, Book, NetworkError, NewsItem, UserPreferences } from '../types';
 
 class ApiService {
   private baseUrl: string;

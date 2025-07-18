@@ -3,8 +3,8 @@
  * Senior Lead Engineer: Clean, performant expandable news interface
  */
 
-import React, { useState, useCallback, memo } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
+import React, { memo, useCallback, useState } from 'react'
 // Simple SVG icons to replace Heroicons
 const ChevronDownIcon = ({ className }: { className?: string }) => (
   <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">

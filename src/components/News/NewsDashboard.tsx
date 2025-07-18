@@ -3,8 +3,8 @@
  * Senior Lead Engineer: Simple expandable news dashboard with AI-powered insights
  */
 
-import React, { useState, useEffect, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
+import React, { useCallback, useEffect, useState } from 'react'
 import ExpandableNewsItem from './ExpandableNewsItem'
 
 interface NewsStory {

@@ -1,11 +1,11 @@
 // React Component Test Template
 // File: tests/frontend/NewsExpansion.test.tsx
 
-import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import '@testing-library/jest-dom';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import React from 'react';
+import { Provider } from 'react-redux';
 
 import { NewsExpansion } from '../../src/components/NewsExpansion';
 import { apiService } from '../../src/services/ApiService';

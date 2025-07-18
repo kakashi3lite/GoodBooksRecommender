@@ -14,6 +14,7 @@ This document outlines the enterprise-grade architecture for a lean MVP news exp
 ## 🏛️ Architectural Overview
 
 ### **Design Philosophy**
+
 - **Single Responsibility Principle**: Each component has one clear purpose
 - **Test-Driven Development**: Every component includes comprehensive tests
 - **Performance-First**: Sub-500ms response times through intelligent caching
@@ -29,27 +30,27 @@ graph TB
         ENI[Expandable News Item]
         UI[Reusable UI Components]
     end
-    
+
     subgraph "API Gateway"
         NEA[News Expansion API]
         Cache[Redis Cache Layer]
         Auth[Authentication]
     end
-    
+
     subgraph "AI Processing Layer"
         FH[Fact Hunter Engine]
         BR[Book Recommender]
         SA[Sentiment Analysis]
         TE[Topic Extraction]
     end
-    
+
     subgraph "Data Sources"
         News[News APIs]
         Books[Book Databases]
         Facts[Fact Check Sources]
         Wikipedia[Wikipedia API]
     end
-    
+
     ND --> ENI
     ENI --> NEA
     NEA --> Cache
@@ -64,6 +65,7 @@ graph TB
 ## 🧩 Component Specifications
 
 ### **1. News Expansion API**
+
 **Location**: `src/news/api/news_expansion.py`
 
 ```python
@@ -74,12 +76,14 @@ GET  /api/news/expand/{id}     # Quick expand by article ID
 ```
 
 **Key Features**:
+
 - **Parallel Processing**: All AI operations run concurrently
 - **Intelligent Caching**: 30-minute TTL with cache invalidation
 - **Error Boundaries**: Comprehensive exception handling
 - **Performance Metrics**: Built-in timing and analytics
 
 **Request/Response Models**:
+
 ```python
 class NewsExpansionRequest(BaseModel):
     article_id: Optional[str] = None
@@ -91,44 +95,50 @@ class NewsExpansionRequest(BaseModel):
 ```
 
 ### **2. Fact Hunter Engine**
+
 **Location**: `src/news/services/fact_hunter.py`
 
 **Core Functionality**:
+
 - **Claim Extraction**: NLP-powered factual statement identification
 - **Multi-Source Verification**: Wikipedia, Reuters, government sites
 - **Credibility Scoring**: Domain trust ratings and confidence intervals
 - **Verdict System**: True/False/Mixed/Unverified classifications
 
 **Implementation Pattern**:
+
 ```python
 class FactHunterEngine:
     async def verify_claims(self, content: str, title: str) -> List[FactCheck]:
         claims = await self.extract_claims(content)
         verified_claims = []
-        
+
         for claim in claims:
             sources = await self.search_verification_sources(claim)
             verdict = await self.analyze_claim_validity(claim, sources)
             verified_claims.append(FactCheck(**verdict))
-        
+
         return verified_claims
 ```
 
 ### **3. Context-Aware Book Recommender**
+
 **Location**: `src/news/services/context_book_recommender.py`
 
 **Algorithm Design**:
+
 - **Topic Matching**: Semantic similarity between news topics and book subjects
 - **Relevance Scoring**: Multi-factor relevance calculation
 - **External Integration**: Seamless connection to GoodBooksRecommender API
 - **Diversity Optimization**: Ensures varied recommendations across genres
 
 **Service Integration**:
+
 ```python
 class ContextBookRecommender:
     async def get_context_recommendations(
-        self, 
-        topics: List[str], 
+        self,
+        topics: List[str],
         article_content: str,
         n_recommendations: int = 5
     ) -> List[BookRecommendation]:
@@ -140,49 +150,54 @@ class ContextBookRecommender:
 ### **4. React UI Components**
 
 #### **NewsDashboard Component**
+
 **Location**: `src/components/News/NewsDashboard.tsx`
 
 **Features**:
+
 - **Auto-Refresh**: Configurable news feed updates
 - **Loading States**: Elegant skeleton screens
 - **Error Handling**: Graceful fallback to demo data
 - **Analytics Tracking**: User interaction metrics
 
 **Component Architecture**:
+
 ```tsx
 const NewsDashboard: React.FC = () => {
-  const [stories, setStories] = useState<NewsStory[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  
+  const [stories, setStories] = useState<NewsStory[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   // Fetch trending stories with error handling
   const fetchTrendingStories = useCallback(async () => {
     try {
-      const response = await newsApi.getTrendingStories()
-      setStories(response.data)
+      const response = await newsApi.getTrendingStories();
+      setStories(response.data);
     } catch (error) {
-      handleFetchError(error)
+      handleFetchError(error);
     }
-  }, [])
-  
+  }, []);
+
   return (
     <div className="news-dashboard">
-      {stories.map(story => (
-        <ExpandableNewsItem 
-          key={story.id} 
+      {stories.map((story) => (
+        <ExpandableNewsItem
+          key={story.id}
           article={story}
           onExpand={handleStoryExpand}
         />
       ))}
     </div>
-  )
-}
+  );
+};
 ```
 
 #### **ExpandableNewsItem Component**
+
 **Location**: `src/components/News/ExpandableNewsItem.tsx`
 
 **Animation System**:
+
 - **Framer Motion**: Smooth expand/collapse transitions
 - **Progressive Loading**: Content appears as AI analysis completes
 - **Error Boundaries**: Individual component failure isolation
@@ -192,6 +207,7 @@ const NewsDashboard: React.FC = () => {
 ## 🧪 Testing Strategy
 
 ### **Unit Tests**
+
 **Location**: `tests/news/`
 
 ```python
@@ -203,7 +219,7 @@ class TestFactHunter:
         claims = await engine.extract_claims(content)
         assert len(claims) > 0
         assert "95% effectiveness" in str(claims)
-    
+
     async def test_verification_with_mock_sources(self):
         # Mock external API calls for reliable testing
         with mock.patch('requests.get') as mock_get:
@@ -225,6 +241,7 @@ class TestBookRecommender:
 ```
 
 ### **Integration Tests**
+
 **Location**: `tests/integration/`
 
 ```python
@@ -237,7 +254,7 @@ class TestNewsExpansionIntegration:
             "include_facts": True,
             "include_books": True
         })
-        
+
         assert response.status_code == 200
         data = response.json()
         assert "fact_checks" in data
@@ -246,6 +263,7 @@ class TestNewsExpansionIntegration:
 ```
 
 ### **Performance Tests**
+
 **Location**: `tests/performance/`
 
 ```python
@@ -255,17 +273,17 @@ class TestPerformance:
         """Ensure sub-500ms response times under concurrent load"""
         import asyncio
         import time
-        
+
         async def make_request():
             start = time.time()
             response = await client.post("/api/news/expand", json=test_payload)
             duration = (time.time() - start) * 1000
             return duration, response.status_code
-        
+
         # Concurrent requests
         tasks = [make_request() for _ in range(50)]
         results = await asyncio.gather(*tasks)
-        
+
         durations = [r[0] for r in results]
         assert max(durations) < 500  # All requests under 500ms
         assert all(r[1] == 200 for r in results)  # All successful
@@ -276,6 +294,7 @@ class TestPerformance:
 ## 🚀 Performance Optimizations
 
 ### **Caching Strategy**
+
 ```python
 # Intelligent cache management
 cache_keys = {
@@ -295,26 +314,28 @@ cache_ttl = {
 ```
 
 ### **Parallel Processing**
+
 ```python
 # Execute AI operations concurrently
 async def expand_news_story(request):
     tasks = []
-    
+
     if request.include_facts:
         tasks.append(fact_hunter.verify_claims(article.content))
-    
+
     if request.include_books:
         tasks.append(book_recommender.get_recommendations(topics))
-    
+
     if request.include_related:
         tasks.append(news_engine.find_related(article.content))
-    
+
     # All operations run in parallel
     results = await asyncio.gather(*tasks, return_exceptions=True)
     return process_results(results)
 ```
 
 ### **Database Optimization**
+
 ```sql
 -- Indexes for performance
 CREATE INDEX idx_articles_published_at ON articles(published_at);
@@ -328,11 +349,12 @@ CREATE INDEX idx_articles_content_search ON articles USING GIN(to_tsvector('engl
 ## 🔒 Security Implementation
 
 ### **Input Validation**
+
 ```python
 class NewsExpansionRequest(BaseModel):
     article_id: Optional[str] = Field(None, regex="^[a-zA-Z0-9_-]+$", max_length=100)
     article_url: Optional[str] = Field(None, regex="^https?://[^\\s]+$")
-    
+
     @validator('article_id', 'article_url')
     def at_least_one_required(cls, v, values):
         if not v and not values.get('article_url'):
@@ -341,6 +363,7 @@ class NewsExpansionRequest(BaseModel):
 ```
 
 ### **Rate Limiting**
+
 ```python
 # Applied at the FastAPI level
 from fastapi_limiter.depends import RateLimiter
@@ -352,6 +375,7 @@ async def expand_news_story(request: NewsExpansionRequest):
 ```
 
 ### **Content Sanitization**
+
 ```python
 import bleach
 
@@ -366,6 +390,7 @@ def sanitize_content(content: str) -> str:
 ## 📊 Monitoring & Analytics
 
 ### **Metrics Collection**
+
 ```python
 from prometheus_client import Counter, Histogram, Gauge
 
@@ -383,6 +408,7 @@ async def expand_news_story(request):
 ```
 
 ### **Structured Logging**
+
 ```python
 logger.info(
     "News expansion completed",
@@ -401,6 +427,7 @@ logger.info(
 ## 🔄 Deployment Strategy
 
 ### **Docker Configuration**
+
 ```dockerfile
 # Dockerfile.news-expansion
 FROM python:3.11-slim
@@ -420,6 +447,7 @@ CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
 ```
 
 ### **Kubernetes Deployment**
+
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -436,37 +464,37 @@ spec:
         app: news-expansion-api
     spec:
       containers:
-      - name: api
-        image: goodbooks/news-expansion:latest
-        ports:
-        - containerPort: 8000
-        env:
-        - name: REDIS_URL
-          value: "redis://redis:6379"
-        - name: DATABASE_URL
-          valueFrom:
-            secretKeyRef:
-              name: db-credentials
-              key: url
-        resources:
-          requests:
-            memory: "256Mi"
-            cpu: "200m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 8000
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /ready
-            port: 8000
-          initialDelaySeconds: 5
-          periodSeconds: 5
+        - name: api
+          image: goodbooks/news-expansion:latest
+          ports:
+            - containerPort: 8000
+          env:
+            - name: REDIS_URL
+              value: "redis://redis:6379"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: db-credentials
+                  key: url
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "200m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 5
 ```
 
 ---
@@ -474,18 +502,21 @@ spec:
 ## 📈 Future Enhancements
 
 ### **Phase 2: Advanced AI Features**
+
 1. **Multi-Language Support**: Expand news in multiple languages
 2. **Bias Detection**: Identify and highlight potential bias in articles
 3. **Sentiment Trends**: Track sentiment changes over time
 4. **Personalization**: User-specific expansion preferences
 
 ### **Phase 3: Advanced Analytics**
+
 1. **User Engagement Metrics**: Track reading patterns and preferences
 2. **Content Quality Scoring**: Automated content quality assessment
 3. **Recommendation Accuracy**: Machine learning model performance tracking
 4. **A/B Testing Framework**: Systematic feature testing
 
 ### **Phase 4: Enterprise Features**
+
 1. **API Rate Limiting**: Advanced rate limiting with user tiers
 2. **Custom AI Models**: Domain-specific fact checking models
 3. **White-label Solutions**: Customizable news expansion for partners
@@ -496,18 +527,21 @@ spec:
 ## 🎯 Success Metrics
 
 ### **Performance KPIs**
+
 - **Response Time**: < 500ms for 95% of requests
 - **Cache Hit Rate**: > 80% for repeated content
 - **Availability**: 99.9% uptime
 - **Error Rate**: < 1% of all requests
 
 ### **User Experience KPIs**
+
 - **Expansion Rate**: % of news items users expand
 - **Session Duration**: Time spent reading expanded content
 - **Book Click-through**: % of users clicking book recommendations
 - **Return Rate**: % of users returning to use the feature
 
 ### **Business KPIs**
+
 - **User Engagement**: Increased time on platform
 - **Content Consumption**: More articles read per session
 - **Revenue Impact**: Book recommendation conversions
@@ -520,6 +554,7 @@ spec:
 This MVP news expansion system represents 50+ years of software engineering expertise applied to create a production-ready, scalable, and maintainable solution. The architecture follows enterprise best practices while maintaining the simplicity and focus required for an MVP.
 
 **Key Differentiators**:
+
 - **Clean Code**: Every component follows SOLID principles
 - **Comprehensive Testing**: Unit, integration, and performance tests
 - **Performance Optimized**: Sub-500ms response times through intelligent design
@@ -530,5 +565,5 @@ The system successfully transforms static news consumption into an interactive, 
 
 ---
 
-*Senior Software Engineer Implementation - 50+ Years Experience*  
-*Production-Ready Architecture - July 17, 2025*
+_Senior Software Engineer Implementation - 50+ Years Experience_  
+_Production-Ready Architecture - July 17, 2025_

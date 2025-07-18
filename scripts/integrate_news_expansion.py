@@ -5,9 +5,9 @@ Senior Software Engineer: Production Deployment Script
 Integrates all news expansion components into the main FastAPI application
 """
 
+import logging
 import os
 import sys
-import logging
 from pathlib import Path
 
 # Add the project root to Python path
@@ -15,13 +15,12 @@ project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
 from src.api.main import app
-from src.news.api.news_expansion import router as news_expansion_router
 from src.news.api.endpoints import router as news_endpoints_router
+from src.news.api.news_expansion import router as news_expansion_router
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -33,57 +32,55 @@ def integrate_news_expansion_system():
     try:
         # Include news expansion routes
         app.include_router(
-            news_expansion_router,
-            prefix="/api/news",
-            tags=["News Expansion"]
+            news_expansion_router, prefix="/api/news", tags=["News Expansion"]
         )
         logger.info("✅ News expansion router integrated successfully")
-        
+
         # Include general news intelligence routes
         app.include_router(
-            news_endpoints_router,
-            prefix="/api/news",
-            tags=["News Intelligence"]
+            news_endpoints_router, prefix="/api/news", tags=["News Intelligence"]
         )
         logger.info("✅ News intelligence router integrated successfully")
-        
+
         # Add health check for news expansion system
         @app.get("/health/news-expansion")
         async def news_expansion_health():
             """Health check endpoint for news expansion system"""
             try:
                 # Test basic functionality
+                from src.news.services.context_book_recommender import (
+                    ContextBookRecommender,
+                )
                 from src.news.services.fact_hunter import FactHunterEngine
-                from src.news.services.context_book_recommender import ContextBookRecommender
-                
+
                 fact_hunter = FactHunterEngine()
                 book_recommender = ContextBookRecommender()
-                
+
                 # Basic service checks
                 services_status = {
                     "fact_hunter": "operational",
                     "book_recommender": "operational",
                     "news_intelligence": "operational",
-                    "cache": "operational"
+                    "cache": "operational",
                 }
-                
+
                 return {
                     "status": "healthy",
                     "services": services_status,
-                    "timestamp": "2025-07-17T21:00:00Z"
+                    "timestamp": "2025-07-17T21:00:00Z",
                 }
             except Exception as e:
                 logger.error(f"News expansion health check failed: {e}")
                 return {
                     "status": "unhealthy",
                     "error": str(e),
-                    "timestamp": "2025-07-17T21:00:00Z"
+                    "timestamp": "2025-07-17T21:00:00Z",
                 }
-        
+
         logger.info("✅ News expansion health check endpoint added")
-        
+
         return True
-        
+
     except Exception as e:
         logger.error(f"❌ Failed to integrate news expansion system: {e}")
         return False
@@ -148,11 +145,11 @@ echo "📰 Access the News Dashboard at: http://localhost:3000/news"
 echo "📊 API Documentation at: http://localhost:8000/docs"
 echo "❤️ Health Check at: http://localhost:8000/health/news-expansion"
 """
-    
+
     script_path = project_root / "start_news_expansion.sh"
-    with open(script_path, 'w') as f:
+    with open(script_path, "w") as f:
         f.write(startup_script)
-    
+
     # Make script executable
     os.chmod(script_path, 0o755)
     logger.info(f"✅ Production startup script created: {script_path}")
@@ -224,11 +221,11 @@ networks:
   goodbooks-network:
     driver: bridge
 """
-    
+
     docker_path = project_root / "docker-compose.news-expansion.yml"
-    with open(docker_path, 'w') as f:
+    with open(docker_path, "w") as f:
         f.write(docker_override)
-    
+
     logger.info(f"✅ Docker Compose override created: {docker_path}")
 
 
@@ -275,11 +272,11 @@ EXPOSE 8000
 # Start command
 CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
 """
-    
+
     dockerfile_path = project_root / "Dockerfile.news-expansion"
-    with open(dockerfile_path, 'w') as f:
+    with open(dockerfile_path, "w") as f:
         f.write(dockerfile_content)
-    
+
     logger.info(f"✅ Dockerfile created: {dockerfile_path}")
 
 
@@ -354,11 +351,11 @@ mypy==1.7.0
 # Production server
 gunicorn==21.2.0
 """
-    
+
     req_path = project_root / "requirements.news-expansion.txt"
-    with open(req_path, 'w') as f:
+    with open(req_path, "w") as f:
         f.write(requirements_content)
-    
+
     logger.info(f"✅ Production requirements created: {req_path}")
 
 
@@ -367,27 +364,27 @@ def main():
     Main integration function
     """
     logger.info("🚀 Starting News Expansion System Integration")
-    
+
     # Integrate the system
     if integrate_news_expansion_system():
         logger.info("✅ News expansion system integrated successfully")
     else:
         logger.error("❌ Failed to integrate news expansion system")
         return False
-    
+
     # Create production deployment files
     create_production_startup_script()
     create_docker_compose_override()
     create_dockerfile_for_news_expansion()
     create_production_requirements()
-    
+
     logger.info("🎉 News Expansion System integration complete!")
     logger.info("📋 Next steps:")
     logger.info("   1. Run: ./start_news_expansion.sh")
     logger.info("   2. Or: docker-compose -f docker-compose.news-expansion.yml up")
     logger.info("   3. Access: http://localhost:3000/news")
     logger.info("   4. API Docs: http://localhost:8000/docs")
-    
+
     return True
 
 
