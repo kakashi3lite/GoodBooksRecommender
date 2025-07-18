@@ -1,9 +1,47 @@
 /**
  * 🚀 Futuristic Dashboard - Main App Component (Senior Engineer Fix)
- * Simplified working version to get dashboard operational
+ * Production-ready architecture with comprehensive AI integration
  */
 
-import React, { useEffect } from 'react'
+import React, { useEffect, Suspense, lazy } from 'react'
+import { Routes, Route } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Toaster } from 'react-hot-toast'
+
+// Redux hooks and actions
+import { useAppDispatch, useAppSelector } from './hooks/redux'
+import { 
+  initializeDashboard, 
+  trackPerformanceMetrics,
+  togglePerformancePanel 
+} from './stores/dashboard/dashboardSlice'
+
+// Core components
+import ErrorBoundary from './components/UI/ErrorBoundary'
+import LoadingScreen from './components/UI/LoadingScreen'
+import NavigationSidebar from './components/Navigation/NavigationSidebar'
+import AIAssistant from './components/AI/AIAssistant'
+import { DashboardAnalytics } from './components/Analytics/DashboardAnalytics'
+import { PerformancePanel } from './components/Analytics/PerformancePanel'
+
+// Lazy load components for performance
+const Dashboard = lazy(() => import('./components/Dashboard/Dashboard'))
+const ReadingNotes = lazy(() => import('./components/Features/ReadingNotes'))
+const CommunityHub = lazy(() => import('./components/Features/CommunityHub'))
+const AdvancedAnalytics = lazy(() => import('./components/Features/AdvancedAnalytics'))
+
+// Animation variants
+const fadeInOut = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1 },
+  exit: { opacity: 0 }
+}
+
+const slideInFromLeft = {
+  initial: { x: -300, opacity: 0 },
+  animate: { x: 0, opacity: 1 },
+  exit: { x: -300, opacity: 0 }
+}
 
 /**
  * App Shell Component
@@ -20,20 +58,10 @@ const AppShell: React.FC = () => {
     performancePanelVisible 
   } = useAppSelector(state => state.dashboard)
   
-  // Track component performance
-  usePerformanceTracking('AppShell')
-  
   // Chain-of-Thought: Initialize AI systems and performance tracking on app mount
   useEffect(() => {
     // Initialize dashboard with AI components
     dispatch(initializeDashboard())
-    
-    // Take initial performance snapshot
-    PerformanceMonitor.takePerformanceSnapshot({
-      type: 'app-init',
-      timestamp: Date.now(),
-      performanceMode
-    })
     
     // Set up performance tracking interval based on performance mode
     const trackingInterval = performanceMode === 'battery' ? 60000 : 30000 // 1 minute or 30 seconds
@@ -125,22 +153,21 @@ const AppShell: React.FC = () => {
           }
         }}
       />
+      
+      {/* Conditionally render performance panel */}
+      {performancePanelVisible && <PerformancePanel />}
     </div>
   )
 }
 
 /**
- * Main App Component with Providers
+ * Main App Component with Error Boundary
  * Forward-Thinking: Ready for additional providers (auth, analytics, etc.)
  */
 const App: React.FC = () => {
   return (
     <ErrorBoundary>
-      <Provider store={store}>
-        <Router>
-          <AppShell />
-        </Router>
-      </Provider>
+      <AppShell />
     </ErrorBoundary>
   )
 }

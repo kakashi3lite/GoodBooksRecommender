@@ -20,6 +20,7 @@ import numpy as np
 try:
     from sklearn.feature_extraction.text import TfidfVectorizer
     from sklearn.metrics.pairwise import cosine_similarity
+
     SKLEARN_AVAILABLE = True
 except ImportError:
     SKLEARN_AVAILABLE = False
@@ -34,12 +35,12 @@ logger = StructuredLogger(__name__)
 @dataclass
 class EvidenceCluster:
     """Evidence cluster with consistency scoring"""
-    
+
     articles: List[NewsArticle]
     source_urls: List[str]
     consistency_score: float  # 0-1, how consistent sources are
-    relevance_score: float    # 0-1, relevance to query
-    confidence_score: float   # Combined score
+    relevance_score: float  # 0-1, relevance to query
+    confidence_score: float  # Combined score
     key_claims: List[str]
     supporting_evidence: List[str]
     contradicting_evidence: List[str] = None
@@ -52,7 +53,7 @@ class EvidenceCluster:
 @dataclass
 class ScoreRAGSummary:
     """ScoreRAG structured summary with evidence scoring"""
-    
+
     summary_text: str
     bullet_points: List[str]
     source_citations: List[Dict[str, Any]]
@@ -68,7 +69,7 @@ class ScoreRAGSummary:
 class ScoreRAGProcessor:
     """
     COT: ScoreRAG improves factual quality via consistency-relevance ranking
-    
+
     Research Integration: ScoreRAG methodology from arXiv:2310.06166
     - Fetch relevant sources from vector DB
     - Score consistency + relevance
@@ -79,19 +80,17 @@ class ScoreRAGProcessor:
     def __init__(self, vector_store: Optional[BookVectorStore] = None):
         self.vector_store = vector_store
         self.session = None
-        
+
         # ScoreRAG parameters (research-optimized)
         self.consistency_threshold = 0.7  # Minimum consistency for inclusion
-        self.relevance_threshold = 0.6    # Minimum relevance for inclusion
-        self.max_evidence_clusters = 5    # Max clusters to consider
+        self.relevance_threshold = 0.6  # Minimum relevance for inclusion
+        self.max_evidence_clusters = 5  # Max clusters to consider
         self.citation_min_confidence = 0.8  # Min confidence for citations
 
         # TF-IDF for consistency scoring (fallback implementation if sklearn not available)
         if SKLEARN_AVAILABLE:
             self.tfidf_vectorizer = TfidfVectorizer(
-                max_features=1000,
-                stop_words='english',
-                ngram_range=(1, 2)
+                max_features=1000, stop_words="english", ngram_range=(1, 2)
             )
         else:
             self.tfidf_vectorizer = None  # Will use simple text similarity
@@ -100,8 +99,7 @@ class ScoreRAGProcessor:
         """Initialize HTTP session"""
         connector = aiohttp.TCPConnector(limit=20, ttl_dns_cache=300)
         self.session = aiohttp.ClientSession(
-            connector=connector,
-            timeout=aiohttp.ClientTimeout(total=30)
+            connector=connector, timeout=aiohttp.ClientTimeout(total=30)
         )
         return self
 
@@ -110,14 +108,11 @@ class ScoreRAGProcessor:
             await self.session.close()
 
     async def generate_scorerag_summary(
-        self,
-        query: str,
-        articles: List[NewsArticle],
-        max_summary_length: int = 200
+        self, query: str, articles: List[NewsArticle], max_summary_length: int = 200
     ) -> ScoreRAGSummary:
         """
         Generate ScoreRAG structured summary with evidence ranking
-        
+
         COT: Multi-stage evidence processing for factual accuracy
         1. Vector similarity retrieval
         2. Consistency scoring within clusters
@@ -129,13 +124,15 @@ class ScoreRAGProcessor:
         try:
             # Stage 1: Evidence Retrieval and Clustering
             evidence_clusters = await self._cluster_evidence_sources(query, articles)
-            
+
             # Stage 2: Consistency-Relevance Scoring
-            scored_clusters = await self._score_evidence_clusters(query, evidence_clusters)
-            
+            scored_clusters = await self._score_evidence_clusters(
+                query, evidence_clusters
+            )
+
             # Stage 3: Reranking by Combined Score
             reranked_clusters = self._rerank_by_combined_score(scored_clusters)
-            
+
             # Stage 4: Structured Summary Generation
             summary_result = await self._generate_structured_summary(
                 query, reranked_clusters, max_summary_length
@@ -148,12 +145,16 @@ class ScoreRAGProcessor:
                 bullet_points=summary_result["bullets"],
                 source_citations=summary_result["citations"],
                 confidence_score=summary_result["confidence"],
-                consistency_score=np.mean([c.consistency_score for c in reranked_clusters]),
+                consistency_score=np.mean(
+                    [c.consistency_score for c in reranked_clusters]
+                ),
                 relevance_score=np.mean([c.relevance_score for c in reranked_clusters]),
                 evidence_clusters=reranked_clusters,
                 fact_check_status=summary_result["fact_status"],
-                hallucination_risk=self._calculate_hallucination_risk(reranked_clusters),
-                processing_time_ms=processing_time
+                hallucination_risk=self._calculate_hallucination_risk(
+                    reranked_clusters
+                ),
+                processing_time_ms=processing_time,
             )
 
         except Exception as e:
@@ -161,9 +162,7 @@ class ScoreRAGProcessor:
             raise
 
     async def _cluster_evidence_sources(
-        self, 
-        query: str, 
-        articles: List[NewsArticle]
+        self, query: str, articles: List[NewsArticle]
     ) -> List[EvidenceCluster]:
         """
         COT: Group articles by semantic similarity to create evidence clusters
@@ -174,55 +173,54 @@ class ScoreRAGProcessor:
 
         # Extract text content for clustering
         article_texts = [f"{article.title} {article.content}" for article in articles]
-        
+
         # TF-IDF vectorization for clustering
         tfidf_matrix = self.tfidf_vectorizer.fit_transform(article_texts)
-        
+
         # Cosine similarity matrix
         similarity_matrix = cosine_similarity(tfidf_matrix)
-        
+
         # Simple clustering: group articles with similarity > threshold
         clusters = []
         used_indices = set()
-        
+
         for i, article in enumerate(articles):
             if i in used_indices:
                 continue
-                
+
             # Find similar articles
             similar_indices = [
-                j for j in range(len(articles))
+                j
+                for j in range(len(articles))
                 if j != i and j not in used_indices and similarity_matrix[i][j] > 0.6
             ]
-            
+
             cluster_articles = [article] + [articles[j] for j in similar_indices]
             cluster_sources = [article.url] + [articles[j].url for j in similar_indices]
-            
+
             # Mark as used
             used_indices.add(i)
             used_indices.update(similar_indices)
-            
+
             # Extract key claims (simplified)
             key_claims = self._extract_key_claims(cluster_articles)
-            
+
             cluster = EvidenceCluster(
                 articles=cluster_articles,
                 source_urls=cluster_sources,
                 consistency_score=0.0,  # Will be calculated in next stage
-                relevance_score=0.0,    # Will be calculated in next stage
-                confidence_score=0.0,   # Will be calculated in next stage
+                relevance_score=0.0,  # Will be calculated in next stage
+                confidence_score=0.0,  # Will be calculated in next stage
                 key_claims=key_claims,
-                supporting_evidence=[]
+                supporting_evidence=[],
             )
-            
+
             clusters.append(cluster)
 
-        return clusters[:self.max_evidence_clusters]
+        return clusters[: self.max_evidence_clusters]
 
     async def _score_evidence_clusters(
-        self, 
-        query: str, 
-        clusters: List[EvidenceCluster]
+        self, query: str, clusters: List[EvidenceCluster]
     ) -> List[EvidenceCluster]:
         """
         COT: Score each cluster for consistency and relevance
@@ -232,14 +230,16 @@ class ScoreRAGProcessor:
         for cluster in clusters:
             # Consistency scoring within cluster
             cluster.consistency_score = self._calculate_consistency_score(cluster)
-            
+
             # Relevance scoring to query
-            cluster.relevance_score = await self._calculate_relevance_score(query, cluster)
-            
+            cluster.relevance_score = await self._calculate_relevance_score(
+                query, cluster
+            )
+
             # Combined confidence score
             cluster.confidence_score = (
-                cluster.consistency_score * 0.6 +  # Weight consistency higher
-                cluster.relevance_score * 0.4
+                cluster.consistency_score * 0.6  # Weight consistency higher
+                + cluster.relevance_score * 0.4
             )
 
         return clusters
@@ -251,55 +251,58 @@ class ScoreRAGProcessor:
         """
         if len(cluster.articles) <= 1:
             return 1.0  # Single source is perfectly consistent
-        
+
         # Extract text content
         texts = [f"{article.title} {article.content}" for article in cluster.articles]
-        
+
         try:
             # TF-IDF similarity within cluster
             tfidf_matrix = self.tfidf_vectorizer.transform(texts)
             similarities = cosine_similarity(tfidf_matrix)
-            
+
             # Average pairwise similarity (excluding diagonal)
             n = len(texts)
             total_similarity = 0
             pairs = 0
-            
+
             for i in range(n):
                 for j in range(i + 1, n):
                     total_similarity += similarities[i][j]
                     pairs += 1
-            
+
             return total_similarity / pairs if pairs > 0 else 1.0
-            
+
         except Exception as e:
             logger.warning("Consistency scoring failed", error=str(e))
             return 0.5  # Default moderate consistency
 
-    async def _calculate_relevance_score(self, query: str, cluster: EvidenceCluster) -> float:
+    async def _calculate_relevance_score(
+        self, query: str, cluster: EvidenceCluster
+    ) -> float:
         """
         COT: Measure how well cluster addresses the original query
         Uses semantic similarity between query and cluster content
         """
         try:
             # Combine cluster content
-            cluster_text = " ".join([
-                f"{article.title} {article.content}" 
-                for article in cluster.articles
-            ])
-            
+            cluster_text = " ".join(
+                [f"{article.title} {article.content}" for article in cluster.articles]
+            )
+
             # TF-IDF similarity to query
             combined_texts = [query, cluster_text]
             tfidf_matrix = self.tfidf_vectorizer.fit_transform(combined_texts)
             similarity = cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:2])[0][0]
-            
+
             return float(similarity)
-            
+
         except Exception as e:
             logger.warning("Relevance scoring failed", error=str(e))
             return 0.5  # Default moderate relevance
 
-    def _rerank_by_combined_score(self, clusters: List[EvidenceCluster]) -> List[EvidenceCluster]:
+    def _rerank_by_combined_score(
+        self, clusters: List[EvidenceCluster]
+    ) -> List[EvidenceCluster]:
         """
         COT: Rerank clusters by combined confidence score
         Higher scoring clusters get priority in summary generation
@@ -307,10 +310,7 @@ class ScoreRAGProcessor:
         return sorted(clusters, key=lambda c: c.confidence_score, reverse=True)
 
     async def _generate_structured_summary(
-        self,
-        query: str,
-        clusters: List[EvidenceCluster],
-        max_length: int
+        self, query: str, clusters: List[EvidenceCluster], max_length: int
     ) -> Dict[str, Any]:
         """
         COT: Generate structured summary with bullet points and citations
@@ -318,10 +318,9 @@ class ScoreRAGProcessor:
         """
         # Filter high-confidence clusters
         high_conf_clusters = [
-            c for c in clusters 
-            if c.confidence_score >= self.citation_min_confidence
+            c for c in clusters if c.confidence_score >= self.citation_min_confidence
         ]
-        
+
         if not high_conf_clusters:
             # Fallback to best available
             high_conf_clusters = clusters[:2] if clusters else []
@@ -329,36 +328,39 @@ class ScoreRAGProcessor:
         # Generate bullet points from key claims
         bullet_points = []
         citations = []
-        
+
         for i, cluster in enumerate(high_conf_clusters[:3]):  # Top 3 clusters
             # Extract top claims
             for claim in cluster.key_claims[:2]:  # Top 2 claims per cluster
                 bullet_points.append(f"• {claim}")
-                
+
                 # Add citation
-                citations.append({
-                    "claim": claim,
-                    "sources": cluster.source_urls[:2],  # Top 2 sources
-                    "confidence": cluster.confidence_score,
-                    "cluster_id": i
-                })
+                citations.append(
+                    {
+                        "claim": claim,
+                        "sources": cluster.source_urls[:2],  # Top 2 sources
+                        "confidence": cluster.confidence_score,
+                        "cluster_id": i,
+                    }
+                )
 
         # Generate narrative summary
         summary_parts = []
         for cluster in high_conf_clusters[:2]:  # Top 2 for narrative
             if cluster.key_claims:
                 summary_parts.append(cluster.key_claims[0])  # Lead claim
-        
+
         summary_text = " ".join(summary_parts)
-        
+
         # Truncate if needed
         if len(summary_text) > max_length:
-            summary_text = summary_text[:max_length-3] + "..."
+            summary_text = summary_text[: max_length - 3] + "..."
 
         # Overall confidence
         overall_confidence = (
             np.mean([c.confidence_score for c in high_conf_clusters])
-            if high_conf_clusters else 0.5
+            if high_conf_clusters
+            else 0.5
         )
 
         # Fact check status
@@ -369,7 +371,7 @@ class ScoreRAGProcessor:
             "bullets": bullet_points,
             "citations": citations,
             "confidence": overall_confidence,
-            "fact_status": fact_status
+            "fact_status": fact_status,
         }
 
     def _extract_key_claims(self, articles: List[NewsArticle]) -> List[str]:
@@ -378,17 +380,24 @@ class ScoreRAGProcessor:
         Simplified extraction - can be enhanced with NER
         """
         claims = []
-        
+
         for article in articles:
             # Extract sentences with high information content
-            sentences = article.content.split('.')
+            sentences = article.content.split(".")
             for sentence in sentences:
                 sentence = sentence.strip()
-                if (len(sentence) > 20 and 
-                    any(keyword in sentence.lower() for keyword in 
-                        ['reported', 'confirmed', 'announced', 'stated', 'according to'])):
+                if len(sentence) > 20 and any(
+                    keyword in sentence.lower()
+                    for keyword in [
+                        "reported",
+                        "confirmed",
+                        "announced",
+                        "stated",
+                        "according to",
+                    ]
+                ):
                     claims.append(sentence)
-        
+
         return claims[:5]  # Top 5 claims
 
     def _calculate_hallucination_risk(self, clusters: List[EvidenceCluster]) -> float:
@@ -398,10 +407,10 @@ class ScoreRAGProcessor:
         """
         if not clusters:
             return 1.0  # Maximum risk with no evidence
-        
+
         avg_consistency = np.mean([c.consistency_score for c in clusters])
         avg_relevance = np.mean([c.relevance_score for c in clusters])
-        
+
         # Inverse relationship: lower scores = higher risk
         risk = 1.0 - (avg_consistency * 0.6 + avg_relevance * 0.4)
         return max(0.0, min(1.0, risk))
