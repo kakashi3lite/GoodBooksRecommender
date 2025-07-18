@@ -1,0 +1,246 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "🤖 Copilot Continue Button Clicker (AHK)",
+      "type": "shell",
+      "command": "start \"Copilot Clicker\" /B \"C:\\Program Files\\AutoHotkey\\AutoHotkey.exe\" \"${workspaceFolder}\\.vscode\\scripts\\copilot-continue-clicker.ahk\"",
+      "presentation": {
+        "reveal": "never",
+        "echo": false,
+        "focus": false,
+        "panel": "shared"
+      },
+      "isBackground": true,
+      "problemMatcher": [],
+      "group": {
+        "kind": "none"
+      },
+      "runOptions": {
+        "runOn": "folderOpen"
+      }
+    },
+    {
+      "label": "🤖 Copilot Continue Button Clicker (PS)",
+      "type": "shell",
+      "command": "powershell.exe -WindowStyle Hidden -ExecutionPolicy Bypass -File \"${workspaceFolder}\\.vscode\\scripts\\copilot-continue-clicker.ps1\"",
+      "presentation": {
+        "reveal": "never",
+        "echo": false,
+        "focus": false,
+        "panel": "shared"
+      },
+      "isBackground": true,
+      "problemMatcher": [],
+      "group": {
+        "kind": "none"
+      }
+    },
+    {
+      "label": "🚀 Start Futuristic Dashboard",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "dev"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "new"
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "severity": 4,
+          "message": 5
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^.*Local:.*$",
+          "endsPattern": "^.*ready in.*$"
+        }
+      },
+      "runOptions": {
+        "runOn": "folderOpen"
+      }
+    },
+    {
+      "label": "🧪 Validate Dashboard Components",
+      "type": "shell",
+      "command": "python",
+      "args": ["test_kindle_dashboard.py"],
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🎨 Build Futuristic CSS",
+      "type": "shell",
+      "command": "npx",
+      "args": [
+        "postcss",
+        "dashboard/css/futuristic-dashboard.css",
+        "--output",
+        "dashboard/css/futuristic-dashboard.min.css"
+      ],
+      "group": "build",
+      "dependsOn": "Install CSS Build Tools"
+    },
+    {
+      "label": "🔧 Install CSS Build Tools",
+      "type": "shell",
+      "command": "npm",
+      "args": ["install", "postcss", "autoprefixer", "cssnano", "--save-dev"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "silent",
+        "focus": false
+      }
+    },
+    {
+      "label": "🤖 Start AI Assistant Server",
+      "type": "shell",
+      "command": "node",
+      "args": ["scripts/ai-assistant-server.js"],
+      "group": "build",
+      "isBackground": true,
+      "presentation": {
+        "echo": true,
+        "reveal": "silent",
+        "focus": false,
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "📊 Performance Analytics",
+      "type": "shell",
+      "command": "python",
+      "args": ["scripts/performance_analytics.py", "--dashboard-type", "futuristic"],
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "new"
+      }
+    },
+    {
+      "label": "🎯 AI Recommendation Test",
+      "type": "shell",
+      "command": "python",
+      "args": ["scripts/test_ai_recommendations.py"],
+      "group": "test",
+      "dependsOn": "🤖 Start AI Assistant Server"
+    },
+    {
+      "label": "🎮 Demo Mode - Full Experience",
+      "type": "shell",
+      "command": "python",
+      "args": ["-c", "import webbrowser; webbrowser.open('http://localhost:8080'); print('🚀 Futuristic Dashboard Demo Started!')"],
+      "group": "build",
+      "dependsOn": "🚀 Start Futuristic Dashboard",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "new"
+      }
+    },
+    {
+      "label": "🔧 Install Dependencies",
+      "type": "shell",
+      "command": "npm",
+      "args": ["install"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🏗️ Build Production",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "build"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "new"
+      },
+      "problemMatcher": "$tsc"
+    },
+    {
+      "label": "🧪 Run Tests",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "test"],
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🎨 Format Code",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "format"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🛑 Stop Copilot Button Clicker",
+      "type": "shell",
+      "command": "powershell.exe -Command \"Stop-Process -Name AutoHotkey -ErrorAction SilentlyContinue; Get-WmiObject Win32_Process -Filter \\\"CommandLine LIKE '%copilot-continue-clicker.ps1%'\\\" | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }\"",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "📊 View Copilot Clicker Log",
+      "type": "shell",
+      "command": "powershell.exe -Command \"Get-Content '${workspaceFolder}\\.vscode\\scripts\\copilot-clicker.log' -Tail 20 -Wait\"",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "⚙️ Configure Copilot Button Clicker",
+      "type": "shell",
+      "command": "code \"${workspaceFolder}\\.vscode\\scripts\\copilot-continue-clicker.ahk\"",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    }
+  ]
+}

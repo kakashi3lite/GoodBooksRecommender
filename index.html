@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="GoodBooks Recommender Dashboard - AI-powered book recommendation system">
+    <meta name="keywords" content="books, recommendations, AI, machine learning, reading">
+    <meta name="author" content="GoodBooks Recommender Team">
+    
+    <!-- Content Security Policy -->
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self';
+        script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net;
+        style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+        font-src 'self' https://fonts.gstatic.com;
+        img-src 'self' data: https:;
+        connect-src 'self' ws: wss:;
+        base-uri 'self';
+        form-action 'self';
+        frame-ancestors 'none';
+        object-src 'none';
+    ">
+    
+    <!-- Security headers -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block">
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+    
+    <title>🤖 Futuristic Book Recommender Dashboard</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
+    
+    <!-- Google Fonts with font-display optimization -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Futuristic Dashboard Styles -->
+    <link rel="stylesheet" href="/dashboard/css/futuristic-dashboard.css">
+    <link rel="stylesheet" href="/dashboard/css/react-components.css">
+    
+    <!-- Performance hints -->
+    <link rel="dns-prefetch" href="//fonts.googleapis.com">
+    <link rel="preload" href="/dashboard/css/futuristic-dashboard.css" as="style">
+</head>
+<body>
+    <!-- React Root -->
+    <div id="root">
+        <!-- Fallback loading screen for non-JS users -->
+        <div class="fallback-loading">
+            <div class="loading-icon">🤖</div>
+            <h2>Initializing AI Dashboard...</h2>
+            <p>Please enable JavaScript for the full experience.</p>
+        </div>
+    </div>
+    
+    <!-- React App will be mounted here by Vite -->
+    <script type="module" src="/src/main.tsx"></script>
+</body>
+</html>

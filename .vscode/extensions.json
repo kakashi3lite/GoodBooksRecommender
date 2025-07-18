@@ -1,0 +1,21 @@
+{
+  "recommendations": [
+    "ms-vscode.vscode-typescript-next",
+    "bradlc.vscode-tailwindcss",
+    "esbenp.prettier-vscode",
+    "ms-python.python",
+    "ms-python.black-formatter",
+    "GitHub.copilot",
+    "GitHub.copilot-chat",
+    "ms-vscode.vscode-json",
+    "ms-vscode.live-server",
+    "formulahendry.auto-rename-tag",
+    "christian-kohler.path-intellisense",
+    "wayou.vscode-todo-highlight",
+    "gruntfuggly.todo-tree",
+    "usernamehw.errorlens",
+    "streetsidesoftware.code-spell-checker",
+    "ms-vscode.vscode-css-peek",
+    "zignd.html-css-class-completion"
+  ]
+}

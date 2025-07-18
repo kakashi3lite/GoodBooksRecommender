@@ -282,6 +282,20 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+# Include News Expansion System routers
+try:
+    from src.news.api.news_expansion import router as news_expansion_router
+    from src.news.api.endpoints import router as news_intelligence_router
+    
+    app.include_router(news_expansion_router, prefix="/api/news", tags=["News Expansion"])
+    app.include_router(news_intelligence_router, prefix="/api/news", tags=["News Intelligence"])
+    logger.info("✅ News Expansion System routers integrated successfully")
+    
+except ImportError as e:
+    logger.warning(f"⚠️ News Expansion System not available: {e}")
+except Exception as e:
+    logger.error(f"❌ Failed to integrate News Expansion System: {e}")
+
 # API Key authentication
 api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 

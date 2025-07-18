@@ -1,0 +1,375 @@
+{
+  "mcpServers": {
+    "goodbooks-ai-dashboard": {
+      "command": "npx",
+      "args": [
+        "@modelcontextprotocol/server-everything",
+        "--no-git-check"
+      ],
+      "env": {
+        "OPENAI_API_KEY": "${env:OPENAI_API_KEY}",
+        "ANTHROPIC_API_KEY": "${env:ANTHROPIC_API_KEY}",
+        "PROJECT_ROOT": "${workspaceFolder}",
+        "AI_MODE": "enhanced",
+        "DASHBOARD_TYPE": "futuristic"
+      }
+    },
+    "ai-code-assistant": {
+      "command": "node",
+      "args": [
+        "${workspaceFolder}/scripts/ai-assistant-server.js"
+      ],
+      "env": {
+        "AI_PROVIDER": "claude",
+        "CONTEXT_WINDOW": "200000",
+        "MEMORY_ENABLED": "true",
+        "CHAIN_OF_THOUGHT": "true"
+      }
+    },
+    "dashboard-validator": {
+      "command": "python",
+      "args": [
+        "${workspaceFolder}/scripts/dashboard-validator-server.py"
+      ],
+      "env": {
+        "VALIDATION_MODE": "continuous",
+        "AI_FEEDBACK": "enabled",
+        "PERFORMANCE_MONITORING": "true"
+      }
+    },
+    "git-intelligence": {
+      "command": "npx",
+      "args": [
+        "@modelcontextprotocol/server-git"
+      ],
+      "env": {
+        "GIT_REPO_PATH": "${workspaceFolder}",
+        "COMMIT_AI_MESSAGES": "true",
+        "BRANCH_INTELLIGENCE": "enabled"
+      }
+    }
+  },
+  "extensions": {
+    "recommended": [
+      "ms-vscode.vscode-typescript-next",
+      "bradlc.vscode-tailwindcss",
+      "esbenp.prettier-vscode",
+      "ms-python.python",
+      "ms-python.black-formatter",
+      "GitHub.copilot",
+      "GitHub.copilot-chat",
+      "ms-vscode.vscode-json",
+      "ms-vscode.live-server",
+      "formulahendry.auto-rename-tag",
+      "christian-kohler.path-intellisense",
+      "wayou.vscode-todo-highlight",
+      "gruntfuggly.todo-tree",
+      "usernamehw.errorlens",
+      "streetsidesoftware.code-spell-checker",
+      "ms-vscode.vscode-css-peek",
+      "zignd.html-css-class-completion"
+    ]
+  },
+  "settings": {
+    "typescript.preferences.includePackageJsonAutoImports": "auto",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": true,
+      "source.organizeImports": true
+    },
+    "files.associations": {
+      "*.css": "css",
+      "*.js": "javascript",
+      "*.json": "jsonc"
+    },
+    "emmet.includeLanguages": {
+      "javascript": "javascriptreact"
+    },
+    "css.validate": true,
+    "css.lint.unknownAtRules": "ignore",
+    "liveServer.settings.donotShowInfoMsg": true,
+    "liveServer.settings.donotVerifyTags": true,
+    "ai.dashboard.mode": "futuristic",
+    "ai.chainOfThought.enabled": true,
+    "ai.memory.persistent": true,
+    "ai.animations.enabled": true
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "🚀 Start Futuristic Dashboard",
+        "type": "shell",
+        "command": "python",
+        "args": ["-m", "http.server", "8080", "--directory", "dashboard"],
+        "group": "build",
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": false,
+          "panel": "new"
+        },
+        "problemMatcher": [],
+        "runOptions": {
+          "runOn": "folderOpen"
+        }
+      },
+      {
+        "label": "🧪 Validate Dashboard Components",
+        "type": "shell",
+        "command": "python",
+        "args": ["test_kindle_dashboard.py"],
+        "group": "test",
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": false,
+          "panel": "shared"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "🎨 Build CSS with Animations",
+        "type": "shell",
+        "command": "npx",
+        "args": [
+          "postcss",
+          "dashboard/css/futuristic-dashboard.css",
+          "--output",
+          "dashboard/css/futuristic-dashboard.min.css",
+          "--config",
+          "postcss.config.js"
+        ],
+        "group": "build",
+        "dependsOn": "Install CSS Build Tools"
+      },
+      {
+        "label": "🔧 Install CSS Build Tools",
+        "type": "shell",
+        "command": "npm",
+        "args": ["install", "postcss", "autoprefixer", "cssnano", "--save-dev"],
+        "group": "build",
+        "presentation": {
+          "echo": true,
+          "reveal": "silent",
+          "focus": false
+        }
+      },
+      {
+        "label": "🤖 Start AI Assistant Server",
+        "type": "shell",
+        "command": "node",
+        "args": ["scripts/ai-assistant-server.js"],
+        "group": "build",
+        "isBackground": true,
+        "presentation": {
+          "echo": true,
+          "reveal": "silent",
+          "focus": false,
+          "panel": "dedicated"
+        },
+        "problemMatcher": {
+          "pattern": {
+            "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
+            "file": 1,
+            "line": 2,
+            "column": 3,
+            "severity": 4,
+            "message": 5
+          }
+        }
+      },
+      {
+        "label": "📊 Performance Analytics",
+        "type": "shell",
+        "command": "python",
+        "args": ["scripts/performance_analytics.py", "--dashboard-type", "futuristic"],
+        "group": "test",
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": true,
+          "panel": "new"
+        }
+      },
+      {
+        "label": "🎯 AI Recommendation Test",
+        "type": "shell",
+        "command": "python",
+        "args": ["scripts/test_ai_recommendations.py"],
+        "group": "test",
+        "dependsOn": "🤖 Start AI Assistant Server"
+      }
+    ]
+  },
+  "launch": {
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "🚀 Debug Futuristic Dashboard",
+        "type": "node",
+        "request": "launch",
+        "program": "${workspaceFolder}/dashboard/js/futuristic-dashboard.js",
+        "console": "integratedTerminal",
+        "env": {
+          "NODE_ENV": "development",
+          "AI_MODE": "debug",
+          "VERBOSE_LOGGING": "true"
+        }
+      },
+      {
+        "name": "🧪 Debug AI Components",
+        "type": "python",
+        "request": "launch",
+        "program": "${workspaceFolder}/src/ai/recommendation_engine.py",
+        "console": "integratedTerminal",
+        "env": {
+          "PYTHONPATH": "${workspaceFolder}",
+          "AI_DEBUG": "true",
+          "LOG_LEVEL": "DEBUG"
+        }
+      }
+    ]
+  },
+  "ai": {
+    "prompts": {
+      "dashboard-enhancement": {
+        "template": "Analyze the current dashboard component at {file} and suggest futuristic enhancements with chain-of-thought reasoning. Consider: 1) Visual appeal and animations 2) AI integration opportunities 3) User experience improvements 4) Forward-thinking architecture. Provide specific code suggestions with memory consistency notes.",
+        "variables": ["file"]
+      },
+      "animation-optimization": {
+        "template": "Review the animation code in {component} and optimize for: 1) Performance (60fps target) 2) User delight 3) Accessibility 4) Battery efficiency. Use chain-of-thought to explain each optimization decision and provide memory notes for consistent behavior.",
+        "variables": ["component"]
+      },
+      "ai-integration": {
+        "template": "Design an AI integration for the {feature} component that: 1) Enhances user experience 2) Provides intelligent recommendations 3) Learns from user behavior 4) Maintains privacy. Include forward-thinking hooks for future AI capabilities.",
+        "variables": ["feature"]
+      },
+      "memory-consistency": {
+        "template": "Ensure memory consistency across dashboard components for: 1) User preferences 2) Interaction patterns 3) Visual states 4) Performance settings. Provide implementation strategy with persistent storage and recovery mechanisms.",
+        "variables": []
+      }
+    },
+    "workflows": {
+      "component-creation": [
+        "Analyze requirements with chain-of-thought",
+        "Design component with forward-thinking architecture",
+        "Implement with animations and AI integration",
+        "Test across devices and browsers",
+        "Document memory and state management",
+        "Optimize performance and accessibility"
+      ],
+      "dashboard-enhancement": [
+        "Audit current components for improvement opportunities",
+        "Apply chain-of-thought reasoning for each enhancement",
+        "Implement with memory consistency",
+        "Add AI intelligence layers",
+        "Validate with comprehensive testing",
+        "Document and deploy with monitoring"
+      ]
+    }
+  },
+  "snippets": {
+    "css": {
+      "futuristic-component": {
+        "prefix": "fcomp",
+        "body": [
+          "/* Chain-of-Thought: ${1:Component purpose and user interaction} */",
+          ".${2:component-name} {",
+          "  /* Memory: ${3:State to remember across sessions} */",
+          "  position: relative;",
+          "  transition: all var(--animation-medium) ease-out;",
+          "  transform-style: preserve-3d;",
+          "",
+          "  /* Forward-Thinking: ${4:Future enhancement hook} */",
+          "  --future-${2:component-name}: ready;",
+          "}",
+          "",
+          ".${2:component-name}:hover {",
+          "  transform: var(--transform-lift);",
+          "  box-shadow: var(--glow-soft);",
+          "}",
+          "",
+          "/* AI Integration Point */",
+          ".${2:component-name}[data-ai-enhanced] {",
+          "  /* AI-specific enhancements */",
+          "}"
+        ],
+        "description": "Create a futuristic component with AI integration hooks"
+      },
+      "animation-keyframe": {
+        "prefix": "fanim",
+        "body": [
+          "/* Chain-of-Thought: ${1:Animation purpose and user benefit} */",
+          "@keyframes ${2:animationName} {",
+          "  0% {",
+          "    ${3:initial-property}: ${4:initial-value};",
+          "  }",
+          "  50% {",
+          "    ${3:initial-property}: ${5:mid-value};",
+          "  }",
+          "  100% {",
+          "    ${3:initial-property}: ${6:final-value};",
+          "  }",
+          "}",
+          "",
+          "/* Memory: Animation state for consistency */",
+          ".animated-${2:animationName} {",
+          "  animation: ${2:animationName} var(--animation-${7:speed}) ease-in-out;",
+          "}"
+        ],
+        "description": "Create an optimized animation with memory consistency"
+      }
+    },
+    "javascript": {
+      "ai-component": {
+        "prefix": "aicomp",
+        "body": [
+          "/**",
+          " * ${1:Component Name}",
+          " * Chain-of-Thought: ${2:User goal and interaction flow}",
+          " * Memory: ${3:State to preserve across sessions}",
+          " * Forward-Thinking: ${4:Future enhancement possibilities}",
+          " */",
+          "class ${1:ComponentName} {",
+          "  constructor(options = {}) {",
+          "    // Memory: Restore previous state",
+          "    this.state = {",
+          "      ...this.loadMemory(),",
+          "      ...options",
+          "    };",
+          "",
+          "    // AI Integration",
+          "    this.ai = {",
+          "      predictor: null,",
+          "      optimizer: null",
+          "    };",
+          "",
+          "    // Forward-Thinking: Future feature hooks",
+          "    this.futureHooks = {",
+          "      ${5:featureName}: null",
+          "    };",
+          "",
+          "    this.init();",
+          "  }",
+          "",
+          "  async init() {",
+          "    // Chain-of-Thought implementation",
+          "    ${6:// Implementation logic}",
+          "  }",
+          "",
+          "  loadMemory() {",
+          "    // Memory consistency implementation",
+          "    return JSON.parse(localStorage.getItem('${1/(.*)/${1:/downcase}/}_memory') || '{}');",
+          "  }",
+          "",
+          "  saveMemory() {",
+          "    localStorage.setItem('${1/(.*)/${1:/downcase}/}_memory', JSON.stringify(this.state));",
+          "  }",
+          "}"
+        ],
+        "description": "Create an AI-enhanced component with memory and future hooks"
+      }
+    }
+  }
+}

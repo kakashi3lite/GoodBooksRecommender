@@ -1,0 +1,28 @@
+{
+  "timestamp": "2025-07-16T19:03:56.803435",
+  "redis_installation": {
+    "installed": true,
+    "guidance": "\nRedis Installation for Windows:\n1. Easy Docker Setup: python scripts/setup_redis_docker.py\n2. Manual Docker: docker run -d -p 6379:6379 --name goodbooks-redis redis:latest\n3. Download Redis: https://github.com/tporadowski/redis/releases\n4. Or use WSL2 with Ubuntu and install Redis there\n"
+  },
+  "redis_connection": {
+    "success": true,
+    "connection": true,
+    "basic_operations": true,
+    "value_retrieved": true
+  },
+  "analytics_redis": {
+    "success": false,
+    "error": "RealTimeAnalytics.__init__() got an unexpected keyword argument 'redis_url'"
+  },
+  "ab_testing_redis": {
+    "success": false,
+    "error": "3 validation errors for ExperimentConfig\nvariants.0\n  Input should be a valid dictionary [type=dict_type, input_value=ExperimentVariant(name='c...ge=50.0, description=''), input_type=ExperimentVariant]\n    For further information visit https://errors.pydantic.dev/2.9/v/dict_type\nvariants.1\n  Input should be a valid dictionary [type=dict_type, input_value=ExperimentVariant(name='t...ge=50.0, description=''), input_type=ExperimentVariant]\n    For further information visit https://errors.pydantic.dev/2.9/v/dict_type\ntraffic_split\n  Field required [type=missing, input_value={'name': 'test_experiment...=50.0, description='')]}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.9/v/missing"
+  },
+  "summary": {
+    "total_tests": 3,
+    "passed": 1,
+    "failed": 2,
+    "success_rate": 33.33333333333333,
+    "overall_status": "FAILED"
+  }
+}

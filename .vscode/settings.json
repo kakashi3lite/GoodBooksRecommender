@@ -1,0 +1,29 @@
+{
+  "typescript.preferences.includePackageJsonAutoImports": "auto",
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.organizeImports": "explicit"
+  },
+  "files.associations": {
+    "*.css": "css",
+    "*.js": "javascript",
+    "*.json": "jsonc"
+  },
+  "emmet.includeLanguages": {
+    "javascript": "javascriptreact"
+  },
+  "css.validate": true,
+  "css.lint.unknownAtRules": "ignore",
+  "liveServer.settings.donotShowInfoMsg": true,
+  "liveServer.settings.donotVerifyTags": true,
+  "ai.dashboard.mode": "futuristic",
+  "ai.chainOfThought.enabled": true,
+  "ai.memory.persistent": true,
+  "ai.animations.enabled": true,
+  "workbench.colorTheme": "Default Dark+",
+  "editor.minimap.enabled": true,
+  "editor.wordWrap": "on",
+  "terminal.integrated.fontSize": 14,
+  "debug.console.fontSize": 14
+}
