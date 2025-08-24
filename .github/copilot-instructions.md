@@ -121,3 +121,9 @@ Use the integrated VS Code tasks for common operations:
 3. **API typing**: Ensure proper TypeScript interfaces match Python models
 4. **Performance**: Large book lists should use virtualization
 5. **Security**: Never expose API keys in frontend code
+
+## 📦 Additional Context
+- See `PROJECT_BRIEF.md`, `CODEMAP.md`, and `ARCHITECTURE.md` for repository overview.
+- Consult `AGENTS.md` for structure, coding standards, and commands.
+- Run `npm test` and `python -m pytest` before committing.
+- Use commit style `type(scope): summary`.
