@@ -387,3 +387,20 @@ Thank you for contributing to GoodBooks Recommender! 🎉
 ---
 
 *This contributing guide is maintained by the project maintainers and is updated regularly to reflect current best practices and community needs.*
+
+---
+## Quick Commands
+```bash
+npm test             # Run frontend tests
+python -m pytest     # Run backend tests
+npm run lint         # Lint frontend
+pre-commit run --files <path>  # Lint backend
+```
+
+## Issue Triage Labels
+Use labels like `bug`, `feature`, `documentation`, `good-first-issue` to help prioritization.
+
+## Commit & PR Conventions
+- Commits follow `type(scope): short description`
+- Reference issues with `Fixes #123`
+- Include test and doc updates with code changes

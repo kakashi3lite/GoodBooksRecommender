@@ -1,0 +1,7 @@
+# Default owners
+* @goodbooks/maintainers
+
+# Areas
+src/**/*.py @goodbooks/backend
+src/**/*.{ts,tsx,js,jsx} @goodbooks/frontend
+terraform/** @goodbooks/infra
