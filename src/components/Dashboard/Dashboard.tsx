@@ -7,26 +7,26 @@
 
 import { AnimatePresence, motion } from 'framer-motion'
 import {
-    Activity,
-    BarChart3,
-    Bell,
-    BookmarkPlus,
-    BookOpen,
-    ChevronDown,
-    Clock,
-    Download,
-    Eye,
-    Filter,
-    Heart,
-    Search,
-    Settings,
-    Share,
-    Sparkles,
-    Star,
-    Target,
-    TrendingUp,
-    Users,
-    Zap
+  Activity,
+  BarChart3,
+  Bell,
+  BookmarkPlus,
+  BookOpen,
+  ChevronDown,
+  Clock,
+  Download,
+  Eye,
+  Filter,
+  Heart,
+  Search,
+  Settings,
+  Share,
+  Sparkles,
+  Star,
+  Target,
+  TrendingUp,
+  Users,
+  Zap
 } from 'lucide-react'
 import React, { useEffect, useMemo, useState } from 'react'
 import { useAppDispatch, useAppSelector } from '../../hooks/redux'
@@ -85,38 +85,38 @@ const Dashboard: React.FC = () => {
   const filterOptions = ['all', 'trending', 'recommended', 'new', 'favorites']
 
   const stats = [
-    { 
-      icon: BookOpen, 
-      label: 'Books Read', 
-      value: '127', 
-      change: '+12', 
+    {
+      icon: BookOpen,
+      label: 'Books Read',
+      value: '127',
+      change: '+12',
       changePercent: '+10.4%',
       color: 'bg-blue-500',
       trend: 'up'
     },
-    { 
-      icon: Target, 
-      label: 'Reading Goal', 
-      value: `${currentProgress}/${readingGoal}`, 
-      change: '+5', 
+    {
+      icon: Target,
+      label: 'Reading Goal',
+      value: `${currentProgress}/${readingGoal}`,
+      change: '+5',
       changePercent: '+15.2%',
       color: 'bg-green-500',
       trend: 'up'
     },
-    { 
-      icon: Star, 
-      label: 'Avg Rating', 
-      value: '8.7', 
-      change: '+0.3', 
+    {
+      icon: Star,
+      label: 'Avg Rating',
+      value: '8.7',
+      change: '+0.3',
       changePercent: '+3.6%',
       color: 'bg-yellow-500',
       trend: 'up'
     },
-    { 
-      icon: Users, 
-      label: 'Community', 
-      value: '2.4K', 
-      change: '+156', 
+    {
+      icon: Users,
+      label: 'Community',
+      value: '2.4K',
+      change: '+156',
       changePercent: '+6.9%',
       color: 'bg-purple-500',
       trend: 'up'
@@ -234,14 +234,14 @@ const Dashboard: React.FC = () => {
   }, [dispatch])
 
   return (
-    <motion.div 
+    <motion.div
       className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-blue-900 dark:to-indigo-900"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
     >
       {/* Enhanced Header with Search and Controls */}
-      <motion.header 
+      <motion.header
         className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-b border-gray-200 dark:border-gray-700"
         variants={itemVariants}
       >
@@ -273,7 +273,7 @@ const Dashboard: React.FC = () => {
 
             {/* Action Buttons */}
             <div className="flex items-center space-x-4">
-              <button 
+              <button
                 onClick={() => setShowNotifications(!showNotifications)}
                 className="relative p-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
               >
@@ -291,7 +291,7 @@ const Dashboard: React.FC = () => {
       {/* Main Dashboard Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Section with Quick Actions */}
-        <motion.div 
+        <motion.div
           className="mb-8"
           variants={itemVariants}
         >
@@ -329,7 +329,7 @@ const Dashboard: React.FC = () => {
         </motion.div>
 
         {/* Stats Grid */}
-        <motion.div 
+        <motion.div
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
           variants={itemVariants}
         >
@@ -363,7 +363,7 @@ const Dashboard: React.FC = () => {
         </motion.div>
 
         {/* Filters and Genre Selection */}
-        <motion.div 
+        <motion.div
           className="flex flex-wrap items-center justify-between mb-8 gap-4"
           variants={itemVariants}
         >
@@ -372,11 +372,10 @@ const Dashboard: React.FC = () => {
               <button
                 key={filter}
                 onClick={() => setActiveFilter(filter)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  activeFilter === filter
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${activeFilter === filter
                     ? 'bg-blue-600 text-white shadow-lg'
                     : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
-                }`}
+                  }`}
               >
                 {filter.charAt(0).toUpperCase() + filter.slice(1)}
               </button>
@@ -385,7 +384,7 @@ const Dashboard: React.FC = () => {
 
           <div className="flex items-center space-x-4">
             <div className="relative">
-              <button 
+              <button
                 className="flex items-center space-x-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               >
                 <Filter className="w-4 h-4" />
@@ -399,7 +398,7 @@ const Dashboard: React.FC = () => {
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Book Recommendations - Main Section */}
-          <motion.div 
+          <motion.div
             className="lg:col-span-3"
             variants={itemVariants}
           >
@@ -473,7 +472,7 @@ const Dashboard: React.FC = () => {
                               <span>{book.progress}%</span>
                             </div>
                             <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-1.5">
-                              <div 
+                              <div
                                 className="bg-blue-600 h-1.5 rounded-full transition-all duration-300"
                                 style={{ width: `${book.progress}%` }}
                               ></div>
@@ -501,7 +500,7 @@ const Dashboard: React.FC = () => {
           </motion.div>
 
           {/* Sidebar with Activity and Analytics */}
-          <motion.div 
+          <motion.div
             className="lg:col-span-1 space-y-6"
             variants={itemVariants}
           >
@@ -599,7 +598,7 @@ const Dashboard: React.FC = () => {
           >
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-gray-900 dark:text-white">Notifications</h3>
-              <button 
+              <button
                 onClick={() => setShowNotifications(false)}
                 className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
               >

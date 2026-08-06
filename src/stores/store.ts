@@ -9,15 +9,15 @@ import { configureStore } from '@reduxjs/toolkit'
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux'
 
 // Slice imports
-import dashboardSlice from './dashboard/dashboardSlice'
-import booksSlice from './books/booksSlice'
 import aiSlice from './ai/aiSlice'
+import booksSlice from './books/booksSlice'
+import dashboardSlice from './dashboard/dashboardSlice'
 import userSlice from './user/userSlice'
 
 // Forward-Thinking: Future feature slices
-import notesSlice from './features/notesSlice'
-import communitySlice from './features/communitySlice'
 import analyticsSlice from './features/analyticsSlice'
+import communitySlice from './features/communitySlice'
+import notesSlice from './features/notesSlice'
 
 /**
  * Configure the Redux store with middleware and devtools
@@ -34,7 +34,7 @@ export const store = configureStore({
     community: communitySlice,
     analytics: analyticsSlice
   },
-  
+
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
@@ -42,7 +42,7 @@ export const store = configureStore({
         ignoredPaths: ['ai.modelInstance', 'dashboard.animationRefs']
       }
     }),
-    
+
   devTools: import.meta.env.MODE !== 'production' && {
     name: 'Futuristic Dashboard',
     trace: true,

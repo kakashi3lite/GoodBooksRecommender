@@ -4,6 +4,19 @@
 
 ---
 
+## ⭐ START HERE — Canonical Docs (verified 2026-08-06)
+
+> Many legacy docs below are **stale/aspirational** (they claim production readiness the code
+> does not support). Trust these three first:
+
+| Document | Why read it |
+|----------|-------------|
+| [**HANDOFF.md**](HANDOFF.md) | ✅ Onboarding: current state, gotchas, first tasks. Read this first. |
+| [**Project Status**](docs/PROJECT_STATUS.md) | ✅ Honest single-source status (what works / what's broken). |
+| [**Deployment Plan**](docs/DEPLOYMENT_PLAN.md) | ✅ Robust P0–P4 roadmap to a deployable system. |
+
+---
+
 ## 🚀 Quick Start Paths
 
 ### For New Users

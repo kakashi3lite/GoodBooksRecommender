@@ -3,30 +3,30 @@
  * Production-grade API service for AI component integration
  */
 
-import { ELearnFitResult, ScoreRAGSummary, GenerativeRecommendation, RecommendationRequest } from '../types/AIModels'
+import { ELearnFitResult, GenerativeRecommendation, RecommendationRequest, ScoreRAGSummary } from '../types/AIModels'
 
 class AIApiService {
   private baseUrl: string = '/api/ai'
   private cache = new Map<string, any>()
-  
+
   // Cache TTL in milliseconds (5 minutes)
   private cacheTTL: number = 5 * 60 * 1000
 
   // Helper to handle API responses with caching
   private async fetchWithCache<T>(
-    endpoint: string, 
-    params: Record<string, any> = {}, 
+    endpoint: string,
+    params: Record<string, any> = {},
     cacheKey?: string
   ): Promise<T> {
     // Generate cache key if not provided
     const key = cacheKey || `${endpoint}:${JSON.stringify(params)}`
-    
+
     // Check cache first
     const cached = this.cache.get(key)
     if (cached && cached.expiry > Date.now()) {
       return cached.data as T
     }
-    
+
     try {
       // Build URL with query params
       const url = new URL(`${this.baseUrl}/${endpoint}`, window.location.origin)
@@ -35,7 +35,7 @@ class AIApiService {
           url.searchParams.append(key, value.toString())
         }
       })
-      
+
       // Fetch from API
       const response = await fetch(url.toString(), {
         method: 'GET',
@@ -44,19 +44,19 @@ class AIApiService {
           'Accept': 'application/json'
         }
       })
-      
+
       if (!response.ok) {
         throw new Error(`API error: ${response.status} ${response.statusText}`)
       }
-      
+
       const data = await response.json()
-      
+
       // Cache the result
       this.cache.set(key, {
         data,
         expiry: Date.now() + this.cacheTTL
       })
-      
+
       return data as T
     } catch (error) {
       console.error(`Error fetching from ${endpoint}:`, error)
@@ -95,11 +95,11 @@ class AIApiService {
       }
     }
   }
-  
+
   // ScoreRAG Summarization API
   async getSummary(text: string): Promise<ScoreRAGSummary | null> {
     if (!text || text.length < 10) return null
-    
+
     try {
       return await this.fetchWithCache<ScoreRAGSummary>(
         'summarize',
@@ -111,7 +111,7 @@ class AIApiService {
       // Fallback if API fails
       const sentences = text.split('.').filter(s => s.trim().length > 0)
       const summary = sentences.slice(0, 2).join('.') + '.'
-      
+
       return {
         originalText: text,
         summaryText: summary.length > 200 ? summary.substring(0, 200) + '...' : summary,
@@ -129,7 +129,7 @@ class AIApiService {
       }
     }
   }
-  
+
   // Generative Recommender API
   async getRecommendations(request: RecommendationRequest): Promise<GenerativeRecommendation[]> {
     try {
@@ -145,7 +145,7 @@ class AIApiService {
       return this.getFallbackRecommendations(request.count || 5)
     }
   }
-  
+
   private getFallbackRecommendations(count: number): GenerativeRecommendation[] {
     const fallbackBooks = [
       {
@@ -184,7 +184,7 @@ class AIApiService {
         shortExplanation: 'Professional software development'
       }
     ]
-    
+
     return fallbackBooks.slice(0, count).map(book => ({
       ...book,
       score: Math.random() * 0.3 + 0.7, // 0.7-1.0

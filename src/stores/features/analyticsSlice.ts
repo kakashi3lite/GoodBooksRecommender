@@ -5,7 +5,7 @@
  * Forward-Thinking: Extensible for identity analytics and wrapped reports
  */
 
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit'
+import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { AnalyticsService } from '../../utils/api'
 
 // ─── Types ────────────────────────────────────────────────────────────────

@@ -5,7 +5,7 @@
  * Forward-Thinking: Extensible for book clubs and social features
  */
 
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit'
+import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { CommunityService } from '../../utils/api'
 
 // ─── Types ────────────────────────────────────────────────────────────────

@@ -66,7 +66,7 @@ const App: React.FC = () => {
   return (
     <div style={{
       minHeight: '100vh',
-      background: theme === 'dark' 
+      background: theme === 'dark'
         ? 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)'
         : 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
       color: theme === 'dark' ? '#ffffff' : '#333333',
@@ -82,8 +82,8 @@ const App: React.FC = () => {
         alignItems: 'center'
       }}>
         <h1 style={{ margin: 0, fontSize: '2rem' }}>🚀 GoodBooks Recommender - Futuristic Dashboard</h1>
-        <button 
-          onClick={toggleTheme} 
+        <button
+          onClick={toggleTheme}
           style={{
             padding: '0.5rem 1rem',
             border: 'none',
@@ -116,8 +116,8 @@ const App: React.FC = () => {
               <div key={index} style={{
                 padding: '1.5rem',
                 borderRadius: '1rem',
-                background: theme === 'dark' 
-                  ? 'rgba(255, 255, 255, 0.1)' 
+                background: theme === 'dark'
+                  ? 'rgba(255, 255, 255, 0.1)'
                   : 'rgba(255, 255, 255, 0.8)',
                 backdropFilter: 'blur(10px)',
                 border: `1px solid ${theme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.3)'}`,
@@ -125,8 +125,8 @@ const App: React.FC = () => {
                 transition: 'transform 0.3s ease',
                 cursor: 'pointer'
               }}
-              onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-5px)'}
-              onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-5px)'}
+                onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
               >
                 <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem' }}>{metric.title}</h3>
                 <div style={{ fontSize: '2rem', fontWeight: 'bold', margin: '0.5rem 0' }}>{metric.value}</div>
@@ -153,21 +153,21 @@ const App: React.FC = () => {
               <div key={index} style={{
                 padding: '1.5rem',
                 borderRadius: '1rem',
-                background: theme === 'dark' 
-                  ? 'rgba(255, 255, 255, 0.05)' 
+                background: theme === 'dark'
+                  ? 'rgba(255, 255, 255, 0.05)'
                   : 'rgba(255, 255, 255, 0.9)',
                 border: `1px solid ${theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
                 transition: 'all 0.3s ease',
                 cursor: 'pointer'
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'scale(1.02)'
-                e.currentTarget.style.boxShadow = '0 10px 30px rgba(0, 0, 0, 0.2)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'scale(1)'
-                e.currentTarget.style.boxShadow = 'none'
-              }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'scale(1.02)'
+                  e.currentTarget.style.boxShadow = '0 10px 30px rgba(0, 0, 0, 0.2)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'scale(1)'
+                  e.currentTarget.style.boxShadow = 'none'
+                }}
               >
                 <div style={{ fontSize: '3rem', textAlign: 'center', marginBottom: '1rem' }}>{book.emoji}</div>
                 <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '1.2rem' }}>{book.title}</h4>
@@ -205,8 +205,8 @@ const App: React.FC = () => {
                 alignItems: 'center',
                 padding: '1rem',
                 borderRadius: '0.5rem',
-                background: theme === 'dark' 
-                  ? 'rgba(255, 255, 255, 0.05)' 
+                background: theme === 'dark'
+                  ? 'rgba(255, 255, 255, 0.05)'
                   : 'rgba(255, 255, 255, 0.8)',
                 border: `1px solid ${theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`
               }}>

@@ -15,8 +15,8 @@ import {
   setLoading
 } from '../../stores/books/booksSlice';
 import { BookCard } from '../UI/BookCard';
-import { LoadingSpinner } from '../UI/LoadingSpinner';
 import { ErrorMessage } from '../UI/ErrorMessage';
+import { LoadingSpinner } from '../UI/LoadingSpinner';
 
 // Type definitions (aligned with the books slice Book shape)
 interface Book {

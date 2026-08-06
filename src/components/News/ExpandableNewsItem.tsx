@@ -124,7 +124,7 @@ const ExpandableNewsItem: React.FC<ExpandableNewsItemProps> = memo(({
     try {
       setIsLoading(true)
       setError(null)
-      
+
       // Call the news expansion API
       const response = await fetch(`/api/news/expand/${article.id}`, {
         method: 'GET',
@@ -140,10 +140,10 @@ const ExpandableNewsItem: React.FC<ExpandableNewsItemProps> = memo(({
       const expansionData: NewsExpansion = await response.json()
       setExpansion(expansionData)
       setIsExpanded(true)
-      
+
       // Call optional expansion callback
       onExpand?.(article.id)
-      
+
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to expand news'
       setError(errorMessage)
@@ -188,7 +188,7 @@ const ExpandableNewsItem: React.FC<ExpandableNewsItemProps> = memo(({
       exit={{ opacity: 0, y: -20 }}
     >
       {/* News Item Header */}
-      <div 
+      <div
         className="p-4 cursor-pointer flex items-start justify-between hover:bg-gray-50 transition-colors"
         onClick={handleExpand}
       >
@@ -196,13 +196,13 @@ const ExpandableNewsItem: React.FC<ExpandableNewsItemProps> = memo(({
           <h3 className="text-lg font-semibold text-gray-900 mb-2 leading-tight">
             {article.title}
           </h3>
-          
+
           {article.preview && (
             <p className="text-gray-600 text-sm mb-2 line-clamp-2">
               {article.preview}
             </p>
           )}
-          
+
           <div className="flex items-center gap-3 text-xs text-gray-500">
             {article.source && (
               <span className="font-medium">{article.source}</span>
@@ -218,7 +218,7 @@ const ExpandableNewsItem: React.FC<ExpandableNewsItemProps> = memo(({
             )}
           </div>
         </div>
-        
+
         <div className="flex items-center gap-2 ml-4">
           {isLoading && (
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
@@ -242,7 +242,7 @@ const ExpandableNewsItem: React.FC<ExpandableNewsItemProps> = memo(({
             className="overflow-hidden"
           >
             <div className="px-4 pb-4 border-t border-gray-100">
-              
+
               {/* Error State */}
               {error && (
                 <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
@@ -253,12 +253,12 @@ const ExpandableNewsItem: React.FC<ExpandableNewsItemProps> = memo(({
               {/* Expansion Content */}
               {expansion && (
                 <div className="mt-4 space-y-6">
-                  
+
                   {/* Summary */}
                   <div>
                     <h4 className="font-semibold text-gray-900 mb-2">📄 Summary</h4>
                     <p className="text-gray-700 leading-relaxed">{expansion.summary}</p>
-                    
+
                     {expansion.topics.length > 0 && (
                       <div className="mt-3 flex flex-wrap gap-2">
                         {expansion.topics.map((topic, index) => (
@@ -282,7 +282,7 @@ const ExpandableNewsItem: React.FC<ExpandableNewsItemProps> = memo(({
                           ({expansion.fact_checks.length} claims checked)
                         </span>
                       </h4>
-                      
+
                       <div className="space-y-3">
                         {expansion.fact_checks.map((fact, index) => (
                           <div
@@ -298,10 +298,10 @@ const ExpandableNewsItem: React.FC<ExpandableNewsItemProps> = memo(({
                                 {Math.round(fact.confidence * 100)}% confidence
                               </span>
                             </div>
-                            
+
                             <p className="text-sm mb-2 italic">&ldquo;{fact.claim}&rdquo;</p>
                             <p className="text-xs opacity-90">{fact.explanation}</p>
-                            
+
                             {fact.sources.length > 0 && (
                               <div className="mt-2 flex flex-wrap gap-1">
                                 {fact.sources.slice(0, 2).map((source, srcIndex) => (
@@ -333,7 +333,7 @@ const ExpandableNewsItem: React.FC<ExpandableNewsItemProps> = memo(({
                           (Context-aware recommendations)
                         </span>
                       </h4>
-                      
+
                       <div className="grid gap-3 sm:grid-cols-2">
                         {expansion.book_recommendations.map((book, index) => (
                           <div
@@ -351,7 +351,7 @@ const ExpandableNewsItem: React.FC<ExpandableNewsItemProps> = memo(({
                                   }}
                                 />
                               )}
-                              
+
                               <div className="flex-1 min-w-0">
                                 <h5 className="font-medium text-gray-900 text-sm leading-tight mb-1">
                                   {book.title}
@@ -360,12 +360,12 @@ const ExpandableNewsItem: React.FC<ExpandableNewsItemProps> = memo(({
                                 <p className="text-xs text-gray-700 line-clamp-2 mb-2">
                                   {book.description}
                                 </p>
-                                
+
                                 <div className="flex items-center justify-between">
                                   <span className="text-xs text-green-600 font-medium">
                                     {Math.round(book.relevance_score * 100)}% relevant
                                   </span>
-                                  
+
                                   {book.buy_url && (
                                     <a
                                       href={book.buy_url}
@@ -390,7 +390,7 @@ const ExpandableNewsItem: React.FC<ExpandableNewsItemProps> = memo(({
                   {expansion.related_articles.length > 0 && (
                     <div>
                       <h4 className="font-semibold text-gray-900 mb-3">🔗 Related Stories</h4>
-                      
+
                       <div className="space-y-2">
                         {expansion.related_articles.map((related, index) => (
                           <a

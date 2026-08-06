@@ -5,7 +5,7 @@
  * Forward-Thinking: Support for different virtualization strategies
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 interface VirtualizationOptions {
   itemCount: number;
@@ -42,34 +42,34 @@ export const useVirtualizedList = (
   containerRef: React.RefObject<HTMLElement>
 ): VirtualizedState => {
   const { itemCount, itemSize, overscan = 3, direction = 'vertical' } = options;
-  
+
   // Track scroll position
   const [scrollOffset, setScrollOffset] = useState<number>(0);
-  
+
   // Track container dimensions
   const [containerSize, setContainerSize] = useState<number>(0);
-  
+
   // Update container size when it changes
   useEffect(() => {
     if (!containerRef.current) return;
-    
+
     const updateContainerSize = () => {
       if (!containerRef.current) return;
-      
+
       const newSize = direction === 'vertical'
         ? containerRef.current.clientHeight
         : containerRef.current.clientWidth;
-        
+
       setContainerSize(newSize);
     };
-    
+
     // Set initial size
     updateContainerSize();
-    
+
     // Setup resize observer
     const resizeObserver = new ResizeObserver(updateContainerSize);
     resizeObserver.observe(containerRef.current);
-    
+
     return () => {
       if (containerRef.current) {
         resizeObserver.unobserve(containerRef.current);
@@ -77,7 +77,7 @@ export const useVirtualizedList = (
       resizeObserver.disconnect();
     };
   }, [containerRef, direction]);
-  
+
   /**
    * Calculate visible range with overscan
    * Chain-of-Thought: Only compute indices for items in view plus buffer
@@ -87,26 +87,26 @@ export const useVirtualizedList = (
     if (containerSize === 0) {
       return { startIndex: 0, endIndex: 10, visibleItems: [] };
     }
-    
+
     // Calculate the range of visible items
     const itemsPerView = Math.ceil(containerSize / itemSize);
     const start = Math.floor(scrollOffset / itemSize);
     const startWithOverscan = Math.max(0, start - overscan);
     const endWithOverscan = Math.min(itemCount - 1, start + itemsPerView + overscan);
-    
+
     // Generate array of visible indices
     const visibleIndices = Array.from(
       { length: endWithOverscan - startWithOverscan + 1 },
       (_, i) => i + startWithOverscan
     );
-    
+
     return {
       startIndex: startWithOverscan,
       endIndex: endWithOverscan,
       visibleItems: visibleIndices
     };
   }, [scrollOffset, containerSize, itemSize, itemCount, overscan]);
-  
+
   /**
    * Handle scroll events
    * Chain-of-Thought: Update visible items when scroll position changes
@@ -117,10 +117,10 @@ export const useVirtualizedList = (
     const newOffset = direction === 'vertical'
       ? target.scrollTop
       : target.scrollLeft;
-      
+
     setScrollOffset(newOffset);
   };
-  
+
   /**
    * Scroll to a specific item
    * Chain-of-Thought: Programmatically adjust scroll position
@@ -128,10 +128,10 @@ export const useVirtualizedList = (
    */
   const scrollToIndex = (index: number) => {
     if (!containerRef.current) return;
-    
+
     // Calculate scroll position
     const scrollPosition = index * itemSize;
-    
+
     // Apply scroll
     if (direction === 'vertical') {
       containerRef.current.scrollTop = scrollPosition;
@@ -139,13 +139,13 @@ export const useVirtualizedList = (
       containerRef.current.scrollLeft = scrollPosition;
     }
   };
-  
+
   /**
    * Calculate total size and item positioning
    * Chain-of-Thought: Create styles for container and items
    * Time Complexity: O(1) per item
    */
-  
+
   // Container props for attaching scroll handler
   const containerProps = {
     style: {
@@ -155,7 +155,7 @@ export const useVirtualizedList = (
     } as React.CSSProperties,
     onScroll: handleScroll
   };
-  
+
   /**
    * Generate props for individual list items
    * Time Complexity: O(1) per visible item
@@ -169,7 +169,7 @@ export const useVirtualizedList = (
     } as React.CSSProperties,
     key: index
   });
-  
+
   return {
     startIndex,
     endIndex,

@@ -11,9 +11,9 @@ import { Route, Routes } from 'react-router-dom'
 // Redux hooks and actions
 import { useAppDispatch, useAppSelector } from './hooks/redux'
 import {
-    initializeDashboard,
-    togglePerformancePanel,
-    trackPerformanceMetrics
+  initializeDashboard,
+  togglePerformancePanel,
+  trackPerformanceMetrics
 } from './stores/dashboard/dashboardSlice'
 
 // Core components
@@ -53,28 +53,28 @@ const slideInFromLeft = {
  */
 const AppShell: React.FC = () => {
   const dispatch = useAppDispatch()
-  const { 
-    isInitialized, 
-    theme, 
-    aiMode, 
-    layout, 
-    performanceMode, 
+  const {
+    isInitialized,
+    theme,
+    aiMode,
+    layout,
+    performanceMode,
     performancePanelVisible,
-    sidebarCollapsed 
+    sidebarCollapsed
   } = useAppSelector(state => state.dashboard)
-  
+
   // Chain-of-Thought: Initialize AI systems and performance tracking on app mount
   useEffect(() => {
     // Initialize dashboard with AI components
     dispatch(initializeDashboard())
-    
+
     // Set up performance tracking interval based on performance mode
     const trackingInterval = performanceMode === 'battery' ? 60000 : 30000 // 1 minute or 30 seconds
-    
+
     const intervalId = setInterval(() => {
       dispatch(trackPerformanceMetrics())
     }, trackingInterval)
-    
+
     return () => clearInterval(intervalId)
   }, [dispatch, performanceMode])
 
@@ -87,7 +87,7 @@ const AppShell: React.FC = () => {
     root.classList.toggle('dark', isDark)
     root.dataset.theme = theme
   }, [theme])
-  
+
   // Handle keyboard shortcut for performance panel
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -96,7 +96,7 @@ const AppShell: React.FC = () => {
         dispatch(togglePerformancePanel())
       }
     }
-    
+
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [dispatch])
@@ -109,7 +109,7 @@ const AppShell: React.FC = () => {
     <div className={`app-shell theme-${theme} ai-mode-${aiMode} layout-${layout} performance-${performanceMode}${sidebarCollapsed ? ' layout-collapsed' : ''}`}>
       {/* Neural network background animation */}
       <div className="neural-background" />
-      
+
       <AnimatePresence mode="wait">
         <motion.div
           className="app-container"
@@ -126,7 +126,7 @@ const AppShell: React.FC = () => {
             animate="animate"
           >
             <NavigationSidebar />
-            
+
             {/* Show compact analytics in sidebar */}
             <div className="sidebar-analytics">
               <DashboardAnalytics compact={true} />
@@ -169,7 +169,7 @@ const AppShell: React.FC = () => {
           }
         }}
       />
-      
+
       {/* Performance panel (conditionally rendered via Redux state) */}
       {performancePanelVisible && <PerformancePanel />}
     </div>

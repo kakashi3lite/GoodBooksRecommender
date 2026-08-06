@@ -22,7 +22,7 @@ export const API_ENDPOINTS = {
     recommend: () => `${API_BASE_URL}/api/books/recommend`,
     similar: (id: string) => `${API_BASE_URL}/api/books/${id}/similar`
   },
-  
+
   // AI-powered features
   ai: {
     chat: () => `${API_BASE_URL}/api/ai/chat`,
@@ -30,7 +30,7 @@ export const API_ENDPOINTS = {
     analysis: () => `${API_BASE_URL}/api/ai/analysis`,
     predict: () => `${API_BASE_URL}/api/ai/predict`
   },
-  
+
   // User management
   user: {
     profile: () => `${API_BASE_URL}/api/user/profile`,
@@ -38,7 +38,7 @@ export const API_ENDPOINTS = {
     history: () => `${API_BASE_URL}/api/user/history`,
     favorites: () => `${API_BASE_URL}/api/user/favorites`
   },
-  
+
   // Forward-Thinking: Future feature endpoints
   notes: {
     getAll: () => `${API_BASE_URL}/api/notes`,
@@ -47,14 +47,14 @@ export const API_ENDPOINTS = {
     delete: (id: string) => `${API_BASE_URL}/api/notes/${id}`,
     search: () => `${API_BASE_URL}/api/notes/search`
   },
-  
+
   community: {
     posts: () => `${API_BASE_URL}/api/community/posts`,
     comments: () => `${API_BASE_URL}/api/community/comments`,
     discussions: () => `${API_BASE_URL}/api/community/discussions`,
     reviews: () => `${API_BASE_URL}/api/community/reviews`
   },
-  
+
   analytics: {
     dashboard: () => `${API_BASE_URL}/api/analytics/dashboard`,
     reading: () => `${API_BASE_URL}/api/analytics/reading`,
@@ -66,17 +66,17 @@ export const API_ENDPOINTS = {
 // HTTP Client with error handling
 export class APIClient {
   private baseURL: string
-  
+
   constructor(baseURL: string = API_BASE_URL) {
     this.baseURL = baseURL
   }
-  
+
   private async request<T>(
-    endpoint: string, 
+    endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
     const url = endpoint.startsWith('http') ? endpoint : `${this.baseURL}${endpoint}`
-    
+
     const response = await fetch(url, {
       headers: {
         'Content-Type': 'application/json',
@@ -84,32 +84,32 @@ export class APIClient {
       },
       ...options
     })
-    
+
     if (!response.ok) {
       throw new Error(`API Error: ${response.status} ${response.statusText}`)
     }
-    
+
     return response.json()
   }
-  
+
   async get<T>(endpoint: string): Promise<T> {
     return this.request<T>(endpoint, { method: 'GET' })
   }
-  
+
   async post<T>(endpoint: string, data?: any): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'POST',
       body: data ? JSON.stringify(data) : undefined
     })
   }
-  
+
   async put<T>(endpoint: string, data?: any): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'PUT',
       body: data ? JSON.stringify(data) : undefined
     })
   }
-  
+
   async delete<T>(endpoint: string): Promise<T> {
     return this.request<T>(endpoint, { method: 'DELETE' })
   }
@@ -124,11 +124,11 @@ export const BookService = {
     const query = userId ? `?user_id=${encodeURIComponent(userId)}` : ''
     return apiClient.get(`${API_ENDPOINTS.books.recommend()}${query}`)
   },
-  
+
   searchBooks: async (query: string) => {
     return apiClient.get(`${API_ENDPOINTS.books.search()}?q=${encodeURIComponent(query)}`)
   },
-  
+
   getBookDetails: async (bookId: string) => {
     return apiClient.get(API_ENDPOINTS.books.getById(bookId))
   }
@@ -138,7 +138,7 @@ export const AIService = {
   generateTooltip: async (bookId: string, context: string) => {
     return apiClient.post(API_ENDPOINTS.ai.tooltip(), { bookId, context })
   },
-  
+
   chatWithAI: async (message: string) => {
     return apiClient.post(API_ENDPOINTS.ai.chat(), { message })
   }

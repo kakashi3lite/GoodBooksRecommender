@@ -28,8 +28,8 @@ import React from 'react'
 import toast from 'react-hot-toast'
 import { NavLink } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../../hooks/redux'
-import { setTheme, toggleSidebar } from '../../stores/dashboard/dashboardSlice'
 import { toggleAssistant } from '../../stores/ai/aiSlice'
+import { setTheme, toggleSidebar } from '../../stores/dashboard/dashboardSlice'
 import { resetUser } from '../../stores/user/userSlice'
 
 // Navigation Items with Enhanced Icons and Descriptions
@@ -235,7 +235,7 @@ const NavigationSidebar: React.FC<NavigationSidebarProps> = ({ className = '' })
               </motion.div>
             )}
           </AnimatePresence>
-          
+
           <button
             onClick={handleCollapse}
             className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -305,10 +305,9 @@ const NavigationSidebar: React.FC<NavigationSidebarProps> = ({ className = '' })
                 key={item.id}
                 to={item.path}
                 className={({ isActive }) =>
-                  `group flex items-center space-x-3 px-3 py-3 rounded-xl transition-all duration-200 relative ${
-                    isActive
-                      ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 shadow-lg'
-                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
+                  `group flex items-center space-x-3 px-3 py-3 rounded-xl transition-all duration-200 relative ${isActive
+                    ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 shadow-lg'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
                   }`
                 }
               >
@@ -317,7 +316,7 @@ const NavigationSidebar: React.FC<NavigationSidebarProps> = ({ className = '' })
                     <div className={`p-2 rounded-lg ${isActive ? 'bg-blue-600 text-white' : 'group-hover:bg-gray-200 dark:group-hover:bg-gray-700'}`}>
                       <item.icon className="w-4 h-4" />
                     </div>
-                    
+
                     <AnimatePresence mode="wait">
                       {isExpanded && (
                         <motion.div
@@ -333,11 +332,10 @@ const NavigationSidebar: React.FC<NavigationSidebarProps> = ({ className = '' })
                               <p className="text-xs opacity-70">{item.description}</p>
                             </div>
                             {item.badge && (
-                              <span className={`px-2 py-1 text-xs rounded-full ${
-                                item.badge === 'New' || item.badge === 'Hot'
+                              <span className={`px-2 py-1 text-xs rounded-full ${item.badge === 'New' || item.badge === 'Hot'
                                   ? 'bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400'
                                   : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
-                              }`}>
+                                }`}>
                                 {item.badge}
                               </span>
                             )}

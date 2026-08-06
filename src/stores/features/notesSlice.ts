@@ -5,7 +5,7 @@
  * Forward-Thinking: Extensible for AI summarization and quote extraction
  */
 
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit'
+import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { NotesService } from '../../utils/api'
 
 // ─── Types ────────────────────────────────────────────────────────────────

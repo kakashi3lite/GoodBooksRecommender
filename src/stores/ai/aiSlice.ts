@@ -5,7 +5,7 @@
  * Forward-Thinking: Extensible for streaming responses and multi-turn context
  */
 
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit'
+import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { AIService } from '../../utils/api'
 
 // ─── Types ────────────────────────────────────────────────────────────────

@@ -30,7 +30,7 @@ class ErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('Dashboard Error:', error, errorInfo)
     this.setState({ error, errorInfo })
-    
+
     // Forward-Thinking: Send to error reporting service
     // this.reportError(error, errorInfo)
   }
@@ -42,14 +42,14 @@ class ErrorBoundary extends Component<Props, State> {
           <div className="error-content">
             <h1>🚫 Something went wrong</h1>
             <p>The dashboard encountered an unexpected error.</p>
-            
+
             <details className="error-details">
               <summary>Error Details</summary>
               <pre>{this.state.error?.toString()}</pre>
               <pre>{this.state.errorInfo?.componentStack}</pre>
             </details>
-            
-            <button 
+
+            <button
               onClick={() => window.location.reload()}
               className="error-reload-btn"
             >

@@ -3,9 +3,9 @@
  * TypeScript wrapper for the Python generative recommendation system
  */
 
+import { aiService } from '../../services/AIApiService'
 import { GenerativeRecommendation, RecommendationContext } from '../../types/AIModels'
 import { Book } from '../../types/book'
-import { aiService } from '../../services/AIApiService'
 
 interface RecommendationOptions {
   maxRecommendations?: number
@@ -61,7 +61,7 @@ export class GenerativeRecommender {
     options: RecommendationOptions = {}
   ): Promise<GenerativeRecommendation[]> {
     const cacheKey = `user_${userId}_${JSON.stringify(options)}`
-    
+
     // Check cache first
     const cached = this.recommendationCache.get(cacheKey)
     if (cached !== undefined) {
@@ -78,20 +78,20 @@ export class GenerativeRecommender {
           excludeRead: true
         } : undefined
       }
-      
+
       const recommendations = await aiService.getRecommendations(request)
-      
+
       if (recommendations && recommendations.length > 0) {
         // Apply user preferences filtering
         const filtered = this.applyUserPreferences(recommendations, options.userPreferences)
-        
+
         // Cache the results
         this.recommendationCache.set(cacheKey, filtered)
         this.lastRecommendationTime = Date.now()
-        
+
         return filtered
       }
-      
+
       // Return fallback recommendations
       return this.getFallbackRecommendations(options)
     } catch (error) {
@@ -111,7 +111,7 @@ export class GenerativeRecommender {
     options: RecommendationOptions = {}
   ): Promise<GenerativeRecommendation[]> {
     const cacheKey = `book_${book.id}_${JSON.stringify(options)}`
-    
+
     if (this.recommendationCache.has(cacheKey)) {
       const cached = this.recommendationCache.get(cacheKey)
       if (cached !== undefined) {
@@ -135,7 +135,7 @@ export class GenerativeRecommender {
 
       const recommendations = await this.getContextualRecommendations(context, options)
       this.recommendationCache.set(cacheKey, recommendations)
-      
+
       return recommendations
     } catch (error) {
       console.warn('Error getting book-based recommendations:', error)
@@ -179,7 +179,7 @@ export class GenerativeRecommender {
     return recommendations.filter(rec => {
       // Filter by preferred genres
       if (preferences.genres && preferences.genres.length > 0) {
-        const hasPreferredGenre = preferences.genres.some(genre => 
+        const hasPreferredGenre = preferences.genres.some(genre =>
           rec.genres?.includes(genre)
         )
         if (!hasPreferredGenre) return false
@@ -187,7 +187,7 @@ export class GenerativeRecommender {
 
       // Exclude unwanted genres
       if (preferences.excludeGenres && preferences.excludeGenres.length > 0) {
-        const hasExcludedGenre = preferences.excludeGenres.some(genre => 
+        const hasExcludedGenre = preferences.excludeGenres.some(genre =>
           rec.genres?.includes(genre)
         )
         if (hasExcludedGenre) return false
@@ -195,7 +195,7 @@ export class GenerativeRecommender {
 
       // Filter by preferred authors
       if (preferences.authors && preferences.authors.length > 0) {
-        const hasPreferredAuthor = preferences.authors.some(author => 
+        const hasPreferredAuthor = preferences.authors.some(author =>
           rec.author?.toLowerCase().includes(author.toLowerCase())
         )
         if (!hasPreferredAuthor) return false
@@ -272,7 +272,7 @@ export class GenerativeRecommender {
     try {
       // This could be enhanced to fetch actual trending data
       const trending = await this.getFallbackRecommendations(options)
-      
+
       // Boost popularity scores for trending books
       return trending.map(rec => ({
         ...rec,
