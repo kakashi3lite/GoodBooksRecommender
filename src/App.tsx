@@ -5,7 +5,7 @@
 
 import { AnimatePresence, motion } from 'framer-motion'
 import { Menu, X } from 'lucide-react'
-import React, { Suspense, lazy, useEffect } from 'react'
+import React, { Suspense, lazy, useEffect, useMemo } from 'react'
 import { Toaster } from 'react-hot-toast'
 import { Route, Routes, useLocation } from 'react-router-dom'
 
@@ -37,6 +37,7 @@ const NewsDashboard = lazy(() => import('./components/News/NewsDashboard'))
 const Discover = lazy(() => import('./components/Features/Discover'))
 const CurrentlyReading = lazy(() => import('./components/Features/CurrentlyReading'))
 const Wishlist = lazy(() => import('./components/Features/Wishlist'))
+const BookDetail = lazy(() => import('./components/Features/BookDetail'))
 const OnboardingFlow = lazy(() => import('./components/Onboarding/OnboardingFlow'))
 
 // Animation variants
@@ -111,11 +112,22 @@ const AppShell: React.FC = () => {
 
   // Chain-of-Thought: Gate the app on account creation + taste onboarding so
   // every user gets personalized recommendations from their first session.
+  // A sessionStorage fallback lets readers who completed onboarding (or chose
+  // the guest path) in a storage-restricted browser (in-app, private mode)
+  // get straight in instead of being blocked by the gate on every reload.
   const isAuthenticated = useAppSelector((state) => state.user.isAuthenticated)
   const hasCompletedOnboarding = useAppSelector(
     (state) => state.user.hasCompletedOnboarding
   )
-  const showOnboarding = !isAuthenticated || !hasCompletedOnboarding
+  const onboardedThisSession = useMemo(() => {
+    try {
+      return sessionStorage.getItem('goodbooks_onboarded') === '1'
+    } catch {
+      return false
+    }
+  }, [])
+  const showOnboarding =
+    (!isAuthenticated || !hasCompletedOnboarding) && !onboardedThisSession
 
   // Chain-of-Thought: When a returning user is restored from localStorage, push
   // their account to the database (best-effort) so it stays in sync.
@@ -185,6 +197,7 @@ const AppShell: React.FC = () => {
                 <Route path="/discover" element={<Discover />} />
                 <Route path="/reading" element={<CurrentlyReading />} />
                 <Route path="/wishlist" element={<Wishlist />} />
+                <Route path="/book/:id" element={<BookDetail />} />
                 <Route path="/news" element={<NewsDashboard />} />
                 <Route path="/notes" element={<ReadingNotes />} />
                 <Route path="/community" element={<CommunityHub />} />

@@ -6,7 +6,9 @@
  */
 
 import { motion } from 'framer-motion';
+import { Share2 } from 'lucide-react';
 import React, { useState } from 'react';
+import toast from 'react-hot-toast';
 import BookCover from './BookCover';
 
 interface Book {
@@ -76,6 +78,39 @@ export const BookCard: React.FC<BookCardProps> = ({
     }
   };
 
+  /**
+   * Chain-of-Thought: Copy this book's shareable URL without bubbling into
+   * the card's own click handler (which navigates to the detail page).
+   * Uses the native share sheet on mobile when available, clipboard otherwise.
+   */
+  const handleShare = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const url = `${window.location.origin}/book/${encodeURIComponent(book.id)}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: book.title,
+          text: `Check out "${book.title}" by ${book.authors} on GoodBooks`,
+          url
+        });
+        return;
+      }
+    } catch {
+      // user dismissed the native sheet — fall through to clipboard copy
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      const ta = document.createElement('textarea');
+      ta.value = url;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
+    toast.success('Link copied — anyone can open it 📎');
+  };
+
   return (
     <motion.div
       className={`book-card ${isNew ? 'new-book' : ''}`}
@@ -90,6 +125,15 @@ export const BookCard: React.FC<BookCardProps> = ({
         perspective: "1000px"
       }}
     >
+      {/* Share button — copies the book's shareable URL */}
+      <button
+        type="button"
+        onClick={handleShare}
+        aria-label={`Share ${book.title}`}
+        className="absolute top-2 right-2 z-10 p-2 rounded-full bg-white/85 dark:bg-gray-800/85 backdrop-blur text-gray-500 dark:text-gray-300 shadow-md hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+      >
+        <Share2 className="w-4 h-4" />
+      </button>
       {/* New badge */}
       {isNew && (
         <motion.div

@@ -28,6 +28,7 @@ import {
     recommendSimilar
 } from '../_lib/recommender'
 import { type PagesEnv, type PagesFunction } from '../_lib/types'
+import { fetchWebTrending, resolveByIsbn, resolveByKey } from '../_lib/webCatalog'
 
 const json = (data: unknown, status = 200): Response =>
     new Response(JSON.stringify(data), {
@@ -131,6 +132,31 @@ export const onRequestGet: PagesFunction<PagesEnv> = async (context) => {
         })
 
         return json(results.map(toWire))
+    }
+
+    // GET /api/books/trending?limit=12 — live curation from open-source sites.
+    if (first === 'trending') {
+        const limit = asInt(url.searchParams.get('limit'), 12)
+        const trending = await fetchWebTrending(limit)
+        return json({ data: trending, source: 'web', count: trending.length })
+    }
+
+    // GET /api/books/resolve?isbn=... — auto-fetch a book shared by ISBN from
+    // open-source catalogs (Open Library) and return the normalized record.
+    // GET /api/books/resolve?key=ol:OL123W|gb:xyz — resolve by provider key.
+    if (first === 'resolve') {
+        const isbn = url.searchParams.get('isbn') ?? url.searchParams.get('id') ?? ''
+        const key = url.searchParams.get('key') ?? ''
+        let resolved: Book | null = null
+        if (isbn) resolved = await resolveByIsbn(isbn)
+        else if (key) resolved = await resolveByKey(key)
+        if (!resolved) {
+            return json(
+                { error: 'not_found', message: `Could not resolve ${isbn || key}` },
+                404
+            )
+        }
+        return json(resolved)
     }
 
     // GET /api/books/:id  and  /api/books/:id/similar

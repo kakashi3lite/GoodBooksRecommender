@@ -7,6 +7,7 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../hooks/redux';
 import {
   addToRecentRecommendations,
@@ -48,6 +49,7 @@ export const AIBookRecommendations: React.FC<RecommendationProps> = ({
   genres = []
 }) => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const theme = useAppSelector((state) => state.dashboard.theme);
   const performanceMode = useAppSelector((state) => state.dashboard.performanceMode);
 
@@ -104,12 +106,14 @@ export const AIBookRecommendations: React.FC<RecommendationProps> = ({
   }, [dispatch, userId, limit, strategy, genres.join(',')]);
 
   /**
-   * Chain-of-Thought: Track book interactions to improve recommendations
-   * Memory: Store interactions in Redux for persistence across sessions
+   * Chain-of-Thought: Track book interactions to improve recommendations.
+   * Every card opens its shareable /book/:id detail page (which auto-fetches
+   * the full record for external ids), so discovery always ends in action.
    */
   const handleBookClick = (book: Book) => {
     dispatch(addToRecentRecommendations(book));
     setViewedRecommendations((prev) => new Set([...prev, book.id]));
+    navigate(`/book/${encodeURIComponent(book.id)}`);
   };
 
   /**

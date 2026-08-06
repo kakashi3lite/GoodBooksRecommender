@@ -93,7 +93,38 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ initialEmail = '' }) =>
         )
         // Best-effort: persist the account to the database when configured
         dispatch(syncAccountToServer())
+        try {
+            sessionStorage.setItem('goodbooks_onboarded', '1')
+        } catch {
+            // sessionStorage unavailable — gate simply re-shows next load
+        }
         toast.success(`Welcome, ${name.trim().split(' ')[0]}! Your picks are ready 🎉`)
+    }
+
+    /**
+     * Guest path — never lock a reader out.
+     * Registers a lightweight guest profile (reducer falls back to sensible
+     * defaults) and completes onboarding so the full-screen gate opens and
+     * every button becomes interactive. A session flag also prevents the gate
+     * from reappearing on every reload when localStorage is unavailable
+     * (in-app browsers, private mode, cleared storage).
+     */
+    const skipForNow = () => {
+        dispatch(register({ name: '', email: '' }))
+        dispatch(
+            completeOnboarding({
+                favoriteGenres: ['Fiction', 'Science Fiction', 'Mystery'],
+                readingGoal: 24,
+                preferredFormats: ['ebook', 'print']
+            })
+        )
+        dispatch(syncAccountToServer())
+        try {
+            sessionStorage.setItem('goodbooks_onboarded', '1')
+        } catch {
+            // ignore — gate re-shows next load
+        }
+        toast.success('Exploring as guest — create an account anytime to save your picks 📚')
     }
 
     const next = () => {
@@ -193,6 +224,14 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ initialEmail = '' }) =>
                                         </div>
                                     ))}
                                 </div>
+
+                                <button
+                                    type="button"
+                                    onClick={skipForNow}
+                                    className="text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 underline underline-offset-4 transition-colors"
+                                >
+                                    Skip for now — explore as guest
+                                </button>
                             </motion.div>
                         )}
 
@@ -265,8 +304,8 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ initialEmail = '' }) =>
                                                 key={genre}
                                                 onClick={() => toggleGenre(genre)}
                                                 className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border text-sm font-medium transition-all ${active
-                                                        ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 shadow-sm'
-                                                        : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:border-blue-400'
+                                                    ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 shadow-sm'
+                                                    : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:border-blue-400'
                                                     }`}
                                                 aria-pressed={active}
                                             >
@@ -289,8 +328,8 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ initialEmail = '' }) =>
                                                 key={g.value}
                                                 onClick={() => setGoal(g.value)}
                                                 className={`px-2 py-2.5 rounded-xl border text-center transition-all ${goal === g.value
-                                                        ? 'border-purple-600 bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
-                                                        : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:border-purple-400'
+                                                    ? 'border-purple-600 bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+                                                    : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:border-purple-400'
                                                     }`}
                                             >
                                                 <span className="block font-bold text-lg leading-tight">{g.value}</span>
@@ -311,8 +350,8 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ initialEmail = '' }) =>
                                                 key={p.id}
                                                 onClick={() => setPace(p.id)}
                                                 className={`px-2 py-2.5 rounded-xl border text-center transition-all ${pace === p.id
-                                                        ? 'border-green-600 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300'
-                                                        : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:border-green-400'
+                                                    ? 'border-green-600 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                                                    : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:border-green-400'
                                                     }`}
                                             >
                                                 <span className="block text-sm font-semibold">{p.label}</span>
@@ -331,8 +370,8 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ initialEmail = '' }) =>
                     <button
                         onClick={() => setStep((s) => Math.max(0, s - 1))}
                         className={`inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${step === 0
-                                ? 'invisible'
-                                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                            ? 'invisible'
+                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
                             }`}
                     >
                         <ArrowLeft className="w-4 h-4" />

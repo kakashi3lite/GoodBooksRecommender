@@ -20,7 +20,9 @@ export const API_ENDPOINTS = {
     getById: (id: string) => `${API_BASE_URL}/api/books/${id}`,
     search: () => `${API_BASE_URL}/api/books/search`,
     recommend: () => `${API_BASE_URL}/api/books/recommend`,
-    similar: (id: string) => `${API_BASE_URL}/api/books/${id}/similar`
+    similar: (id: string) => `${API_BASE_URL}/api/books/${id}/similar`,
+    trending: () => `${API_BASE_URL}/api/books/trending`,
+    resolve: () => `${API_BASE_URL}/api/books/resolve`
   },
 
   // AI-powered features
