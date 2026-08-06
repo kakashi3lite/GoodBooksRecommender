@@ -14,7 +14,6 @@ import {
   BookOpen,
   ChevronDown,
   Clock,
-  Download,
   Eye,
   Filter,
   Heart,
@@ -29,6 +28,8 @@ import {
   Zap
 } from 'lucide-react'
 import React, { useEffect, useMemo, useState } from 'react'
+import toast from 'react-hot-toast'
+import { useNavigate } from 'react-router-dom'
 import { BOOK_CATALOG } from '../../data/bookCatalog'
 import { useAppDispatch, useAppSelector } from '../../hooks/redux'
 import { fetchRecommendations } from '../../stores/books/booksSlice'
@@ -43,6 +44,15 @@ import {
 import { toggleFavorite } from '../../stores/user/userSlice'
 import { dailyPickReason, getDailyPick } from '../../utils/dailyPick'
 import { describeProfile, getPersonalizedRecommendations } from '../../utils/personalization'
+import {
+  computePace,
+  distinctReadingDays,
+  estimateHoursLeft,
+  formatHours,
+  personaEmoji,
+  personaOf
+} from '../../utils/readingInsights'
+import AddBookModal from '../UI/AddBookModal'
 import BookCover from '../UI/BookCover'
 
 // Enhanced Animation Variants
@@ -81,6 +91,8 @@ const cardHoverVariants = {
 // Enhanced Dashboard Component with Modern UI Elements
 const Dashboard: React.FC = () => {
   const dispatch = useAppDispatch()
+  const navigate = useNavigate()
+  const [addBookOpen, setAddBookOpen] = useState(false)
   const storeRecommendations = useAppSelector((state) => state.books.recommendations)
   const storeLoading = useAppSelector((state) => state.books.loading)
   const userPreferences = useAppSelector((state) => state.user.preferences)
@@ -107,6 +119,51 @@ const Dashboard: React.FC = () => {
   const goalProgressPct =
     readingGoal > 0 ? Math.min(100, Math.round((finishedCount / readingGoal) * 100)) : 0
   const dailyPick = getDailyPick()
+
+  // ── Reader-bliss layer ────────────────────────────────────────────────────
+  // Identity + open-loop pull: the reader's persona is visible, and the
+  // in-progress book gets a "pick up where you left off" nudge with an honest
+  // time-to-finish estimate and a one-tap log (their own average session).
+  const pace = computePace(readingLog)
+  const persona = personaOf(pace.avgPagesPerSession, distinctReadingDays(readingLog), finishedCount)
+
+  const activeEntry = currentlyReading.find((e) => e.finishedAt === null)
+  const activeBook = activeEntry
+    ? storeRecommendations.find((b) => b.id === activeEntry.bookId) ??
+      BOOK_CATALOG.find((b) => b.id === activeEntry.bookId) ??
+      (activeEntry.book
+        ? {
+            id: activeEntry.bookId,
+            title: activeEntry.book.title,
+            authors: activeEntry.book.authors,
+            cover_url: activeEntry.book.cover_url,
+            genres: activeEntry.book.genres,
+            page_count: activeEntry.book.page_count
+          }
+        : null)
+    : null
+  const activePagesRead = activeEntry
+    ? readingLog.filter((l) => l.bookId === activeEntry.bookId).reduce((a, l) => a + l.pages, 0)
+    : 0
+  const activeHoursLeft =
+    activeBook && activeBook.page_count && activeBook.page_count > 0
+      ? formatHours(
+          estimateHoursLeft(Math.max(0, activeBook.page_count - activePagesRead), pace.avgPagesPerSession)
+        )
+      : null
+
+  const quickLogActive = () => {
+    if (!activeEntry) return
+    dispatch(logReadingSession({ bookId: activeEntry.bookId, pages: pace.avgPagesPerSession }))
+    toast.success(
+      `Logged your usual ${pace.avgPagesPerSession} pages — ${activeBook?.title ?? 'your book'} awaits! 🔥`
+    )
+  }
+
+  const refreshRecommendations = () => {
+    dispatch(fetchRecommendations({ limit: 6, strategy: 'hybrid' }))
+    toast.success('Refreshing your recommendations… ✨')
+  }
 
   const filterOptions = ['all', 'trending', 'recommended', 'new', 'favorites']
 
@@ -286,7 +343,12 @@ const Dashboard: React.FC = () => {
           <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-6 text-white">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-bold mb-2">Welcome back, {userProfile.name.split(' ')[0]}! 👋</h1>
+                <div className="flex items-center gap-2 mb-2">
+                  <h1 className="text-3xl font-bold">Welcome back, {userProfile.name.split(' ')[0]}! 👋</h1>
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/20 text-xs font-semibold" title="Your reading persona">
+                    {personaEmoji(persona)} {persona}
+                  </span>
+                </div>
                 <p className="text-blue-100 mb-4">
                   {readingGoal - finishedCount > 0
                     ? `You're ${readingGoal - finishedCount} book${readingGoal - finishedCount === 1 ? '' : 's'} away from your ${readingGoal}-book goal.`
@@ -294,11 +356,17 @@ const Dashboard: React.FC = () => {
                   {streak > 0 ? ` ${streak}-day streak, keep it going!` : ' Start a streak with a few pages today.'}
                 </p>
                 <div className="flex space-x-4">
-                  <button className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition-all duration-200 flex items-center space-x-2">
+                  <button
+                    onClick={() => setAddBookOpen(true)}
+                    className="bg-white/20 hover:bg-white/30 px-4 py-2.5 rounded-lg transition-all duration-200 flex items-center space-x-2"
+                  >
                     <BookmarkPlus className="w-4 h-4" />
                     <span>Add Book</span>
                   </button>
-                  <button className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition-all duration-200 flex items-center space-x-2">
+                  <button
+                    onClick={refreshRecommendations}
+                    className="bg-white/20 hover:bg-white/30 px-4 py-2.5 rounded-lg transition-all duration-200 flex items-center space-x-2"
+                  >
                     <Sparkles className="w-4 h-4" />
                     <span>Get Recommendation</span>
                   </button>
@@ -318,6 +386,59 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
         </motion.div>
+
+        {/* Continue Reading — the open loop that pulls readers back */}
+        {activeEntry && activeBook && (
+          <motion.div className="mb-8" variants={itemVariants}>
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-purple-200 dark:border-purple-900 p-4 flex items-center gap-4 shadow-md">
+              <BookCover
+                title={activeBook.title}
+                author={activeBook.authors}
+                genres={activeBook.genres}
+                seed={activeBook.id}
+                size="sm"
+                rounded="md"
+                showText={false}
+              />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs uppercase tracking-wider text-purple-600 dark:text-purple-400 font-semibold">
+                  ⏳ Pick up where you left off
+                </p>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white truncate">
+                  {activeBook.title}
+                </h3>
+                <div className="mt-1 flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
+                  <span>{activeEntry.progressPct}% done</span>
+                  {activeHoursLeft && (
+                    <span className="inline-flex items-center gap-1 text-purple-600 dark:text-purple-300">
+                      <Clock className="w-3.5 h-3.5" /> {activeHoursLeft} left at your pace
+                    </span>
+                  )}
+                </div>
+                <div className="mt-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 max-w-xs">
+                  <div
+                    className="h-1.5 rounded-full bg-gradient-to-r from-purple-500 to-blue-500"
+                    style={{ width: `${activeEntry.progressPct}%` }}
+                  />
+                </div>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-2 flex-shrink-0">
+                <button
+                  onClick={quickLogActive}
+                  className="px-4 py-2.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold transition-colors"
+                >
+                  ⚡ Log {pace.avgPagesPerSession} pg
+                </button>
+                <button
+                  onClick={() => navigate('/reading')}
+                  className="px-4 py-2.5 rounded-lg bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 text-sm font-semibold transition-colors"
+                >
+                  Open shelf
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
 
         {/* Today's Pick — a fresh daily reason to come back */}
         <motion.div className="mb-8" variants={itemVariants}>
@@ -404,7 +525,7 @@ const Dashboard: React.FC = () => {
               <button
                 key={filter}
                 onClick={() => setActiveFilter(filter)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${activeFilter === filter
+                className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${activeFilter === filter
                   ? 'bg-blue-600 text-white shadow-lg'
                   : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
                   }`}
@@ -417,7 +538,7 @@ const Dashboard: React.FC = () => {
           <div className="flex items-center space-x-4">
             <div className="relative">
               <button
-                className="flex items-center space-x-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                className="flex items-center space-x-2 px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               >
                 <Filter className="w-4 h-4" />
                 <span className="text-sm">{selectedGenre}</span>
@@ -447,11 +568,12 @@ const Dashboard: React.FC = () => {
                     )}
                   </h2>
                   <div className="flex space-x-2">
-                    <button className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
+                    <button
+                      onClick={refreshRecommendations}
+                      aria-label="Refresh recommendations"
+                      className="p-2.5 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                    >
                       <Eye className="w-4 h-4" />
-                    </button>
-                    <button className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
-                      <Download className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
@@ -536,7 +658,11 @@ const Dashboard: React.FC = () => {
                           <button
                             onClick={() => {
                               if (progressFor(book.id) > 0) {
-                                dispatch(logReadingSession({ bookId: book.id, pages: 20 }))
+                                // Honest quick log: the reader's own average session.
+                                dispatch(
+                                  logReadingSession({ bookId: book.id, pages: pace.avgPagesPerSession })
+                                )
+                                toast.success(`Logged ${pace.avgPagesPerSession} pages — keep it going! 📚`)
                               } else {
                                 dispatch(
                                   startReading({
@@ -552,19 +678,31 @@ const Dashboard: React.FC = () => {
                                 )
                               }
                             }}
-                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs py-2 px-3 rounded-lg transition-colors"
+                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs py-2.5 px-3 rounded-lg transition-colors"
                           >
-                            {progressFor(book.id) > 0 ? 'Log 20 pages' : 'Start Reading'}
+                            {progressFor(book.id) > 0
+                              ? `Log ${pace.avgPagesPerSession} pg`
+                              : 'Start Reading'}
                           </button>
                           <button
                             onClick={() => dispatch(toggleFavorite(book.id))}
-                            className={`p-2 transition-colors ${favorites.includes(book.id) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
+                            className={`p-2.5 transition-colors ${favorites.includes(book.id) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
                             aria-label="Toggle wishlist"
                           >
-                            <Heart className="w-3 h-3" />
+                            <Heart className="w-4 h-4" />
                           </button>
-                          <button className="p-2 text-gray-400 hover:text-blue-500 transition-colors">
-                            <Share className="w-3 h-3" />
+                          <button
+                            onClick={() => {
+                              const url = `${window.location.origin}/book/${encodeURIComponent(book.id)}`
+                              navigator.clipboard
+                                .writeText(url)
+                                .then(() => toast.success('Link copied — share it with a reader 📎'))
+                                .catch(() => toast.error('Could not copy the link'))
+                            }}
+                            className="p-2.5 text-gray-400 hover:text-blue-500 transition-colors"
+                            aria-label="Share book"
+                          >
+                            <Share className="w-4 h-4" />
                           </button>
                         </div>
                       </div>
@@ -645,15 +783,24 @@ const Dashboard: React.FC = () => {
                 Quick Actions
               </h3>
               <div className="space-y-3">
-                <button className="w-full flex items-center justify-center space-x-2 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+                <button
+                  onClick={() => setAddBookOpen(true)}
+                  className="w-full flex items-center justify-center space-x-2 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                >
                   <BookmarkPlus className="w-4 h-4" />
                   <span>Add New Book</span>
                 </button>
-                <button className="w-full flex items-center justify-center space-x-2 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
+                <button
+                  onClick={() => navigate('/analytics')}
+                  className="w-full flex items-center justify-center space-x-2 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+                >
                   <Target className="w-4 h-4" />
                   <span>Update Goal</span>
                 </button>
-                <button className="w-full flex items-center justify-center space-x-2 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors">
+                <button
+                  onClick={() => navigate('/community')}
+                  className="w-full flex items-center justify-center space-x-2 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+                >
                   <Users className="w-4 h-4" />
                   <span>Join Community</span>
                 </button>
@@ -694,6 +841,9 @@ const Dashboard: React.FC = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Add Book — web search modal */}
+      <AddBookModal open={addBookOpen} onClose={() => setAddBookOpen(false)} />
     </motion.div>
   )
 }

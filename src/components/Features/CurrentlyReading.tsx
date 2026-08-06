@@ -11,8 +11,9 @@
  */
 
 import { motion } from 'framer-motion'
-import { BookOpen, Check, Clock, Minus, Plus, Sparkles, Trash2 } from 'lucide-react'
+import { BookOpen, Check, Clock, Minus, Plus, Sparkles, Timer, Trash2, Zap } from 'lucide-react'
 import React, { useState } from 'react'
+import toast from 'react-hot-toast'
 import { BOOK_CATALOG } from '../../data/bookCatalog'
 import { useAppDispatch, useAppSelector } from '../../hooks/redux'
 import {
@@ -21,6 +22,11 @@ import {
     removeFromReading,
     type ReadingBookSnapshot
 } from '../../stores/reading/readingSlice'
+import {
+    computePace,
+    estimateHoursLeft,
+    formatHours
+} from '../../utils/readingInsights'
 import BookCompletionModal from '../UI/BookCompletionModal'
 import BookCover from '../UI/BookCover'
 
@@ -36,12 +42,17 @@ interface ShelfBook {
     authors: string
     cover_url: string
     genres?: string[]
+    page_count?: number
 }
 
 const CurrentlyReading: React.FC = () => {
     const dispatch = useAppDispatch()
     const currentlyReading = useAppSelector((state) => state.reading.currentlyReading)
+    const readingLog = useAppSelector((state) => state.reading.readingLog)
     const recommendations = useAppSelector((state) => state.books.recommendations)
+
+    // Real pace — used for the one-tap quick log (your own average, honest).
+    const { avgPagesPerSession } = computePace(readingLog)
 
     const [session, setSession] = useState<SessionState | null>(null)
     const [pagesInput, setPagesInput] = useState('')
@@ -64,7 +75,8 @@ const CurrentlyReading: React.FC = () => {
                 title: found.title,
                 authors: found.authors,
                 cover_url: found.cover_url ?? '',
-                genres: found.genres
+                genres: found.genres,
+                page_count: found.page_count
             }
         }
         if (snapshot) {
@@ -73,7 +85,8 @@ const CurrentlyReading: React.FC = () => {
                 title: snapshot.title,
                 authors: snapshot.authors,
                 cover_url: snapshot.cover_url,
-                genres: snapshot.genres
+                genres: snapshot.genres,
+                page_count: snapshot.page_count
             }
         }
         return { id: entryId, title: entryId, authors: 'Unknown', cover_url: '' }
@@ -93,7 +106,16 @@ const CurrentlyReading: React.FC = () => {
         const pages = Number(pagesInput)
         if (!Number.isFinite(pages) || pages <= 0) return
         dispatch(logReadingSession({ bookId: session.bookId, pages: Math.round(pages) }))
+        toast.success(`Logged ${Math.round(pages)} pages — keep it going! 📚`)
         setSession(null)
+    }
+
+    /** One-tap quick log using the reader's own average session (honest + fast). */
+    const quickLog = (bookId: string, bookTitle: string) => {
+        dispatch(logReadingSession({ bookId, pages: avgPagesPerSession }))
+        toast.success(
+            `Logged your usual ${avgPagesPerSession} pages — "${bookTitle}" is moving along 🔥`
+        )
     }
 
     const handleFinish = (book: ShelfBook) => {
@@ -134,6 +156,14 @@ const CurrentlyReading: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                         {shelf.map(({ entry, book }) => {
                             const done = entry.finishedAt !== null
+                            const pagesRead = readingLog
+                                .filter((l) => l.bookId === book.id)
+                                .reduce((a, l) => a + l.pages, 0)
+                            const pagesLeft = book.page_count
+                                ? Math.max(0, book.page_count - pagesRead)
+                                : 0
+                            const hoursLeft =
+                                pagesLeft > 0 ? formatHours(estimateHoursLeft(pagesLeft, avgPagesPerSession)) : null
                             return (
                                 <div
                                     key={book.id}
@@ -159,6 +189,11 @@ const CurrentlyReading: React.FC = () => {
                                             <Clock className="w-3.5 h-3.5 mr-1" />
                                             {done ? 'Finished 🎉' : `${entry.progressPct}% complete`}
                                         </span>
+                                        {!done && hoursLeft && (
+                                            <span className="flex items-center gap-1 text-xs text-purple-600 dark:text-purple-300">
+                                                <Timer className="w-3.5 h-3.5" /> {hoursLeft} left
+                                            </span>
+                                        )}
                                     </div>
                                     <div className="mt-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                                         <div
@@ -172,10 +207,17 @@ const CurrentlyReading: React.FC = () => {
                                         <div className="mt-5 space-y-2">
                                             <div className="flex gap-2">
                                                 <button
-                                                    onClick={() => openSession(book.id)}
+                                                    onClick={() => quickLog(book.id, book.title)}
                                                     className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors"
+                                                    aria-label={`Quick log ${avgPagesPerSession} pages`}
                                                 >
-                                                    <Plus className="w-4 h-4" /> Log pages
+                                                    <Zap className="w-4 h-4" /> Log {avgPagesPerSession} pg
+                                                </button>
+                                                <button
+                                                    onClick={() => openSession(book.id)}
+                                                    className="inline-flex items-center justify-center gap-1 py-2.5 px-3 rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-sm font-medium transition-colors"
+                                                >
+                                                    Custom
                                                 </button>
                                                 <button
                                                     onClick={() => handleFinish(book)}

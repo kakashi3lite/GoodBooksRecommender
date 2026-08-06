@@ -342,4 +342,22 @@ with zero external dependency.
 - Verified layouts at 390 / 834 / 1280 px: no horizontal overflow anywhere,
   mobile drawer + desktop sidebar both correct, dark mode glass header intact.
 
+## 14. Reader-Bliss UX Pass (2026-08-07)
+
+Psychology principles applied (all backed by the reader's OWN data — nothing
+fabricated):
+
+| Principle | Implementation |
+|---|---|
+| **Micro-commitments / friction** | One-tap quick log on `/reading`: "Log {your avg} pg" uses the reader's real average pages/session (`src/utils/readingInsights.ts` → `computePace`). The detailed editor (presets + custom) is one tap away. |
+| **Goal-gradient effect** | "Continue reading" open-loop card on the Dashboard when a book is in progress: title, % done, **~Xh left at your pace**, one-tap log + "Open shelf". |
+| **Zeigarnik (open loops)** | The continue card + `Timer` time-left chips on shelf cards pull readers back to unfinished books. |
+| **Identity-based habits** | Visible **persona chip** in the welcome header (Binge/Immersive/Consistent/Seasoned/Rising Reader) from real log patterns (`personaOf`). |
+| **Readability** | Relaxed line-height (1.65) on expanded blurbs, tightened title/author hierarchy in `book-card.css`. |
+| **No dead controls** | Wired the Dashboard's dead "Add Book" (opens modal), "Get Recommendation" (refetch + toast), "Update Goal" (→ /analytics), "Join Community" (→ /community), Eye (refresh), Share (copy link). Removed the dead Download. **Replaced the fake "Log 20 pages" with the adaptive one-tap log.** |
+
+New shared module: `src/utils/readingInsights.ts` (computePace,
+estimateHoursLeft, formatHours, personaOf, personaEmoji, distinctReadingDays).
+
+
 
