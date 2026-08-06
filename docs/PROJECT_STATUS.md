@@ -61,7 +61,9 @@
 
 | Feature | Frontend | Backend | Wired End-to-End? |
 |---|---|---|---|
-| Hybrid recommendations | ✅ UI + slice thunks | ⚠️ logic exists, wrong endpoint/contract | 🔴 No |
+| Account creation + taste onboarding | ✅ 3-step flow + localStorage | 🔴 /auth routes exist, not wired to UI | ✅ (client-side) |
+| Personalized recommendations | ✅ engine ranks catalog w/ reasons | 🔴 logic exists, wrong endpoint/contract | ✅ (client-side engine) |
+| Hybrid recommendations (server) | ✅ UI + slice thunks | ⚠️ logic exists, wrong endpoint/contract | 🔴 No |
 | Semantic/vector search | — | ⚠️ `BookVectorStore` exists, no endpoint | 🔴 No |
 | AI chat assistant | ✅ works w/ fallback | 🔴 no `/api/ai/*` | 🔴 No |
 | News dashboard | ✅ demo fallback | ⚠️ routers exist but dead (bug #1) | 🔴 No |

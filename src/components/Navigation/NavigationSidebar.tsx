@@ -30,7 +30,7 @@ import { NavLink } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../../hooks/redux'
 import { toggleAssistant } from '../../stores/ai/aiSlice'
 import { setTheme, toggleSidebar } from '../../stores/dashboard/dashboardSlice'
-import { resetUser } from '../../stores/user/userSlice'
+import { logout } from '../../stores/user/userSlice'
 
 // Navigation Items with Enhanced Icons and Descriptions
 const navigationItems = [
@@ -176,12 +176,20 @@ const NavigationSidebar: React.FC<NavigationSidebarProps> = ({ className = '' })
   // Memory: Sidebar collapse state lives in Redux so it persists across routes
   const isExpanded = useAppSelector((state) => state.dashboard.sidebarCollapsed) === false
   const theme = useAppSelector((state) => state.dashboard.theme)
+  const userProfile = useAppSelector((state) => state.user.profile)
+
+  const initials = userProfile.name
+    .split(' ')
+    .map((part) => part[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join('')
+    .toUpperCase()
 
   const handleCollapse = () => dispatch(toggleSidebar())
 
   /**
    * Chain-of-Thought: Route each user action to the correct Redux dispatch.
-   * Replaces the previous console.log stubs with real functionality.
    */
   const handleUserAction = (actionId: string) => {
     switch (actionId) {
@@ -190,7 +198,7 @@ const NavigationSidebar: React.FC<NavigationSidebarProps> = ({ className = '' })
         toast.success(theme === 'dark' ? 'Light mode enabled' : 'Dark mode enabled')
         break
       case 'profile':
-        toast('Profile page coming soon')
+        toast(`Signed in as ${userProfile.email}`)
         break
       case 'notifications':
         toast('You have 3 new notifications')
@@ -199,8 +207,8 @@ const NavigationSidebar: React.FC<NavigationSidebarProps> = ({ className = '' })
         toast('Settings coming soon')
         break
       case 'logout':
-        dispatch(resetUser())
-        toast.success('Signed out')
+        dispatch(logout())
+        toast.success('Signed out — see you soon!')
         break
       default:
         break
@@ -249,7 +257,7 @@ const NavigationSidebar: React.FC<NavigationSidebarProps> = ({ className = '' })
         <div className="p-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
-              <span className="text-white font-semibold text-sm">JD</span>
+              <span className="text-white font-semibold text-sm">{initials || 'R'}</span>
             </div>
             <AnimatePresence mode="wait">
               {isExpanded && (
@@ -259,11 +267,17 @@ const NavigationSidebar: React.FC<NavigationSidebarProps> = ({ className = '' })
                   exit={{ opacity: 0, x: -20 }}
                   className="flex-1 min-w-0"
                 >
-                  <h3 className="font-semibold text-gray-900 dark:text-white text-sm">John Doe</h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">john.doe@example.com</p>
+                  <h3 className="font-semibold text-gray-900 dark:text-white text-sm truncate">
+                    {userProfile.name}
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                    {userProfile.email}
+                  </p>
                   <div className="flex items-center mt-1">
                     <Star className="w-3 h-3 text-yellow-500 mr-1" />
-                    <span className="text-xs text-gray-600 dark:text-gray-400">Reading Level: Expert</span>
+                    <span className="text-xs text-gray-600 dark:text-gray-400 capitalize">
+                      Reading Level: {userProfile.readingLevel}
+                    </span>
                   </div>
                 </motion.div>
               )}

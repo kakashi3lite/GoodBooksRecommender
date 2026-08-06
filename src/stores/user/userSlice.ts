@@ -42,13 +42,68 @@ export interface UserSliceState {
   goals: ReadingGoal[]
   readingHistory: string[]
   favorites: string[]
+  /** True once the user has created an account (local, graceful). */
+  isAuthenticated: boolean
+  /** True once the taste-onboarding quiz is complete. */
+  hasCompletedOnboarding: boolean
   loading: boolean
   error: string | null
 }
 
+// ─── Persistence ─────────────────────────────────────────────────────────────
+
+const STORAGE_KEY = 'goodbooks_user'
+
+interface PersistedUser {
+  profile: UserProfile
+  preferences: UserPreferences
+  goals: ReadingGoal[]
+  readingHistory: string[]
+  favorites: string[]
+  isAuthenticated: boolean
+  hasCompletedOnboarding: boolean
+}
+
+const persistUser = (state: UserSliceState): void => {
+  try {
+    const payload: PersistedUser = {
+      profile: state.profile,
+      preferences: state.preferences,
+      goals: state.goals,
+      readingHistory: state.readingHistory,
+      favorites: state.favorites,
+      isAuthenticated: state.isAuthenticated,
+      hasCompletedOnboarding: state.hasCompletedOnboarding
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload))
+  } catch (error) {
+    console.warn('[User] Failed to persist user state:', error)
+  }
+}
+
+const restoreUser = (): Partial<UserSliceState> | undefined => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) return undefined
+    const parsed = JSON.parse(raw) as PersistedUser
+    return {
+      profile: parsed.profile,
+      preferences: parsed.preferences,
+      goals: parsed.goals ?? [],
+      readingHistory: parsed.readingHistory ?? [],
+      favorites: parsed.favorites ?? [],
+      isAuthenticated: parsed.isAuthenticated,
+      hasCompletedOnboarding: parsed.hasCompletedOnboarding
+    }
+  } catch (error) {
+    console.warn('[User] Failed to restore user state:', error)
+    return undefined
+  }
+}
+
 // ─── Initial State ────────────────────────────────────────────────────────
 
-const initialState: UserSliceState = {
+const baseInitialState: UserSliceState = {
   profile: {
     id: null,
     name: 'Reader',
@@ -56,18 +111,22 @@ const initialState: UserSliceState = {
     readingLevel: 'intermediate'
   },
   preferences: {
-    favoriteGenres: ['Fiction', 'Sci-Fi', 'Mystery'],
+    favoriteGenres: ['Fiction', 'Science Fiction', 'Mystery'],
     preferredFormats: ['ebook', 'print'],
-    readingGoal: 52,
+    readingGoal: 24,
     notifications: true,
     privacy: 'friends'
   },
   goals: [],
   readingHistory: [],
   favorites: [],
+  isAuthenticated: false,
+  hasCompletedOnboarding: false,
   loading: false,
   error: null
 }
+
+const initialState: UserSliceState = { ...baseInitialState, ...restoreUser() }
 
 // ─── Async Thunks ──────────────────────────────────────────────────────────
 
@@ -151,7 +210,74 @@ const userSlice = createSlice({
       ].slice(0, 100)
     },
 
-    resetUser: () => initialState
+    // ── Auth & Onboarding ────────────────────────────────────────────────
+
+    /**
+     * Create an account (local-first). The backend /auth/register endpoint
+     * will sync this in a later milestone; the app is fully usable today.
+     */
+    register: (state, action: PayloadAction<{ name: string; email: string }>) => {
+      state.profile = {
+        id: `u-${Date.now().toString(36)}`,
+        name: action.payload.name.trim() || 'Reader',
+        email: action.payload.email.trim() || 'reader@goodbooks.app',
+        readingLevel: 'novice'
+      }
+      state.isAuthenticated = true
+      state.error = null
+      persistUser(state)
+    },
+
+    /** Restore a previously created account. */
+    login: (state, action: PayloadAction<{ email: string; name?: string }>) => {
+      state.profile = {
+        ...state.profile,
+        name: action.payload.name ?? state.profile.name,
+        email: action.payload.email.trim() || state.profile.email
+      }
+      state.isAuthenticated = true
+      state.error = null
+      persistUser(state)
+    },
+
+    /** Sign out — returns to the onboarding/landing gate. */
+    logout: (state) => {
+      state.isAuthenticated = false
+      state.hasCompletedOnboarding = false
+      state.profile = { ...baseInitialState.profile }
+      state.preferences = { ...baseInitialState.preferences }
+      state.goals = []
+      state.readingHistory = []
+      state.favorites = []
+      try {
+        localStorage.removeItem(STORAGE_KEY)
+      } catch (error) {
+        console.warn('[User] Failed to clear persisted user:', error)
+      }
+    },
+
+    /**
+     * Complete the taste-onboarding quiz. Merges preferences so the
+     * personalization engine can rank recommendations immediately.
+     */
+    completeOnboarding: (
+      state,
+      action: PayloadAction<Partial<UserPreferences>>
+    ) => {
+      state.preferences = { ...state.preferences, ...action.payload }
+      state.hasCompletedOnboarding = true
+      state.error = null
+      persistUser(state)
+    },
+
+    resetUser: () => {
+      try {
+        localStorage.removeItem(STORAGE_KEY)
+      } catch (error) {
+        console.warn('[User] Failed to clear persisted user:', error)
+      }
+      return { ...baseInitialState }
+    }
   },
 
   extraReducers: (builder) => {
@@ -188,6 +314,10 @@ export const {
   removeGoal,
   toggleFavorite,
   addToHistory,
+  register,
+  login,
+  logout,
+  completeOnboarding,
   resetUser
 } = userSlice.actions
 
@@ -198,5 +328,9 @@ export const selectUserPreferences = (state: { user: UserSliceState }) => state.
 export const selectReadingGoals = (state: { user: UserSliceState }) => state.user.goals
 export const selectFavorites = (state: { user: UserSliceState }) => state.user.favorites
 export const selectUserLoading = (state: { user: UserSliceState }) => state.user.loading
+export const selectIsAuthenticated = (state: { user: UserSliceState }) =>
+  state.user.isAuthenticated
+export const selectHasCompletedOnboarding = (state: { user: UserSliceState }) =>
+  state.user.hasCompletedOnboarding
 
 export default userSlice.reducer

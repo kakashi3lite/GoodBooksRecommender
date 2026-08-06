@@ -31,6 +31,7 @@ import {
 import React, { useEffect, useMemo, useState } from 'react'
 import { useAppDispatch, useAppSelector } from '../../hooks/redux'
 import { fetchRecommendations } from '../../stores/books/booksSlice'
+import { describeProfile, getPersonalizedRecommendations } from '../../utils/personalization'
 
 // Enhanced Animation Variants
 const containerVariants = {
@@ -71,6 +72,11 @@ const Dashboard: React.FC = () => {
   const storeRecommendations = useAppSelector((state) => state.books.recommendations)
   const storeLoading = useAppSelector((state) => state.books.loading)
   const userPreferences = useAppSelector((state) => state.user.preferences)
+  const userProfile = useAppSelector((state) => state.user.profile)
+  const isAuthenticated = useAppSelector((state) => state.user.isAuthenticated)
+  const hasCompletedOnboarding = useAppSelector(
+    (state) => state.user.hasCompletedOnboarding
+  )
 
   const [activeFilter, setActiveFilter] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
@@ -206,26 +212,46 @@ const Dashboard: React.FC = () => {
   ]
 
   /**
-   * Chain-of-Thought: Merge real API recommendations with curated demo data.
-   * Memory: The dashboard stays populated even before the backend responds,
-   * then swaps in live recommendations the moment they arrive.
+   * Chain-of-Thought: Rank the catalog against the reader's taste profile.
+   * Priority: personalized picks (after onboarding) → live API → demo data.
+   * Memory: Personalization is instant and offline — no backend required.
    */
   const displayBooks = useMemo(() => {
-    if (storeRecommendations.length === 0) return recentBooks
+    if (isAuthenticated && hasCompletedOnboarding) {
+      return getPersonalizedRecommendations(userPreferences, { limit: 6 }).map(
+        (rec) => ({
+          id: Number(rec.book.id.replace('b-', '')),
+          title: rec.book.title,
+          author: rec.book.authors,
+          cover: '📖',
+          rating: rec.book.rating,
+          progress: 0,
+          genre: rec.book.genres[0] ?? 'Fiction',
+          trending: false,
+          timeToRead: `${Math.max(2, Math.round(rec.book.page_count / 120))}h`, 
+          description: rec.book.description,
+          reason: rec.reasons[0] ?? undefined
+        })
+      )
+    }
 
-    return storeRecommendations.map((book) => ({
-      id: Number(book.id),
-      title: book.title,
-      author: book.authors,
-      cover: '📖',
-      rating: book.rating,
-      progress: 0,
-      genre: book.genres?.[0] ?? 'Fiction',
-      trending: false,
-      timeToRead: '—',
-      description: book.description ?? 'A personalized recommendation for you.'
-    }))
-  }, [storeRecommendations])
+    if (storeRecommendations.length > 0) {
+      return storeRecommendations.map((book) => ({
+        id: Number(book.id),
+        title: book.title,
+        author: book.authors,
+        cover: '📖',
+        rating: book.rating,
+        progress: 0,
+        genre: book.genres?.[0] ?? 'Fiction',
+        trending: false,
+        timeToRead: '—',
+        description: book.description ?? 'A personalized recommendation for you.'
+      }))
+    }
+
+    return recentBooks
+  }, [isAuthenticated, hasCompletedOnboarding, userPreferences, storeRecommendations])
 
   useEffect(() => {
     // Chain-of-Thought: Fetch personalized recommendations from the backend on mount.
@@ -423,6 +449,12 @@ const Dashboard: React.FC = () => {
                     </button>
                   </div>
                 </div>
+                {isAuthenticated && hasCompletedOnboarding && (
+                  <p className="mt-2 text-xs text-blue-700 dark:text-blue-300 flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    Personalized for {userProfile.name} — {describeProfile(userPreferences)}
+                  </p>
+                )}
               </div>
 
               <div className="p-6">
@@ -452,6 +484,13 @@ const Dashboard: React.FC = () => {
                       <p className="text-gray-600 dark:text-gray-400 text-xs mb-3 line-clamp-2">
                         {book.description}
                       </p>
+
+                      {(book as any).reason && (
+                        <p className="text-[11px] text-purple-700 dark:text-purple-300 flex items-center gap-1 mb-3">
+                          <Sparkles className="w-3 h-3 flex-shrink-0" />
+                          {(book as any).reason}
+                        </p>
+                      )}
 
                       <div className="space-y-2">
                         <div className="flex items-center justify-between text-xs">

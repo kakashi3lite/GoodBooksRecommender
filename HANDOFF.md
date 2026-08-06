@@ -89,10 +89,16 @@ behind demo data. Fix the code before documenting "production ready."
 - **Frontend build & run**: `npm run dev` → all 8 routes render (Dashboard, Discover, Currently
   Reading, Wishlist, Analytics, Community, News) with sidebar, AI assistant chat, theme toggle,
   loading screen, error boundary, toasts.
+- **Account creation + taste onboarding**: first-run 3-step flow (welcome → create account →
+  taste quiz). After completing it, the app is **personalized** — see below.
+- **Personalized recommendations (client-side engine)**: `src/utils/personalization.ts` ranks
+  the curated catalog (`src/data/bookCatalog.ts`, 24 books) against the reader's taste profile
+  (genres, moods, goal) and shows a *reason* on every pick ("Because you love Science Fiction").
+  Works instantly, offline — no backend required. Account + preferences persist in localStorage.
 - **AI Assistant**: chat works even with the backend down (Cmd+K to toggle, quick actions,
   book-suggestion cards with ratings).
-- **Redux**: 7 slices, localStorage persistence (`dashboard_state`), typed hooks.
-- **Tooling**: Tailwind + PostCSS configured, Vitest (19 tests passing), ESLint (0 errors),
+- **Redux**: 7 slices, localStorage persistence (`dashboard_state` + `goodbooks_user`), typed hooks.
+- **Tooling**: Tailwind + PostCSS configured, Vitest (**37 tests** passing), ESLint (0 errors),
   `tsc --noEmit` clean, `npm run build` succeeds.
 - **Backend modules**: extensive (auth/RBAC, caching, FAISS vector store, A/B testing, privacy,
   monitoring) — but largely unverified at runtime and not wired to the frontend.

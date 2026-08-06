@@ -14,6 +14,7 @@ import {
   setError,
   setLoading
 } from '../../stores/books/booksSlice';
+import { getPersonalizedRecommendations } from '../../utils/personalization';
 import { BookCard } from '../UI/BookCard';
 import { ErrorMessage } from '../UI/ErrorMessage';
 import { LoadingSpinner } from '../UI/LoadingSpinner';
@@ -119,6 +120,33 @@ export const AIBookRecommendations: React.FC<RecommendationProps> = ({
   const storeLoading = useAppSelector((state) => state.books.loading);
   const storeError = useAppSelector((state) => state.books.error);
 
+  // Personalization source: account + onboarding unlocks taste-based ranking
+  const isAuthenticated = useAppSelector((state) => state.user.isAuthenticated);
+  const hasCompletedOnboarding = useAppSelector(
+    (state) => state.user.hasCompletedOnboarding
+  );
+  const userPreferences = useAppSelector((state) => state.user.preferences);
+
+  /**
+   * Chain-of-Thought: Rank the catalog against the reader's taste profile.
+   * This runs locally and instantly — no backend round-trip required.
+   */
+  const personalizedPicks = useMemo(() => {
+    if (!isAuthenticated || !hasCompletedOnboarding) return [] as Book[];
+    return getPersonalizedRecommendations(userPreferences, { limit }).map((rec) => ({
+      id: rec.book.id,
+      title: rec.book.title,
+      authors: rec.book.authors,
+      cover_url: rec.book.cover_url,
+      rating: rec.book.rating,
+      genres: rec.book.genres,
+      published_year: rec.book.published_year,
+      description: rec.book.description,
+      ai_recommendation_score: rec.score,
+      ai_explanation: rec.reasons[0]
+    }));
+  }, [isAuthenticated, hasCompletedOnboarding, userPreferences, limit]);
+
   // Local mirror so the grid re-renders cheaply and we can track viewed items
   const [viewedRecommendations, setViewedRecommendations] = useState<Set<string>>(new Set());
   // When the backend is unreachable we show curated demo picks instead of a raw error
@@ -161,9 +189,10 @@ export const AIBookRecommendations: React.FC<RecommendationProps> = ({
     return 4;
   }, []);
 
-  // Error state (prefer store error, fall back to local)
+  // Error state (prefer store error, fall back to local) — skipped when
+  // personalized picks are already available.
   const displayError = storeError ?? null;
-  if (displayError && !showFallback) {
+  if (personalizedPicks.length === 0 && displayError && !showFallback) {
     // Graceful degradation: offer curated demo picks instead of a dead end.
     return (
       <div className="recommendations-fallback">
@@ -180,13 +209,17 @@ export const AIBookRecommendations: React.FC<RecommendationProps> = ({
     );
   }
 
-  // Loading state (skip when already showing fallback picks)
-  if (!showFallback && (storeLoading || (storeRecommendations.length === 0 && !storeError))) {
+  // Loading state (skip when already showing fallback or personalized picks)
+  if (
+    personalizedPicks.length === 0 &&
+    !showFallback &&
+    (storeLoading || (storeRecommendations.length === 0 && !storeError))
+  ) {
     return <LoadingSpinner message="Finding your perfect reads..." />;
   }
 
-  // Empty state (only when not in fallback mode)
-  if (storeRecommendations.length === 0 && !showFallback) {
+  // Empty state (only when not in fallback mode and no personalized picks)
+  if (personalizedPicks.length === 0 && storeRecommendations.length === 0 && !showFallback) {
     return (
       <div className="ai-book-recommendations">
         <h2 className="recommendations-title">AI-Powered Book Recommendations</h2>
@@ -202,13 +235,23 @@ export const AIBookRecommendations: React.FC<RecommendationProps> = ({
    * Chain-of-Thought: Responsive CSS grid — avoids an uninstalled virtualization
    * dependency while keeping DOM size manageable for typical result sets.
    */
-  const booksToRender = showFallback && storeRecommendations.length === 0
-    ? FALLBACK_BOOKS
-    : (storeRecommendations as unknown as Book[]);
+  const booksToRender =
+    personalizedPicks.length > 0
+      ? personalizedPicks
+      : showFallback && storeRecommendations.length === 0
+        ? FALLBACK_BOOKS
+        : (storeRecommendations as unknown as Book[]);
 
   return (
     <div className={`ai-book-recommendations theme-${theme} performance-${performanceMode}`}>
-      <h2 className="recommendations-title">AI-Powered Book Recommendations</h2>
+      <div className="flex items-center gap-2">
+        <h2 className="recommendations-title">AI-Powered Book Recommendations</h2>
+        {personalizedPicks.length > 0 && (
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300">
+            ✨ Personalized for you
+          </span>
+        )}
+      </div>
 
       {showFallback && storeRecommendations.length === 0 && (
         <p className="recommendation-fallback-note">

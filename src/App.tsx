@@ -33,6 +33,7 @@ const NewsDashboard = lazy(() => import('./components/News/NewsDashboard'))
 const Discover = lazy(() => import('./components/Features/Discover'))
 const CurrentlyReading = lazy(() => import('./components/Features/CurrentlyReading'))
 const Wishlist = lazy(() => import('./components/Features/Wishlist'))
+const OnboardingFlow = lazy(() => import('./components/Onboarding/OnboardingFlow'))
 
 // Animation variants
 const fadeInOut = {
@@ -100,6 +101,14 @@ const AppShell: React.FC = () => {
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [dispatch])
+
+  // Chain-of-Thought: Gate the app on account creation + taste onboarding so
+  // every user gets personalized recommendations from their first session.
+  const isAuthenticated = useAppSelector((state) => state.user.isAuthenticated)
+  const hasCompletedOnboarding = useAppSelector(
+    (state) => state.user.hasCompletedOnboarding
+  )
+  const showOnboarding = !isAuthenticated || !hasCompletedOnboarding
 
   if (!isInitialized) {
     return <LoadingScreen message="Initializing AI systems..." />
@@ -172,6 +181,13 @@ const AppShell: React.FC = () => {
 
       {/* Performance panel (conditionally rendered via Redux state) */}
       {performancePanelVisible && <PerformancePanel />}
+
+      {/* Onboarding gate — first-run account creation + taste quiz */}
+      {showOnboarding && (
+        <Suspense fallback={null}>
+          <OnboardingFlow />
+        </Suspense>
+      )}
     </div>
   )
 }
