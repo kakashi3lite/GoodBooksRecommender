@@ -7,8 +7,8 @@
  * Response: { reply, bookSuggestions?: [{id,title,authors,cover_url?,rating?}],
  *             model }
  *
- * Uses the LLM when configured (AI_PROVIDER/AI_API_KEY/AI_MODEL) and falls
- * back to the local hybrid engine otherwise — always returns real picks.
+ * Uses the LLM when configured (OPENAI_API_KEY/AI_MODEL) and falls back to
+ * the local hybrid engine otherwise — always returns real picks.
  */
 import { handleChat } from '../_lib/ai'
 import { type PagesFunction } from '../_lib/types'

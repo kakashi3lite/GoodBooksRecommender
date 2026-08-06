@@ -22,10 +22,11 @@ pages_build_output_dir = "./dist"
 #                                 repo or the browser bundle
 #     SUPABASE_JWKS_URL           https://<ref>.supabase.co/auth/v1/.well-known/jwks.json
 #                                 (for verifying user JWTs server-side)
-#     AI_PROVIDER                 openai | (any OpenAI-compatible)
-#     AI_API_KEY                  optional LLM key for /api/ai/chat (secret)
-#     AI_MODEL                    e.g. gpt-4o-mini
-#     AI_BASE_URL                 optional custom endpoint for AI_PROVIDER
+#     AI_PROVIDER                 openai (default) | any OpenAI-compatible
+#     OPENAI_API_KEY              LLM key for /api/ai/chat (secret). Live
+#                                 provider: MiniMax (api.minimax.io)
+#     AI_MODEL                    e.g. gpt-4o-mini, MiniMax-M2
+#     AI_BASE_URL                 custom endpoint, e.g. https://api.minimax.io/v1
 #
 #   Build-time (baked into the browser bundle):
 #     VITE_SUPABASE_URL         same URL (accounts + realtime)

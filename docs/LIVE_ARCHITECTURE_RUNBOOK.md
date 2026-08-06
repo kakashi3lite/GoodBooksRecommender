@@ -19,11 +19,11 @@
 | Database | Supabase `rqorywqrimcsgekmsxmj` | Schema **not yet applied** — API currently serves the embedded catalog (`source: "catalog"`) |
 | Live data | Open Library + Google Books | Trending, ISBN/key resolution, book covers (all key-less) |
 | News | Google News RSS → JSON | `functions/api/news/[[route]].ts` |
-| AI chat | OpenAI-compatible (env-gated) | `AI_PROVIDER`, `AI_API_KEY`, `AI_MODEL` as Cloudflare secrets |
+| AI chat | OpenAI-compatible (env-gated) | MiniMax: `OPENAI_API_KEY`, `AI_BASE_URL`, `AI_MODEL` as Cloudflare secrets |
 
 ### Env vars on the Pages project
-- Plain: `SUPABASE_URL`, `SUPABASE_ANON_KEY` (publishable), `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `AI_PROVIDER`, `AI_MODEL`
-- **Secret**: `SUPABASE_SERVICE_ROLE_KEY`, `AI_API_KEY`
+- Plain: `SUPABASE_URL`, `SUPABASE_ANON_KEY` (publishable), `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `AI_PROVIDER`
+- **Secret**: `SUPABASE_SERVICE_ROLE_KEY`, `OPENAI_API_KEY`, `AI_BASE_URL` (`https://api.minimax.io/v1`), `AI_MODEL` (`MiniMax-M2`)
 - `VITE_*` vars are baked at **build time** (see runbook §8). Never commit secrets.
 
 ---
@@ -468,11 +468,12 @@ An automated sweep hit every endpoint with valid + edge-case inputs. Result:
    `find -delete` step is mandatory immediately before every deploy; they can
    reappear after editing (macOS creates them).
 
-**Note on AI chat**: the live model reports `goodbooks-hybrid`, meaning the
-LLM (`AI_API_KEY`/`AI_MODEL`) is not active on the production project — chat
-gracefully uses the local hybrid engine with real picks. To enable the LLM,
-add `AI_API_KEY` (+ `AI_MODEL`) as a secret on the Pages project; no code
-change needed.
+**Note on AI chat**: the LLM layer is OpenAI-compatible and the live provider
+is **MiniMax** — `OPENAI_API_KEY` = MiniMax key (secret), `AI_BASE_URL` =
+`https://api.minimax.io/v1`, `AI_MODEL` = `MiniMax-M2`. Chat falls back to the
+local hybrid engine (real picks, `model: goodbooks-hybrid`) whenever the LLM
+is unreachable. A bounded retry (2 retries with backoff) is in place so
+transient 429/5xx don't drop the reply.
 
 
 

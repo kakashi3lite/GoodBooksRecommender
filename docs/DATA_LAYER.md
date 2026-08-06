@@ -47,7 +47,7 @@ explainable, real-time, cheap.
 3. **MMR diversity** — re-ranks personalized picks so the top list isn't
    repetitive (λ = 0.3 similarity penalty).
 4. **LLM layer (optional, env-gated)** — only for conversational chat
-   (`AI_PROVIDER` + `AI_API_KEY` + `AI_MODEL`). Never for ranking.
+   (`OPENAI_API_KEY` + `AI_BASE_URL` + `AI_MODEL`). Never for ranking.
 
 ## API Reference
 
@@ -93,10 +93,12 @@ serves the embedded curated catalog (same shape, always works).
    - `VITE_SUPABASE_ANON_KEY` = Settings → API → anon (public, browser-safe)
 4. Redeploy. `/api/books` now reports `source: "database"`.
 
-Optional AI chat upgrade (adds an LLM to the chat assistant):
-- `AI_PROVIDER` = `openai` (or any OpenAI-compatible endpoint via `AI_BASE_URL`)
-- `AI_API_KEY` = your key
-- `AI_MODEL` = e.g. `gpt-4o-mini` (default)
+Optional AI chat upgrade (adds an LLM to the chat assistant — any
+OpenAI-compatible provider):
+- `OPENAI_API_KEY` = provider key — set as a Cloudflare **secret**
+- `AI_BASE_URL` = provider base URL, e.g. `https://api.minimax.io/v1` (MiniMax)
+- `AI_MODEL` = e.g. `MiniMax-M2` (current live provider) or `gpt-4o-mini`
+- `AI_PROVIDER` = optional, for custom providers
 
 **Data tables** (see `docs/supabase/schema.sql`): `books`, `profiles`,
 `user_preferences`, `reading_activity` (real-time feed), `recommendations_log`
