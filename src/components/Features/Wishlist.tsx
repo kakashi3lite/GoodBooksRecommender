@@ -7,6 +7,7 @@
 import { motion } from 'framer-motion'
 import { Heart } from 'lucide-react'
 import React from 'react'
+import { BOOK_CATALOG } from '../../data/bookCatalog'
 import { useAppDispatch, useAppSelector } from '../../hooks/redux'
 import { toggleFavorite } from '../../stores/user/userSlice'
 import BookCover from '../UI/BookCover'
@@ -20,8 +21,14 @@ const Wishlist: React.FC = () => {
     const favorites = useAppSelector((state) => state.user.favorites)
     const recommendations = useAppSelector((state) => state.books.recommendations)
 
-    // Resolve favorite IDs against known books
-    const wishlistBooks = recommendations.filter((book) => favorites.includes(book.id))
+    // Resolve favorite IDs against live API books, then the curated catalog —
+    // so the shelf always renders, even before the API responds.
+    const byId = (id: string) =>
+        recommendations.find((b) => b.id === id) ?? BOOK_CATALOG.find((b) => b.id === id)
+
+    const wishlistBooks = favorites
+        .map((id) => byId(id))
+        .filter((b): b is NonNullable<typeof b> => Boolean(b))
 
     return (
         <motion.div

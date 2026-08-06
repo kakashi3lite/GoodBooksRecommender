@@ -296,7 +296,7 @@
    =================================== */
 
 /* Smooth chart animations */
-.recharts-area, 
+.recharts-area,
 .recharts-line,
 .recharts-bar {
   transition: opacity var(--animation-medium);
@@ -376,11 +376,25 @@
   transform: scale(1.15);
 }
 
-.heat-cell[data-level="0"] { background-color: var(--bg-tertiary); }
-.heat-cell[data-level="1"] { background-color: var(--ai-level-1); }
-.heat-cell[data-level="2"] { background-color: var(--ai-level-2); }
-.heat-cell[data-level="3"] { background-color: var(--ai-level-3); }
-.heat-cell[data-level="4"] { background-color: var(--ai-level-4); }
+.heat-cell[data-level="0"] {
+  background-color: var(--bg-tertiary);
+}
+
+.heat-cell[data-level="1"] {
+  background-color: var(--ai-level-1);
+}
+
+.heat-cell[data-level="2"] {
+  background-color: var(--ai-level-2);
+}
+
+.heat-cell[data-level="3"] {
+  background-color: var(--ai-level-3);
+}
+
+.heat-cell[data-level="4"] {
+  background-color: var(--ai-level-4);
+}
 
 /* ===================================
    📱 IMPROVED TABLET RESPONSIVENESS
@@ -391,36 +405,36 @@
   .analytics-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .metric-group {
     grid-template-columns: repeat(2, 1fr);
     grid-gap: var(--space-3);
   }
-  
+
   .analytics-card {
     padding: var(--space-3);
   }
-  
+
   .analytics-title {
     font-size: var(--font-size-lg);
   }
-  
+
   /* Improve chart height for better readability */
   .metric-chart {
     margin: var(--space-3) 0;
   }
-  
+
   .metric-chart .recharts-responsive-container {
     height: 130px !important;
   }
-  
+
   /* Create two-column layout for genre items */
   .genre-list {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: var(--space-3);
   }
-  
+
   .genre-item {
     grid-template-columns: minmax(70px, auto) 1fr 30px;
     gap: var(--space-2);
@@ -436,15 +450,15 @@
   .analytics-card {
     border: 2px solid var(--text-primary);
   }
-  
+
   .circle-fill {
     stroke-width: 4.5;
   }
-  
+
   .personalization-score {
     height: 12px;
   }
-  
+
   .genre-bar-container {
     height: 12px;
     border: 1px solid var(--text-primary);
@@ -456,14 +470,14 @@
   .analytics-card:hover {
     transform: none;
   }
-  
+
   .score-fill,
   .genre-bar,
   .circle-fill {
     transition: none;
   }
-  
-  .recharts-area, 
+
+  .recharts-area,
   .recharts-line,
   .recharts-bar {
     transition: none;
@@ -477,14 +491,14 @@
     box-shadow: none;
     break-inside: avoid;
   }
-  
+
   .analytics-card {
     break-inside: avoid;
     page-break-inside: avoid;
     box-shadow: none;
     border: 1px solid #ddd;
   }
-  
+
   .analytics-grid {
     display: block;
   }

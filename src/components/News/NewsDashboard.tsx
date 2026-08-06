@@ -15,6 +15,7 @@ interface NewsStory {
   preview?: string
   credibility_score?: number
   topics?: string[]
+  link?: string
 }
 
 interface NewsDashboardProps {
@@ -54,71 +55,23 @@ const NewsDashboard: React.FC<NewsDashboardProps> = ({ className = "" }) => {
         published_at: story.published_at || new Date().toISOString(),
         preview: story.summary || 'Click to expand and see AI-powered analysis...',
         credibility_score: story.credibility_score,
-        topics: story.topics
+        topics: story.topics,
+        link: story.link
       }))
 
       setStories(newsStories)
-      
+
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load news'
       setError(errorMessage)
       console.error('News fetch failed:', err)
-      
-      // Fallback to demo data
-      setStories(getDemoStories())
+
+      // No fabricated fallback — show the empty/offline state instead.
+      setStories([])
     } finally {
       setIsLoading(false)
     }
   }, [])
-
-  // Demo data for development/fallback
-  const getDemoStories = (): NewsStory[] => [
-    {
-      id: "demo-1",
-      title: "Climate Deal Signed by 30 Countries",
-      source: "Reuters",
-      published_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-      preview: "International agreement aims to reduce global emissions by 40% by 2030...",
-      credibility_score: 0.92,
-      topics: ["climate", "environment", "politics"]
-    },
-    {
-      id: "demo-2", 
-      title: "Tech Layoffs Surge in 2025 Q2",
-      source: "TechCrunch",
-      published_at: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-      preview: "Major technology companies announce workforce reductions as AI automation accelerates...",
-      credibility_score: 0.88,
-      topics: ["technology", "business", "economy"]
-    },
-    {
-      id: "demo-3",
-      title: "Breakthrough in Quantum Computing Research",
-      source: "Science Daily",
-      published_at: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-      preview: "Scientists achieve 99.9% fidelity in quantum error correction, paving way for practical applications...",
-      credibility_score: 0.95,
-      topics: ["science", "technology", "research"]
-    },
-    {
-      id: "demo-4",
-      title: "Global Health Initiative Launches",
-      source: "WHO",
-      published_at: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(),
-      preview: "World Health Organization announces new program to combat infectious diseases in developing nations...",
-      credibility_score: 0.97,
-      topics: ["health", "global", "medicine"]
-    },
-    {
-      id: "demo-5",
-      title: "Artificial Intelligence in Education Study Results",
-      source: "Nature",
-      published_at: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
-      preview: "Comprehensive analysis shows 34% improvement in learning outcomes with AI-assisted tutoring...",
-      credibility_score: 0.94,
-      topics: ["education", "ai", "technology", "research"]
-    }
-  ]
 
   // Handle story expansion
   const handleStoryExpand = useCallback((articleId: string) => {
@@ -200,7 +153,7 @@ const NewsDashboard: React.FC<NewsDashboardProps> = ({ className = "" }) => {
             <span className="font-medium">Failed to load news</span>
           </div>
           <p className="text-red-600 text-sm mt-1">{error}</p>
-          <p className="text-red-600 text-sm">Showing demo data instead.</p>
+          <p className="text-red-600 text-sm">Check back in a moment — no demo stories are shown.</p>
         </motion.div>
       )}
 
@@ -265,7 +218,7 @@ const NewsDashboard: React.FC<NewsDashboardProps> = ({ className = "" }) => {
           <span>⚡ Real-time Updates</span>
         </div>
         <p className="mt-2">
-          Powered by GoodBooks AI • News data refreshed every 30 minutes
+          Powered by GoodBooks AI • Real headlines from Google News • Refresh for the latest
         </p>
       </motion.div>
     </div>

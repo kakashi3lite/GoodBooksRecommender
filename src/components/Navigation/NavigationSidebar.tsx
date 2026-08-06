@@ -57,8 +57,8 @@ const navigationItems = [
     path: '/reading',
     icon: BookOpen,
     label: 'Currently Reading',
-    description: '3 books in progress',
-    badge: '3',
+    description: 'Pick up where you left off',
+    badge: null,
     color: 'text-orange-600'
   },
   {
@@ -67,7 +67,7 @@ const navigationItems = [
     icon: Heart,
     label: 'Wishlist',
     description: 'Books to read later',
-    badge: '12',
+    badge: null,
     color: 'text-red-600'
   },
   {
@@ -85,7 +85,7 @@ const navigationItems = [
     icon: Users,
     label: 'Community',
     description: 'Connect with readers',
-    badge: '5',
+    badge: null,
     color: 'text-indigo-600'
   },
   {
@@ -94,7 +94,7 @@ const navigationItems = [
     icon: Newspaper,
     label: 'Book News',
     description: 'Latest literary updates',
-    badge: 'Hot',
+    badge: null,
     color: 'text-yellow-600'
   }
 ]
@@ -177,6 +177,22 @@ const NavigationSidebar: React.FC<NavigationSidebarProps> = ({ className = '' })
   const isExpanded = useAppSelector((state) => state.dashboard.sidebarCollapsed) === false
   const theme = useAppSelector((state) => state.dashboard.theme)
   const userProfile = useAppSelector((state) => state.user.profile)
+
+  // Real counts for badges + quick stats (persisted reading activity).
+  const currentlyReadingCount = useAppSelector((state) => state.reading.currentlyReading.length)
+  const favoritesCount = useAppSelector((state) => state.user.favorites.length)
+  const finishedCount = useAppSelector(
+    (state) => state.reading.currentlyReading.filter((e) => e.finishedAt !== null).length
+  )
+  const readingGoal = useAppSelector((state) => state.user.preferences.readingGoal)
+  const goalProgressPct =
+    readingGoal > 0 ? Math.min(100, Math.round((finishedCount / readingGoal) * 100)) : 0
+
+  const badgeFor = (id: string): string | null => {
+    if (id === 'reading') return currentlyReadingCount > 0 ? String(currentlyReadingCount) : null
+    if (id === 'wishlist') return favoritesCount > 0 ? String(favoritesCount) : null
+    return null
+  }
 
   const initials = userProfile.name
     .split(' ')
@@ -296,14 +312,14 @@ const NavigationSidebar: React.FC<NavigationSidebarProps> = ({ className = '' })
               <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3">
                 <div className="flex items-center justify-between">
                   <BookOpen className="w-4 h-4 text-blue-600" />
-                  <span className="text-xl font-bold text-blue-600">24</span>
+                  <span className="text-xl font-bold text-blue-600">{finishedCount}</span>
                 </div>
-                <p className="text-xs text-blue-600 mt-1">Books Read</p>
+                <p className="text-xs text-blue-600 mt-1">Books Finished</p>
               </div>
               <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3">
                 <div className="flex items-center justify-between">
                   <Target className="w-4 h-4 text-green-600" />
-                  <span className="text-xl font-bold text-green-600">68%</span>
+                  <span className="text-xl font-bold text-green-600">{goalProgressPct}%</span>
                 </div>
                 <p className="text-xs text-green-600 mt-1">Goal Progress</p>
               </div>
@@ -345,14 +361,14 @@ const NavigationSidebar: React.FC<NavigationSidebarProps> = ({ className = '' })
                               <p className="font-medium text-sm">{item.label}</p>
                               <p className="text-xs opacity-70">{item.description}</p>
                             </div>
-                            {item.badge && (
-                              <span className={`px-2 py-1 text-xs rounded-full ${item.badge === 'New' || item.badge === 'Hot'
-                                ? 'bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400'
-                                : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
-                                }`}>
-                                {item.badge}
-                              </span>
-                            )}
+                            {(() => {
+                              const badge = badgeFor(item.id) ?? item.badge
+                              return badge ? (
+                                <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400">
+                                  {badge}
+                                </span>
+                              ) : null
+                            })()}
                           </div>
                         </motion.div>
                       )}

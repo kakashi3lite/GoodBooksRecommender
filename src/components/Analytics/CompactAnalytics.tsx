@@ -13,11 +13,11 @@
 import { motion } from 'framer-motion'
 import React, { useEffect, useState } from 'react'
 import { useAppDispatch, useAppSelector } from '../../hooks/redux'
+import { selectBookCache } from '../../stores/books/booksSlice'
 import {
     selectPerformanceMetrics,
     trackPerformanceMetrics
 } from '../../stores/dashboard/dashboardSlice'
-import { selectBookCache } from '../../stores/books/booksSlice'
 
 interface GenreBar {
     name: string

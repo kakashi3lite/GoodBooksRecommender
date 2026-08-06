@@ -12,6 +12,7 @@ import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux'
 import aiSlice from './ai/aiSlice'
 import booksSlice from './books/booksSlice'
 import dashboardSlice from './dashboard/dashboardSlice'
+import readingSlice from './reading/readingSlice'
 import userSlice from './user/userSlice'
 
 // Forward-Thinking: Future feature slices
@@ -29,6 +30,7 @@ export const store = configureStore({
     books: booksSlice,
     ai: aiSlice,
     user: userSlice,
+    reading: readingSlice,
     // Forward-Thinking: Future features
     notes: notesSlice,
     community: communitySlice,

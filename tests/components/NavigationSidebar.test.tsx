@@ -11,6 +11,7 @@ import { describe, expect, it } from 'vitest'
 import NavigationSidebar from '../../src/components/Navigation/NavigationSidebar'
 import aiReducer from '../../src/stores/ai/aiSlice'
 import dashboardReducer from '../../src/stores/dashboard/dashboardSlice'
+import readingReducer from '../../src/stores/reading/readingSlice'
 import userReducer from '../../src/stores/user/userSlice'
 
 const createStore = () =>
@@ -18,7 +19,8 @@ const createStore = () =>
         reducer: {
             dashboard: dashboardReducer,
             ai: aiReducer,
-            user: userReducer
+            user: userReducer,
+            reading: readingReducer
         }
     })
 

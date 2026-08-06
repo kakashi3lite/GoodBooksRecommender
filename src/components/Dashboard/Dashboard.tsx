@@ -29,8 +29,19 @@ import {
   Zap
 } from 'lucide-react'
 import React, { useEffect, useMemo, useState } from 'react'
+import { BOOK_CATALOG } from '../../data/bookCatalog'
 import { useAppDispatch, useAppSelector } from '../../hooks/redux'
 import { fetchRecommendations } from '../../stores/books/booksSlice'
+import {
+  booksFinished,
+  computeStreak,
+  logReadingSession,
+  pagesAllTime,
+  pagesThisMonth,
+  startReading
+} from '../../stores/reading/readingSlice'
+import { toggleFavorite } from '../../stores/user/userSlice'
+import { dailyPickReason, getDailyPick } from '../../utils/dailyPick'
 import { describeProfile, getPersonalizedRecommendations } from '../../utils/personalization'
 import BookCover from '../UI/BookCover'
 
@@ -82,177 +93,126 @@ const Dashboard: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [showNotifications, setShowNotifications] = useState(false)
-  // Chain-of-Thought: Derive goal + progress from persisted preferences;
-  // keeps the dashboard consistent with the user slice without local state churn.
+
+  // ── Real, persisted reading data — every number on this page is derived. ──
+  const currentlyReading = useAppSelector((state) => state.reading.currentlyReading)
+  const readingLog = useAppSelector((state) => state.reading.readingLog)
+  const favorites = useAppSelector((state) => state.user.favorites)
   const selectedGenre = 'All Genres'
   const readingGoal = userPreferences.readingGoal
-  const currentProgress = 34
+  const finishedCount = booksFinished(currentlyReading)
+  const streak = computeStreak(readingLog)
+  const monthPages = pagesThisMonth(readingLog)
+  const totalPages = pagesAllTime(readingLog)
+  const goalProgressPct =
+    readingGoal > 0 ? Math.min(100, Math.round((finishedCount / readingGoal) * 100)) : 0
+  const dailyPick = getDailyPick()
 
-  // Sample data for enhanced dashboard
   const filterOptions = ['all', 'trending', 'recommended', 'new', 'favorites']
 
+  // Real stats — all derived from persisted reading activity.
   const stats = [
     {
       icon: BookOpen,
-      label: 'Books Read',
-      value: '127',
-      change: '+12',
-      changePercent: '+10.4%',
+      label: 'Books Finished',
+      value: `${finishedCount}`,
+      change: `${readingLog.length} sessions logged`,
+      changePercent: `${Math.round(monthPages / 300)} books this month`,
       color: 'bg-blue-500',
       trend: 'up'
     },
     {
       icon: Target,
       label: 'Reading Goal',
-      value: `${currentProgress}/${readingGoal}`,
-      change: '+5',
-      changePercent: '+15.2%',
+      value: `${finishedCount}/${readingGoal}`,
+      change: `${Math.max(0, readingGoal - finishedCount)} to go`,
+      changePercent: `${goalProgressPct}% complete`,
       color: 'bg-green-500',
       trend: 'up'
     },
     {
       icon: Star,
-      label: 'Avg Rating',
-      value: '8.7',
-      change: '+0.3',
-      changePercent: '+3.6%',
+      label: 'Streak',
+      value: `${streak} days`,
+      change: streak > 0 ? 'keep it going 🔥' : 'read today to start',
+      changePercent: streak > 0 ? 'on fire' : 'start today',
       color: 'bg-yellow-500',
       trend: 'up'
     },
     {
-      icon: Users,
-      label: 'Community',
-      value: '2.4K',
-      change: '+156',
-      changePercent: '+6.9%',
+      icon: Activity,
+      label: 'Pages This Month',
+      value: `${monthPages}`,
+      change: `${totalPages} pages all-time`,
+      changePercent: `${readingLog.length} sessions`,
       color: 'bg-purple-500',
       trend: 'up'
     }
   ]
 
-  const recentBooks = [
-    {
-      id: 1,
-      title: "The Seven Husbands of Evelyn Hugo",
-      author: "Taylor Jenkins Reid",
-      cover: "📚",
-      rating: 4.8,
-      progress: 85,
-      genre: "Fiction",
-      trending: true,
-      timeToRead: "2h 30m",
-      description: "A captivating novel about Hollywood's golden age and the secrets of a reclusive icon."
-    },
-    {
-      id: 2,
-      title: "Atomic Habits",
-      author: "James Clear",
-      cover: "🧠",
-      rating: 4.9,
-      progress: 100,
-      genre: "Self-Help",
-      trending: false,
-      timeToRead: "6h 15m",
-      description: "Tiny changes, remarkable results. The ultimate guide to habit formation."
-    },
-    {
-      id: 3,
-      title: "Project Hail Mary",
-      author: "Andy Weir",
-      cover: "🚀",
-      rating: 4.7,
-      progress: 45,
-      genre: "Sci-Fi",
-      trending: true,
-      timeToRead: "4h 45m",
-      description: "A lone astronaut must save humanity in this thrilling space adventure."
-    },
-    {
-      id: 4,
-      title: "The Silent Patient",
-      author: "Alex Michaelides",
-      cover: "🔍",
-      rating: 4.6,
-      progress: 0,
-      genre: "Mystery",
-      trending: false,
-      timeToRead: "5h 10m",
-      description: "A woman's act of violence against her husband and her refusal to speak."
-    },
-    {
-      id: 5,
-      title: "Educated",
-      author: "Tara Westover",
-      cover: "🎓",
-      rating: 4.8,
-      progress: 67,
-      genre: "Biography",
-      trending: true,
-      timeToRead: "7h 20m",
-      description: "A memoir about education, family, and the struggle for self-invention."
-    },
-    {
-      id: 6,
-      title: "Where the Crawdads Sing",
-      author: "Delia Owens",
-      cover: "🌿",
-      rating: 4.5,
-      progress: 23,
-      genre: "Fiction",
-      trending: false,
-      timeToRead: "6h 45m",
-      description: "A coming-of-age mystery set in the marshlands of North Carolina."
-    }
-  ]
+  const bookTitle = (id: string): string =>
+    storeRecommendations.find((b) => b.id === id)?.title ??
+    BOOK_CATALOG.find((b) => b.id === id)?.title ??
+    id
 
-  const activities = [
-    { action: "Finished reading", book: "Atomic Habits", time: "2 hours ago", icon: "✅" },
-    { action: "Added to wishlist", book: "The Seven Moons of Maali Almeida", time: "5 hours ago", icon: "❤️" },
-    { action: "Rated 5 stars", book: "Project Hail Mary", time: "1 day ago", icon: "⭐" },
-    { action: "Shared review", book: "The Silent Patient", time: "2 days ago", icon: "📝" }
-  ]
+  // Real activity feed — derived from the user's actual reading sessions.
+  const activities = useMemo(() => {
+    const sessions = [...readingLog].sort((a, b) => b.ts - a.ts).slice(0, 4)
+    return sessions.length > 0
+      ? sessions.map((log) => ({
+        action: 'Read',
+        book: `${bookTitle(log.bookId)} · ${log.pages} pages`,
+        time: new Date(log.ts).toLocaleString(undefined, {
+          hour: 'numeric',
+          minute: '2-digit',
+          day: 'numeric',
+          month: 'short'
+        }),
+        icon: '📖'
+      }))
+      : [
+        {
+          action: 'No sessions yet',
+          book: 'Start reading to build your streak',
+          time: 'today',
+          icon: '🌱'
+        }
+      ]
+  }, [readingLog, storeRecommendations])
 
   /**
    * Chain-of-Thought: Rank the catalog against the reader's taste profile.
-   * Priority: personalized picks (after onboarding) → live API → demo data.
-   * Memory: Personalization is instant and offline — no backend required.
+   * Personalization is instant and offline — no demo fallback; every card is
+   * a real catalog book ranked for this reader.
    */
   const displayBooks = useMemo(() => {
-    if (isAuthenticated && hasCompletedOnboarding) {
-      return getPersonalizedRecommendations(userPreferences, { limit: 6 }).map(
-        (rec) => ({
-          id: Number(rec.book.id.replace('b-', '')),
-          title: rec.book.title,
-          author: rec.book.authors,
-          cover: '📖',
-          rating: rec.book.rating,
-          progress: 0,
-          genre: rec.book.genres[0] ?? 'Fiction',
-          trending: false,
-          timeToRead: `${Math.max(2, Math.round(rec.book.page_count / 120))}h`,
-          description: rec.book.description,
-          reason: rec.reasons[0] ?? undefined
-        })
-      )
-    }
-
-    if (storeRecommendations.length > 0) {
-      return storeRecommendations.map((book) => ({
-        id: Number(book.id),
-        title: book.title,
-        author: book.authors,
-        cover: '📖',
-        rating: book.rating,
+    return getPersonalizedRecommendations(userPreferences, { limit: 6 }).map(
+      (rec) => ({
+        id: rec.book.id,
+        title: rec.book.title,
+        author: rec.book.authors,
+        rating: rec.book.rating,
         progress: 0,
-        genre: book.genres?.[0] ?? 'Fiction',
+        genre: rec.book.genres[0] ?? 'Fiction',
         trending: false,
-        timeToRead: '—',
-        description: book.description ?? 'A personalized recommendation for you.'
-      }))
-    }
+        timeToRead: `${Math.max(2, Math.round(rec.book.page_count / 120))}h`,
+        description: rec.book.description,
+        reason: rec.reasons[0] ?? undefined
+      })
+    )
+  }, [userPreferences])
 
-    return recentBooks
-  }, [isAuthenticated, hasCompletedOnboarding, userPreferences, storeRecommendations])
+  // Real progress lookup (persisted) + client-side search filter.
+  const progressFor = (id: string): number =>
+    currentlyReading.find((e) => e.bookId === id)?.progressPct ?? 0
+
+  const filteredBooks = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase()
+    if (!q) return displayBooks
+    return displayBooks.filter((b) =>
+      `${b.title} ${b.author} ${b.genre}`.toLowerCase().includes(q)
+    )
+  }, [displayBooks, searchQuery])
 
   useEffect(() => {
     // Chain-of-Thought: Fetch personalized recommendations from the backend on mount.
@@ -325,9 +285,12 @@ const Dashboard: React.FC = () => {
           <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-6 text-white">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-bold mb-2">Welcome back, Reader! 👋</h1>
+                <h1 className="text-3xl font-bold mb-2">Welcome back, {userProfile.name.split(' ')[0]}! 👋</h1>
                 <p className="text-blue-100 mb-4">
-                  You&apos;re {readingGoal - currentProgress} books away from your {readingGoal}-book goal. Keep it up!
+                  {readingGoal - finishedCount > 0
+                    ? `You're ${readingGoal - finishedCount} book${readingGoal - finishedCount === 1 ? '' : 's'} away from your ${readingGoal}-book goal.`
+                    : `Goal crushed — ${finishedCount}/${readingGoal} books finished. 🎉`}
+                  {streak > 0 ? ` ${streak}-day streak, keep it going!` : ' Start a streak with a few pages today.'}
                 </p>
                 <div className="flex space-x-4">
                   <button className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition-all duration-200 flex items-center space-x-2">
@@ -345,12 +308,53 @@ const Dashboard: React.FC = () => {
                   <div className="absolute inset-0 bg-white/20 rounded-full"></div>
                   <div className="absolute inset-2 bg-white/10 rounded-full flex items-center justify-center">
                     <div className="text-center">
-                      <div className="text-2xl font-bold">{Math.round((currentProgress / readingGoal) * 100)}%</div>
+                      <div className="text-2xl font-bold">{goalProgressPct}%</div>
                       <div className="text-xs text-blue-100">Complete</div>
                     </div>
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Today's Pick — a fresh daily reason to come back */}
+        <motion.div className="mb-8" variants={itemVariants}>
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-blue-200 dark:border-blue-900 p-4 flex items-center gap-4">
+            <BookCover
+              title={dailyPick.title}
+              author={dailyPick.authors}
+              genres={dailyPick.genres}
+              seed={dailyPick.id}
+              size="sm"
+              rounded="md"
+              showText={false}
+            />
+            <div className="flex-1 min-w-0">
+              <p className="text-xs uppercase tracking-wider text-blue-600 dark:text-blue-400 font-semibold">
+                ✨ Today&apos;s Pick
+              </p>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white truncate">{dailyPick.title}</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                {dailyPick.authors} · {dailyPick.rating}★
+              </p>
+              <p className="text-xs text-purple-700 dark:text-purple-300 mt-1">
+                {dailyPickReason(dailyPick)}
+              </p>
+            </div>
+            <div className="flex gap-2 flex-shrink-0">
+              <button
+                onClick={() => dispatch(startReading(dailyPick.id))}
+                className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors"
+              >
+                Start Reading
+              </button>
+              <button
+                onClick={() => dispatch(toggleFavorite(dailyPick.id))}
+                className="px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 text-sm rounded-lg transition-colors"
+              >
+                + Wishlist
+              </button>
             </div>
           </div>
         </motion.div>
@@ -382,7 +386,7 @@ const Dashboard: React.FC = () => {
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">{stat.value}</p>
                 <p className="text-gray-600 dark:text-gray-400 text-sm">{stat.label}</p>
                 <p className="text-gray-500 dark:text-gray-500 text-xs mt-1">
-                  {stat.change} this month
+                  {stat.change}
                 </p>
               </div>
             </motion.div>
@@ -460,7 +464,7 @@ const Dashboard: React.FC = () => {
 
               <div className="p-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {displayBooks.map((book) => (
+                  {filteredBooks.map((book) => (
                     <motion.div
                       key={book.id}
                       className="group bg-gray-50 dark:bg-gray-700 rounded-xl p-4 hover:shadow-lg transition-all duration-200"
@@ -512,26 +516,39 @@ const Dashboard: React.FC = () => {
                           </span>
                         </div>
 
-                        {book.progress > 0 && (
+                        {progressFor(book.id) > 0 && (
                           <div className="space-y-1">
                             <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400">
                               <span>Progress</span>
-                              <span>{book.progress}%</span>
+                              <span>{progressFor(book.id)}%</span>
                             </div>
                             <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-1.5">
                               <div
                                 className="bg-blue-600 h-1.5 rounded-full transition-all duration-300"
-                                style={{ width: `${book.progress}%` }}
+                                style={{ width: `${progressFor(book.id)}%` }}
                               ></div>
                             </div>
                           </div>
                         )}
 
                         <div className="flex space-x-2 pt-2">
-                          <button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs py-2 px-3 rounded-lg transition-colors">
-                            {book.progress > 0 ? 'Continue' : 'Start Reading'}
+                          <button
+                            onClick={() => {
+                              if (progressFor(book.id) > 0) {
+                                dispatch(logReadingSession({ bookId: book.id, pages: 20 }))
+                              } else {
+                                dispatch(startReading(book.id))
+                              }
+                            }}
+                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs py-2 px-3 rounded-lg transition-colors"
+                          >
+                            {progressFor(book.id) > 0 ? 'Log 20 pages' : 'Start Reading'}
                           </button>
-                          <button className="p-2 text-gray-400 hover:text-red-500 transition-colors">
+                          <button
+                            onClick={() => dispatch(toggleFavorite(book.id))}
+                            className={`p-2 transition-colors ${favorites.includes(book.id) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
+                            aria-label="Toggle wishlist"
+                          >
                             <Heart className="w-3 h-3" />
                           </button>
                           <button className="p-2 text-gray-400 hover:text-blue-500 transition-colors">
@@ -581,29 +598,29 @@ const Dashboard: React.FC = () => {
               <div className="space-y-4">
                 <div>
                   <div className="flex justify-between text-sm mb-1">
-                    <span className="text-gray-600 dark:text-gray-400">Books Read</span>
-                    <span className="font-medium">5/8</span>
+                    <span className="text-gray-600 dark:text-gray-400">Books This Month</span>
+                    <span className="font-medium">{Math.round(monthPages / 300)}</span>
                   </div>
                   <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
-                    <div className="bg-purple-600 h-2 rounded-full" style={{ width: '62%' }}></div>
+                    <div className="bg-purple-600 h-2 rounded-full" style={{ width: `${Math.min(100, (monthPages / 300 / Math.max(1, readingGoal)) * 100)}%` }}></div>
                   </div>
                 </div>
                 <div>
                   <div className="flex justify-between text-sm mb-1">
                     <span className="text-gray-600 dark:text-gray-400">Reading Time</span>
-                    <span className="font-medium">24h</span>
+                    <span className="font-medium">{Math.round(monthPages / 40)}h</span>
                   </div>
                   <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
-                    <div className="bg-green-600 h-2 rounded-full" style={{ width: '80%' }}></div>
+                    <div className="bg-green-600 h-2 rounded-full" style={{ width: `${Math.min(100, (monthPages / 1200) * 100)}%` }}></div>
                   </div>
                 </div>
                 <div>
                   <div className="flex justify-between text-sm mb-1">
                     <span className="text-gray-600 dark:text-gray-400">Streak</span>
-                    <span className="font-medium">12 days</span>
+                    <span className="font-medium">{streak} days</span>
                   </div>
                   <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
-                    <div className="bg-orange-600 h-2 rounded-full" style={{ width: '95%' }}></div>
+                    <div className="bg-orange-600 h-2 rounded-full" style={{ width: `${Math.min(100, (streak / 30) * 100)}%` }}></div>
                   </div>
                 </div>
               </div>
@@ -654,12 +671,12 @@ const Dashboard: React.FC = () => {
             </div>
             <div className="space-y-3">
               <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                <p className="text-sm font-medium text-blue-900 dark:text-blue-100">New Recommendation Available!</p>
-                <p className="text-xs text-blue-700 dark:text-blue-300">Based on your reading of &ldquo;Atomic Habits&rdquo;</p>
+                <p className="text-sm font-medium text-blue-900 dark:text-blue-100">Today&apos;s Pick is ready ✨</p>
+                <p className="text-xs text-blue-700 dark:text-blue-300">{dailyPick.title} — {dailyPickReason(dailyPick)}</p>
               </div>
               <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
                 <p className="text-sm font-medium text-green-900 dark:text-green-100">Reading Goal Progress</p>
-                <p className="text-xs text-green-700 dark:text-green-300">You&apos;re 65% complete for this month!</p>
+                <p className="text-xs text-green-700 dark:text-green-300">You&apos;re {goalProgressPct}% to your {readingGoal}-book goal{streak > 0 ? ` with a ${streak}-day streak!` : '.'}</p>
               </div>
             </div>
           </motion.div>
