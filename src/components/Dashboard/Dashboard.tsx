@@ -17,11 +17,13 @@ import {
   Eye,
   Filter,
   Heart,
+  Moon,
   Search,
   Settings,
   Share,
   Sparkles,
   Star,
+  Sun,
   Target,
   TrendingUp,
   Users,
@@ -33,6 +35,7 @@ import { useNavigate } from 'react-router-dom'
 import { BOOK_CATALOG } from '../../data/bookCatalog'
 import { useAppDispatch, useAppSelector } from '../../hooks/redux'
 import { fetchRecommendations } from '../../stores/books/booksSlice'
+import { setTheme } from '../../stores/dashboard/dashboardSlice'
 import {
   booksFinished,
   computeStreak,
@@ -54,6 +57,7 @@ import {
 } from '../../utils/readingInsights'
 import AddBookModal from '../UI/AddBookModal'
 import BookCover from '../UI/BookCover'
+import SettingsModal from '../UI/SettingsModal'
 
 // Enhanced Animation Variants
 const containerVariants = {
@@ -105,6 +109,8 @@ const Dashboard: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [showNotifications, setShowNotifications] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const theme = useAppSelector((state) => state.dashboard.theme)
 
   // ── Real, persisted reading data — every number on this page is derived. ──
   const currentlyReading = useAppSelector((state) => state.reading.currentlyReading)
@@ -163,6 +169,12 @@ const Dashboard: React.FC = () => {
   const refreshRecommendations = () => {
     dispatch(fetchRecommendations({ limit: 6, strategy: 'hybrid' }))
     toast.success('Refreshing your recommendations… ✨')
+  }
+
+  /** Enter on the header search → full results on Discover (web search). */
+  const submitSearch = () => {
+    const q = searchQuery.trim()
+    navigate(q ? `/discover?q=${encodeURIComponent(q)}` : '/discover')
   }
 
   const filterOptions = ['all', 'trending', 'recommended', 'new', 'favorites']
@@ -295,7 +307,7 @@ const Dashboard: React.FC = () => {
             {/* Logo and Title */}
             <div className="flex items-center space-x-4">
               <div className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                📚 BookWise AI
+                📚 GoodBooks
               </div>
               <span className="hidden sm:block text-sm text-gray-500 dark:text-gray-400">
                 Intelligent Reading Companion
@@ -308,24 +320,39 @@ const Dashboard: React.FC = () => {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Search books, authors, or genres..."
+                  placeholder="Search any book, author, or ISBN…"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') submitSearch()
+                  }}
+                  aria-label="Search any book"
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
             </div>
 
             {/* Action Buttons */}
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-3">
+              <button
+                onClick={() => dispatch(setTheme(theme === 'dark' ? 'light' : 'dark'))}
+                aria-label="Toggle dark mode"
+                className="p-2.5 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-amber-400 transition-colors"
+              >
+                {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+              </button>
               <button
                 onClick={() => setShowNotifications(!showNotifications)}
-                className="relative p-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                className="relative p-2.5 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
               >
                 <Bell className="w-5 h-5" />
                 <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
               </button>
-              <button className="p-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+              <button
+                onClick={() => setSettingsOpen(true)}
+                aria-label="Open settings"
+                className="p-2.5 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+              >
                 <Settings className="w-5 h-5" />
               </button>
             </div>
@@ -844,6 +871,8 @@ const Dashboard: React.FC = () => {
 
       {/* Add Book — web search modal */}
       <AddBookModal open={addBookOpen} onClose={() => setAddBookOpen(false)} />
+      {/* Settings — real preferences panel */}
+      <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </motion.div>
   )
 }

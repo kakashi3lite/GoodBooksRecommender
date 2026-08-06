@@ -381,5 +381,42 @@ around the standard mobile pattern:
 - Verified at 390px: tabs navigate, Shelf badge = active count, drawer opens via
   More, drawer links hidden correctly, no content occlusion.
 
+## 16. Settings, Search & Branding Pass (2026-08-07)
+
+### Settings now actually works (was a "coming soon" toast)
+- **`SettingsModal`** (`src/components/UI/SettingsModal.tsx`) opens from the
+  drawer "Settings" action AND the dashboard header gear — no more dead button.
+  Real, functional controls wired to the stores:
+  - **Appearance**: Light / Dark / Auto theme (`dashboardSlice.setTheme`)
+  - **Reading**: yearly goal presets (5/12/24/52) + custom, notifications toggle,
+    profile privacy (`userSlice.setPreferences`)
+  - **Account**: signed-in reader info
+  - **Data**: export the whole reading library as JSON (reader-owned data)
+
+### Phone search bar now works with a nice format
+- The dashboard header search was client-filtering only 6 books. Now **Enter**
+  navigates to `/discover?q=...`; **Discover reads `?q=`** (`useSearchParams`)
+  and renders the debounced web-search result grid (covers + blurbs + count).
+
+### Dark-mode switch in the header
+- **Mobile top bar**: sun/moon toggle button (App.tsx) — one tap to switch.
+- **Dashboard header**: sun/moon toggle beside the bell/settings.
+- Same store (`setTheme`) everywhere → consistent across header, settings, and
+  the sidebar's Dark Mode action.
+
+### Branding + color psychology (consistent system)
+- **Name unified**: "GoodBooks" everywhere (was "BookWise" in the sidebar,
+  dashboard header, and mobile top bar — fixed all three).
+- **Signature mark**: the `from-blue-600 to-purple-600` gradient is the brand
+  gradient (logo tile, welcome hero, primary CTAs, onboarding) — used
+  consistently.
+- **Semantic palette** (psychology-driven, applied consistently):
+  - **Blue** = trust, calm, focus → primary actions, links, Today's Pick
+  - **Purple** = imagination, personalization → AI, continue-reading, analytics
+  - **Green** = growth, completion → goal progress, finish, success
+  - **Amber/orange** = warmth, motivation → streak, flame
+  - **Red** = alerts/badges only
+
+
 
 

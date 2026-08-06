@@ -4,7 +4,7 @@
  */
 
 import { AnimatePresence, motion } from 'framer-motion'
-import { Menu, X } from 'lucide-react'
+import { Menu, Moon, Sun, X } from 'lucide-react'
 import React, { Suspense, lazy, useEffect, useMemo } from 'react'
 import { Toaster } from 'react-hot-toast'
 import { Route, Routes, useLocation } from 'react-router-dom'
@@ -14,6 +14,7 @@ import { useAppDispatch, useAppSelector } from './hooks/redux'
 import {
   closeMobileNav,
   initializeDashboard,
+  setTheme,
   toggleMobileNav,
   togglePerformancePanel,
   trackPerformanceMetrics
@@ -24,8 +25,8 @@ import { syncAccountToServer } from './stores/user/userSlice'
 import AIAssistant from './components/AI/AIAssistant'
 import { CompactAnalytics } from './components/Analytics/CompactAnalytics'
 import { PerformancePanel } from './components/Analytics/PerformancePanel'
-import NavigationSidebar from './components/Navigation/NavigationSidebar'
 import MobileBottomNav from './components/Navigation/MobileBottomNav'
+import NavigationSidebar from './components/Navigation/NavigationSidebar'
 import ErrorBoundary from './components/UI/ErrorBoundary'
 import LoadingScreen from './components/UI/LoadingScreen'
 
@@ -147,7 +148,7 @@ const AppShell: React.FC = () => {
       {/* Neural network background animation */}
       <div className="neural-background" />
 
-      {/* Mobile top bar — hamburger + brand (visible < 768px) */}
+      {/* Mobile top bar — hamburger + brand + theme toggle (visible < 768px) */}
       <header className="mobile-topbar">
         <button
           type="button"
@@ -158,7 +159,15 @@ const AppShell: React.FC = () => {
         >
           {mobileNavOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
-        <span className="mobile-topbar-brand">📚 BookWise</span>
+        <span className="mobile-topbar-brand">📚 GoodBooks</span>
+        <button
+          type="button"
+          className="mobile-menu-button ml-auto"
+          onClick={() => dispatch(setTheme(theme === 'dark' ? 'light' : 'dark'))}
+          aria-label="Toggle dark mode"
+        >
+          {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+        </button>
       </header>
 
       {/* Mobile drawer backdrop (closes the menu on tap outside) */}

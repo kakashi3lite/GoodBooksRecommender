@@ -9,7 +9,7 @@
 import { motion } from 'framer-motion'
 import { Search, Sparkles, X } from 'lucide-react'
 import React, { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { API_ENDPOINTS } from '../../utils/api'
 import AIBookRecommendations from '../AI/AIBookRecommendations'
 import { BookCard } from '../UI/BookCard'
@@ -28,14 +28,25 @@ interface SearchResult {
 
 /**
  * Discover — the reader's exploration surface: live search + AI picks + web trends.
+ * Accepts an optional ?q= query param (e.g. from the dashboard header search).
  */
 const Discover: React.FC = () => {
-    const [query, setQuery] = useState('')
+    const [searchParams] = useSearchParams()
+    const [query, setQuery] = useState(() => searchParams.get('q') ?? '')
     const [results, setResults] = useState<SearchResult[]>([])
     const [searching, setSearching] = useState(false)
     const [searched, setSearched] = useState(false)
     const debounceRef = useRef<number | undefined>(undefined)
     const navigate = useNavigate()
+
+    /**
+     * Chain-of-Thought: keep the box in sync when arriving with ?q= (e.g. the
+     * dashboard header search navigates here with a query).
+     */
+    useEffect(() => {
+        const q = searchParams.get('q')
+        if (q !== null) setQuery(q)
+    }, [searchParams])
 
     /**
      * Chain-of-Thought: debounced live search — 350ms after the user pauses,

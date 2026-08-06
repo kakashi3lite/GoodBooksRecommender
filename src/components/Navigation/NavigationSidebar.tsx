@@ -33,6 +33,7 @@ import { toggleAssistant } from '../../stores/ai/aiSlice'
 import { setTheme, toggleSidebar } from '../../stores/dashboard/dashboardSlice'
 import { logout } from '../../stores/user/userSlice'
 import AddBookModal from '../UI/AddBookModal'
+import SettingsModal from '../UI/SettingsModal'
 
 // Navigation Items with Enhanced Icons and Descriptions
 const navigationItems = [
@@ -186,6 +187,7 @@ interface NavigationSidebarProps {
 const NavigationSidebar: React.FC<NavigationSidebarProps> = ({ className = '' }) => {
   const dispatch = useAppDispatch()
   const [addBookOpen, setAddBookOpen] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
   // Memory: Sidebar collapse state lives in Redux so it persists across routes
   const isExpanded = useAppSelector((state) => state.dashboard.sidebarCollapsed) === false
   const theme = useAppSelector((state) => state.dashboard.theme)
@@ -233,7 +235,7 @@ const NavigationSidebar: React.FC<NavigationSidebarProps> = ({ className = '' })
         toast('No new notifications yet')
         break
       case 'settings':
-        toast('Settings coming soon')
+        setSettingsOpen(true)
         break
       case 'logout':
         dispatch(logout())
@@ -266,7 +268,7 @@ const NavigationSidebar: React.FC<NavigationSidebarProps> = ({ className = '' })
                   <BookOpen className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h2 className="font-bold text-gray-900 dark:text-white text-lg">BookWise</h2>
+                  <h2 className="font-bold text-gray-900 dark:text-white text-lg">GoodBooks</h2>
                   <p className="text-xs text-gray-500 dark:text-gray-400">AI Reading Assistant</p>
                 </div>
               </motion.div>
@@ -463,6 +465,8 @@ const NavigationSidebar: React.FC<NavigationSidebarProps> = ({ className = '' })
 
       {/* Add Book — web search modal */}
       <AddBookModal open={addBookOpen} onClose={() => setAddBookOpen(false)} />
+      {/* Settings — real preferences panel */}
+      <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </motion.aside>
   )
 }
