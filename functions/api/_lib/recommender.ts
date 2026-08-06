@@ -155,8 +155,44 @@ const MOOD_MAP: Record<string, string> = {
     romance: 'romantic',
     fantasy: 'epic',
     scifi: 'adventurous',
+    'sci-fi': 'adventurous',
     'science fiction': 'adventurous',
     biography: 'thought-provoking'
+}
+
+/**
+ * Canonicalize a genre label so aliases from the UI/API ("sci-fi", "scifi",
+ * "non-fiction") match the catalog vocabulary ("Science Fiction", "Nonfiction").
+ * Without this the 45% genre weight silently collapses to 0 for common queries.
+ */
+const normalizeGenre = (g: string): string => {
+    const key = g.trim().toLowerCase().replace(/[^a-z0-9]/g, '')
+    switch (key) {
+        case 'scifi':
+        case 'sci-fi':
+        case 'sciencefiction':
+            return 'sciencefiction'
+        case 'selfhelp':
+            return 'selfhelp'
+        case 'non-fiction':
+        case 'nonfiction':
+            return 'nonfiction'
+        case 'historicalfiction':
+        case 'historical':
+            return 'historicalfiction'
+        case 'literary':
+        case 'literaryfiction':
+            return 'literaryfiction'
+        default:
+            return key
+    }
+}
+
+const genreOverlap = (book: Book, profile: Profile): number => {
+    if (profile.favoriteGenres.length === 0) return 0.5
+    const prefs = profile.favoriteGenres.map(normalizeGenre)
+    const matched = book.genres.filter((g) => prefs.includes(normalizeGenre(g))).length
+    return Math.min(1, (matched / Math.max(1, prefs.length)) * 2)
 }
 
 /** Build a profile from raw preferences (genres + reading goal). */
@@ -179,14 +215,6 @@ export const buildProfile = (prefs: {
     }
 }
 
-const genreOverlap = (book: Book, profile: Profile): number => {
-    if (profile.favoriteGenres.length === 0) return 0.5
-    const matched = book.genres.filter((g) =>
-        profile.favoriteGenres.some((fg) => fg.toLowerCase() === g.toLowerCase())
-    ).length
-    return Math.min(1, (matched / Math.max(1, profile.favoriteGenres.length)) * 2)
-}
-
 const moodOverlap = (book: Book, profile: Profile): number => {
     if (profile.preferredMoods.length === 0) return 0.5
     const matched = book.moods.filter((m) => profile.preferredMoods.includes(m)).length
@@ -205,9 +233,8 @@ export const scoreBook = (book: Book, profile: Profile): number => {
 
 /** Build a human-readable reason (matches the client engine). */
 export const buildReason = (book: Book, profile: Profile): string => {
-    const matchedGenre = book.genres.find((g) =>
-        profile.favoriteGenres.some((fg) => fg.toLowerCase() === g.toLowerCase())
-    )
+    const prefs = profile.favoriteGenres.map(normalizeGenre)
+    const matchedGenre = book.genres.find((g) => prefs.includes(normalizeGenre(g)))
     if (matchedGenre) return `Because you love ${matchedGenre}`
     const matchedMood = book.moods.find((m) => profile.preferredMoods.includes(m))
     if (matchedMood) return `A ${matchedMood.replace('-', ' ')} read that fits your current vibe`
@@ -306,7 +333,16 @@ export const recommendFromQuery = (
     const excluded = new Set(excludeIds)
 
     // Keyword hints → genre/mood filters boost.
-    const hintGenres = ALL_GENRES_FOR_QUERY.filter((g) => q.includes(g.toLowerCase()))
+    // Map common aliases ("sci-fi", "self-help", "non-fiction") onto the
+    // catalog vocabulary so plain-language queries get the genre boost too.
+    const hintGenres = Array.from(
+        new Set([
+            ...ALL_GENRES_FOR_QUERY.filter((g) => q.includes(g.toLowerCase())),
+            ...Object.entries(GENRE_ALIASES)
+                .filter(([alias]) => q.includes(alias))
+                .map(([, canonical]) => canonical)
+        ])
+    )
     const hintMoods = ALL_MOODS_FOR_QUERY.filter((m) => q.includes(m.toLowerCase()))
 
     const qVec = VECTORIZER.vectorFor(tokenize(query))
@@ -338,5 +374,16 @@ const ALL_GENRES_FOR_QUERY: string[] = Array.from(
 const ALL_MOODS_FOR_QUERY: string[] = Array.from(
     new Set(BOOK_CATALOG.flatMap((b) => b.moods))
 )
+
+/** Common user-facing genre aliases → canonical catalog genre. */
+const GENRE_ALIASES: Record<string, string> = {
+    'sci-fi': 'Science Fiction',
+    scifi: 'Science Fiction',
+    'science fiction': 'Science Fiction',
+    'self-help': 'Self-Help',
+    'non-fiction': 'Nonfiction',
+    'historical fiction': 'Historical Fiction',
+    'literary fiction': 'Literary Fiction'
+}
 
 export { VECTORIZER }

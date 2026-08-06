@@ -46,7 +46,7 @@ const NewsDashboard: React.FC<NewsDashboardProps> = ({ className = "" }) => {
       }
 
       const data = await response.json()
-      
+
       // Convert API response to component format
       const newsStories: NewsStory[] = data.map((story: any) => ({
         id: story.article_id,
@@ -76,7 +76,7 @@ const NewsDashboard: React.FC<NewsDashboardProps> = ({ className = "" }) => {
   // Handle story expansion
   const handleStoryExpand = useCallback((articleId: string) => {
     setExpandedCount(prev => prev + 1)
-    
+
     // Track analytics (placeholder)
     console.log(`Story expanded: ${articleId}`)
   }, [])
@@ -90,7 +90,7 @@ const NewsDashboard: React.FC<NewsDashboardProps> = ({ className = "" }) => {
     <div className={`max-w-4xl mx-auto p-6 ${className}`}>
       {/* Header */}
       <div className="mb-8">
-        <motion.h1 
+        <motion.h1
           className="text-3xl font-bold text-gray-900 mb-2"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -98,8 +98,8 @@ const NewsDashboard: React.FC<NewsDashboardProps> = ({ className = "" }) => {
         >
           🌐 News Dashboard
         </motion.h1>
-        
-        <motion.p 
+
+        <motion.p
           className="text-gray-600 mb-4"
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -107,14 +107,14 @@ const NewsDashboard: React.FC<NewsDashboardProps> = ({ className = "" }) => {
         >
           Top news stories with AI-powered fact checking and context-aware book recommendations
         </motion.p>
-        
+
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4 text-sm text-gray-500">
             <span>📊 {stories.length} stories loaded</span>
             <span>🔍 {expandedCount} expanded</span>
             <span>⚡ AI-powered analysis</span>
           </div>
-          
+
           <button
             onClick={fetchTrendingStories}
             disabled={isLoading}
@@ -127,7 +127,7 @@ const NewsDashboard: React.FC<NewsDashboardProps> = ({ className = "" }) => {
 
       {/* Loading State */}
       {isLoading && stories.length === 0 && (
-        <motion.div 
+        <motion.div
           className="flex items-center justify-center py-12"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -141,7 +141,7 @@ const NewsDashboard: React.FC<NewsDashboardProps> = ({ className = "" }) => {
 
       {/* Error State */}
       {error && (
-        <motion.div 
+        <motion.div
           className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg"
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -166,9 +166,9 @@ const NewsDashboard: React.FC<NewsDashboardProps> = ({ className = "" }) => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              transition={{ 
-                duration: 0.3, 
-                delay: index * 0.05 
+              transition={{
+                duration: 0.3,
+                delay: index * 0.05
               }}
             >
               <ExpandableNewsItem
@@ -183,7 +183,7 @@ const NewsDashboard: React.FC<NewsDashboardProps> = ({ className = "" }) => {
 
       {/* Empty State */}
       {!isLoading && stories.length === 0 && (
-        <motion.div 
+        <motion.div
           className="text-center py-12"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -205,7 +205,7 @@ const NewsDashboard: React.FC<NewsDashboardProps> = ({ className = "" }) => {
       )}
 
       {/* Footer Info */}
-      <motion.div 
+      <motion.div
         className="mt-12 pt-6 border-t border-gray-200 text-center text-sm text-gray-500"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

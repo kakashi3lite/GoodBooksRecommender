@@ -22,11 +22,12 @@ import {
   User,
   Users,
   X,
-  Zap
+  Zap,
+  type LucideIcon
 } from 'lucide-react'
 import React from 'react'
 import toast from 'react-hot-toast'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../../hooks/redux'
 import { toggleAssistant } from '../../stores/ai/aiSlice'
 import { setTheme, toggleSidebar } from '../../stores/dashboard/dashboardSlice'
@@ -99,7 +100,14 @@ const navigationItems = [
   }
 ]
 
-const userActions = [
+interface UserAction {
+  id: 'profile' | 'notifications' | 'theme' | 'settings' | 'logout'
+  icon: LucideIcon
+  label: string
+  badge?: string | null
+}
+
+const userActions: UserAction[] = [
   {
     id: 'profile',
     icon: User,
@@ -109,7 +117,7 @@ const userActions = [
     id: 'notifications',
     icon: Bell,
     label: 'Notifications',
-    badge: '3'
+    badge: null
   },
   {
     id: 'theme',
@@ -173,6 +181,7 @@ interface NavigationSidebarProps {
 
 const NavigationSidebar: React.FC<NavigationSidebarProps> = ({ className = '' }) => {
   const dispatch = useAppDispatch()
+  const navigate = useNavigate()
   // Memory: Sidebar collapse state lives in Redux so it persists across routes
   const isExpanded = useAppSelector((state) => state.dashboard.sidebarCollapsed) === false
   const theme = useAppSelector((state) => state.dashboard.theme)
@@ -217,7 +226,7 @@ const NavigationSidebar: React.FC<NavigationSidebarProps> = ({ className = '' })
         toast(`Signed in as ${userProfile.email}`)
         break
       case 'notifications':
-        toast('You have 3 new notifications')
+        toast('No new notifications yet')
         break
       case 'settings':
         toast('Settings coming soon')
@@ -399,7 +408,7 @@ const NavigationSidebar: React.FC<NavigationSidebarProps> = ({ className = '' })
           >
             <div className="space-y-2">
               <button
-                onClick={() => toast('Add Book feature coming soon')}
+                onClick={() => navigate('/discover')}
                 className="w-full flex items-center justify-center space-x-2 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg"
               >
                 <BookmarkPlus className="w-4 h-4" />

@@ -40,70 +40,6 @@ interface RecommendationProps {
   genres?: string[];
 }
 
-// Curated demo books shown when the backend is unreachable, so discovery
-// always remains useful (graceful degradation, same as the Dashboard).
-const FALLBACK_BOOKS: Book[] = [
-  {
-    id: 'demo-1',
-    title: 'The Midnight Library',
-    authors: 'Matt Haig',
-    cover_url: '',
-    rating: 4.3,
-    genres: ['Fiction'],
-    published_year: 2020,
-    description: 'Between life and death there is a library, and within that library, the shelves go on forever.'
-  },
-  {
-    id: 'demo-2',
-    title: 'Project Hail Mary',
-    authors: 'Andy Weir',
-    cover_url: '',
-    rating: 4.7,
-    genres: ['Sci-Fi'],
-    published_year: 2021,
-    description: 'A lone astronaut must save the earth from disaster in this near-perfect sci-fi thriller.'
-  },
-  {
-    id: 'demo-3',
-    title: 'Tomorrow, and Tomorrow, and Tomorrow',
-    authors: 'Gabrielle Zevin',
-    cover_url: '',
-    rating: 4.5,
-    genres: ['Fiction'],
-    published_year: 2022,
-    description: 'A decade-spanning story about friendship, creativity, and the worlds we build together.'
-  },
-  {
-    id: 'demo-4',
-    title: 'The House in the Cerulean Sea',
-    authors: 'T.J. Klune',
-    cover_url: '',
-    rating: 4.6,
-    genres: ['Fantasy'],
-    published_year: 2020,
-    description: 'A caseworker journeys to a remote island orphanage for magical children.'
-  },
-  {
-    id: 'demo-5',
-    title: 'Piranesi',
-    authors: 'Susanna Clarke',
-    cover_url: '',
-    rating: 4.4,
-    genres: ['Fantasy'],
-    published_year: 2020,
-    description: 'A man lives in an endless house of halls and statues, and the mystery of its world unfolds.'
-  },
-  {
-    id: 'demo-6',
-    title: 'A Psalm for the Wild-Built',
-    authors: 'Becky Chambers',
-    cover_url: '',
-    rating: 4.4,
-    genres: ['Sci-Fi'],
-    published_year: 2021,
-    description: 'A tea monk and a robot explore what it means to be alive in a gentle, hopeful novella.'
-  }
-];
 // Main component
 export const AIBookRecommendations: React.FC<RecommendationProps> = ({
   userId,
@@ -149,8 +85,7 @@ export const AIBookRecommendations: React.FC<RecommendationProps> = ({
 
   // Local mirror so the grid re-renders cheaply and we can track viewed items
   const [viewedRecommendations, setViewedRecommendations] = useState<Set<string>>(new Set());
-  // When the backend is unreachable we show curated demo picks instead of a raw error
-  const [showFallback, setShowFallback] = useState(false);
+  // When the backend is unreachable we show an honest error with retry.
 
   /**
    * Chain-of-Thought: Fetch recommendations through the Redux thunk on mount.
@@ -192,34 +127,31 @@ export const AIBookRecommendations: React.FC<RecommendationProps> = ({
   // Error state (prefer store error, fall back to local) — skipped when
   // personalized picks are already available.
   const displayError = storeError ?? null;
-  if (personalizedPicks.length === 0 && displayError && !showFallback) {
-    // Graceful degradation: offer curated demo picks instead of a dead end.
+  if (personalizedPicks.length === 0 && displayError) {
     return (
       <div className="recommendations-fallback">
         <ErrorMessage
           message="Could not reach the recommendation engine."
-          details="You can retry, or browse curated picks while the service is offline."
+          details="Check your connection and try again — your picks are ready as soon as the service is back."
           onRetry={() => {
             dispatch(setError(null));
             dispatch(fetchRecommendations({ userId, limit, strategy, genres }));
           }}
-          onDismiss={() => setShowFallback(true)}
         />
       </div>
     );
   }
 
-  // Loading state (skip when already showing fallback or personalized picks)
+  // Loading state (skip when personalized picks are already available)
   if (
     personalizedPicks.length === 0 &&
-    !showFallback &&
     (storeLoading || (storeRecommendations.length === 0 && !storeError))
   ) {
     return <LoadingSpinner message="Finding your perfect reads..." />;
   }
 
-  // Empty state (only when not in fallback mode and no personalized picks)
-  if (personalizedPicks.length === 0 && storeRecommendations.length === 0 && !showFallback) {
+  // Empty state
+  if (personalizedPicks.length === 0 && storeRecommendations.length === 0) {
     return (
       <div className="ai-book-recommendations">
         <h2 className="recommendations-title">AI-Powered Book Recommendations</h2>
@@ -238,9 +170,7 @@ export const AIBookRecommendations: React.FC<RecommendationProps> = ({
   const booksToRender =
     personalizedPicks.length > 0
       ? personalizedPicks
-      : showFallback && storeRecommendations.length === 0
-        ? FALLBACK_BOOKS
-        : (storeRecommendations as unknown as Book[]);
+      : (storeRecommendations as unknown as Book[]);
 
   return (
     <div className={`ai-book-recommendations theme-${theme} performance-${performanceMode}`}>
@@ -252,21 +182,6 @@ export const AIBookRecommendations: React.FC<RecommendationProps> = ({
           </span>
         )}
       </div>
-
-      {showFallback && storeRecommendations.length === 0 && (
-        <p className="recommendation-fallback-note">
-          Showing curated picks while the recommendation service is offline.{' '}
-          <button
-            className="text-blue-600 dark:text-blue-400 underline"
-            onClick={() => {
-              setShowFallback(false);
-              dispatch(fetchRecommendations({ userId, limit, strategy, genres }));
-            }}
-          >
-            Retry
-          </button>
-        </p>
-      )}
 
       <div
         className="recommendations-grid"

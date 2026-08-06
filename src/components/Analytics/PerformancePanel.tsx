@@ -5,14 +5,14 @@
  * Forward-Thinking: Exportable performance reports and optimization suggestions
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useAppSelector, useAppDispatch } from '../../hooks/redux';
-import { 
-  selectPerformanceMetrics, 
+import { AnimatePresence, motion } from 'framer-motion';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useAppDispatch, useAppSelector } from '../../hooks/redux';
+import {
+  selectPerformanceMetrics,
   selectPerformanceMode,
-  togglePerformancePanel,
-  selectPerformancePanelVisible
+  selectPerformancePanelVisible,
+  togglePerformancePanel
 } from '../../stores/dashboard/dashboardSlice';
 import PerformanceMonitor, { FrameRateMonitor, MemoryAnalyzer } from '../../utils/performanceMonitor';
 
@@ -20,32 +20,32 @@ interface PerformancePanelProps {
   className?: string;
 }
 
-export const PerformancePanel: React.FC<PerformancePanelProps> = ({ 
+export const PerformancePanel: React.FC<PerformancePanelProps> = ({
   className = ''
 }) => {
   const dispatch = useAppDispatch();
-  
+
   // Get state from Redux
   const performanceMetrics = useAppSelector(selectPerformanceMetrics);
   const performanceMode = useAppSelector(selectPerformanceMode);
   const isPanelVisible = useAppSelector(selectPerformancePanelVisible);
-  
+
   // Local state for frame rate and memory metrics
   const [frameMetrics, setFrameMetrics] = useState({
     fps: 60,
     drops: 0,
     averageFrameTime: 0
   });
-  
+
   const [memoryMetrics, setMemoryMetrics] = useState({
     currentUsage: 0,
     peakUsage: 0,
     trend: 'unknown' as 'stable' | 'growing' | 'unknown',
     growthRate: 0
   });
-  
+
   const [activeTab, setActiveTab] = useState<'overview' | 'components' | 'api' | 'memory'>('overview');
-  
+
   // Initialize frame rate and memory monitoring
   useEffect(() => {
     if (isPanelVisible) {
@@ -58,15 +58,15 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({
           averageFrameTime: FrameRateMonitor.getAverageFrameTime()
         }));
       });
-      
+
       // Start memory monitoring
       MemoryAnalyzer.startMonitoring(5000);
-      
+
       // Regular memory updates
       const memoryInterval = setInterval(() => {
         setMemoryMetrics(MemoryAnalyzer.getMemoryReport());
       }, 3000);
-      
+
       return () => {
         FrameRateMonitor.stopMonitoring();
         MemoryAnalyzer.stopMonitoring();
@@ -74,7 +74,7 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({
       };
     }
   }, [isPanelVisible]);
-  
+
   /**
    * Performance analytics and insights
    * Time Complexity: O(n) where n is number of performance snapshots
@@ -82,7 +82,7 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({
   const performanceAnalytics = useMemo(() => {
     return PerformanceMonitor.getPerformanceAnalytics();
   }, [performanceMetrics.lastUpdated]);
-  
+
   /**
    * Generate performance score based on metrics
    * Chain-of-Thought: Weighted score calculation based on critical metrics
@@ -90,48 +90,48 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({
    */
   const performanceScore = useMemo(() => {
     if (!isPanelVisible) return 0;
-    
+
     // Base score of 100, reduce for performance issues
     let score = 100;
-    
+
     // Penalize for slow load time (> 300ms)
     if (performanceMetrics.loadTime > 300) {
       score -= Math.min(20, (performanceMetrics.loadTime - 300) / 50);
     }
-    
+
     // Penalize for slow render time (> 50ms)
     if (performanceMetrics.renderTime > 50) {
       score -= Math.min(15, (performanceMetrics.renderTime - 50) / 10);
     }
-    
+
     // Penalize for frame drops
     score -= Math.min(25, frameMetrics.drops * 5);
-    
+
     // Penalize for low FPS
     if (frameMetrics.fps < 60) {
       score -= Math.min(20, (60 - frameMetrics.fps) / 2);
     }
-    
+
     // Penalize for growing memory trend
     if (memoryMetrics.trend === 'growing' && memoryMetrics.growthRate > 1) {
       score -= Math.min(20, memoryMetrics.growthRate * 5);
     }
-    
+
     return Math.max(0, Math.min(100, Math.round(score)));
   }, [
     isPanelVisible,
-    performanceMetrics.loadTime, 
-    performanceMetrics.renderTime, 
-    frameMetrics.drops, 
+    performanceMetrics.loadTime,
+    performanceMetrics.renderTime,
+    frameMetrics.drops,
     frameMetrics.fps,
     memoryMetrics.trend,
     memoryMetrics.growthRate
   ]);
-  
+
   if (!isPanelVisible) {
     return null;
   }
-  
+
   return (
     <AnimatePresence>
       <motion.div
@@ -143,7 +143,7 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({
       >
         <div className="panel-header">
           <h3>Performance Monitor ({performanceScore}/100)</h3>
-          <button 
+          <button
             className="close-button"
             onClick={() => dispatch(togglePerformancePanel())}
             aria-label="Close performance panel"
@@ -151,34 +151,34 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({
             ×
           </button>
         </div>
-        
+
         <div className="panel-tabs">
-          <button 
+          <button
             className={`panel-tab ${activeTab === 'overview' ? 'active' : ''}`}
             onClick={() => setActiveTab('overview')}
           >
             Overview
           </button>
-          <button 
+          <button
             className={`panel-tab ${activeTab === 'components' ? 'active' : ''}`}
             onClick={() => setActiveTab('components')}
           >
             Components
           </button>
-          <button 
+          <button
             className={`panel-tab ${activeTab === 'api' ? 'active' : ''}`}
             onClick={() => setActiveTab('api')}
           >
             API
           </button>
-          <button 
+          <button
             className={`panel-tab ${activeTab === 'memory' ? 'active' : ''}`}
             onClick={() => setActiveTab('memory')}
           >
             Memory
           </button>
         </div>
-        
+
         <div className="panel-content">
           {activeTab === 'overview' && (
             <div className="performance-overview">
@@ -187,49 +187,49 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({
                   <div className="perf-icon">⚡</div>
                   <p className="perf-value">{Math.round(performanceMetrics.loadTime)}ms</p>
                   <p className="perf-label">Load Time</p>
-                  <div 
-                    className="perf-indicator" 
+                  <div
+                    className="perf-indicator"
                     style={{ width: `${Math.min(100, performanceMetrics.loadTime / 10)}%` }}
                   />
                 </div>
-                
+
                 <div className="perf-item">
                   <div className="perf-icon">🔄</div>
                   <p className="perf-value">{Math.round(performanceMetrics.renderTime)}ms</p>
                   <p className="perf-label">Render Time</p>
-                  <div 
-                    className="perf-indicator" 
+                  <div
+                    className="perf-indicator"
                     style={{ width: `${Math.min(100, performanceMetrics.renderTime / 5)}%` }}
                   />
                 </div>
-                
+
                 <div className="perf-item">
                   <div className="perf-icon">📱</div>
                   <p className="perf-value">{frameMetrics.fps}</p>
                   <p className="perf-label">FPS</p>
-                  <div 
-                    className="perf-indicator" 
-                    style={{ 
+                  <div
+                    className="perf-indicator"
+                    style={{
                       width: `${Math.min(100, (frameMetrics.fps / 60) * 100)}%`,
                       background: frameMetrics.fps < 30 ? 'var(--error)' : 'var(--ai-primary)'
                     }}
                   />
                 </div>
-                
+
                 <div className="perf-item">
                   <div className="perf-icon">💾</div>
                   <p className="perf-value">{Math.round(memoryMetrics.currentUsage)}MB</p>
                   <p className="perf-label">Memory</p>
-                  <div 
-                    className="perf-indicator" 
-                    style={{ 
+                  <div
+                    className="perf-indicator"
+                    style={{
                       width: `${Math.min(100, (memoryMetrics.currentUsage / 200) * 100)}%`,
                       background: memoryMetrics.trend === 'growing' ? 'var(--warning)' : 'var(--ai-primary)'
                     }}
                   />
                 </div>
               </div>
-              
+
               <div className="optimization-suggestions">
                 <h4>Optimization Suggestions</h4>
                 {performanceAnalytics.optimizationSuggestions.length > 0 ? (
@@ -242,7 +242,7 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({
                   <p>No performance issues detected.</p>
                 )}
               </div>
-              
+
               <div className="performance-mode">
                 <h4>Performance Mode: <span className="mode-value">{performanceMode}</span></h4>
                 <p className="mode-description">
@@ -253,7 +253,7 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({
               </div>
             </div>
           )}
-          
+
           {activeTab === 'components' && (
             <div className="component-performance">
               <h4>Slowest Components</h4>
@@ -264,21 +264,34 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({
               ) : (
                 <p>No component performance data available.</p>
               )}
-              
+
               <h4>Component Render Times (ms)</h4>
               <div className="heat-map">
-                {Array.from({ length: 35 }, (_, i) => (
-                  <div 
-                    key={i}
-                    className="heat-cell"
-                    data-level={Math.min(4, Math.floor(Math.random() * 5))}
-                    title={`Component ${i + 1}: ${Math.floor(Math.random() * 80) + 10}ms`}
-                  />
-                ))}
+                {performanceMetrics.apiLatency &&
+                  Object.keys(performanceMetrics.apiLatency).length > 0 ? (
+                  Object.entries(performanceMetrics.apiLatency)
+                    .slice(0, 35)
+                    .map(([endpoint, latency], i) => {
+                      const ms = typeof latency === 'number' ? Math.round(latency) : 0
+                      // Level 0..4 by latency buckets (real measured values).
+                      const level =
+                        ms <= 50 ? 0 : ms <= 150 ? 1 : ms <= 300 ? 2 : ms <= 600 ? 3 : 4
+                      return (
+                        <div
+                          key={i}
+                          className="heat-cell"
+                          data-level={level}
+                          title={`${endpoint}: ${ms}ms`}
+                        />
+                      )
+                    })
+                ) : (
+                  <p className="text-sm text-gray-500">No component latency data yet — interactions will be measured here.</p>
+                )}
               </div>
             </div>
           )}
-          
+
           {activeTab === 'api' && (
             <div className="api-performance">
               <h4>API Latency</h4>
@@ -291,14 +304,14 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({
               )}
             </div>
           )}
-          
+
           {activeTab === 'memory' && (
             <div className="memory-performance">
               <h4>Memory Usage</h4>
               <p>Current: {Math.round(memoryMetrics.currentUsage)} MB</p>
               <p>Peak: {Math.round(memoryMetrics.peakUsage)} MB</p>
               <p>Trend: {memoryMetrics.trend} ({memoryMetrics.growthRate.toFixed(2)} MB/min)</p>
-              
+
               {memoryMetrics.trend === 'growing' && (
                 <div className="memory-warning">
                   <p>⚠️ Possible memory leak detected. Check for:
@@ -313,7 +326,7 @@ export const PerformancePanel: React.FC<PerformancePanelProps> = ({
             </div>
           )}
         </div>
-        
+
         <div className="panel-footer">
           <small>Last updated: {new Date(performanceMetrics.lastUpdated).toLocaleTimeString()}</small>
         </div>
