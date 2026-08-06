@@ -33,7 +33,10 @@ import { fetchWebTrending, getBookInsights, resolveByIsbn, resolveByKey, searchW
 const json = (data: unknown, status = 200): Response =>
     new Response(JSON.stringify(data), {
         status,
-        headers: { 'Content-Type': 'application/json; charset=utf-8' }
+        headers: {
+            'Content-Type': 'application/json; charset=utf-8',
+            'X-Content-Type-Options': 'nosniff'
+        }
     })
 
 const notFound = (message = 'Not found'): Response =>

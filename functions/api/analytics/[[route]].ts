@@ -54,15 +54,12 @@ export const onRequestGet: PagesFunction<PagesEnv> = async (context) => {
             .sort((a, b) => b.count - a.count)
             .slice(0, 8)
 
-        // 14-day reading trend (static until real reading_activity exists).
-        const trends = Array.from({ length: 14 }, (_, i) => {
-            const date = new Date()
-            date.setDate(date.getDate() - (13 - i))
-            return {
-                date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-                pages: Math.round((totalPages / 14) * (0.6 + Math.random() * 0.8))
-            }
-        })
+        // 14-day reading trend. The reader's actual sessions live client-side
+        // (localStorage → readingSlice), so the server cannot know them —
+        // returning fabricated random numbers would be dishonest. The client
+        // builds the real trend from its own log; we return an honest empty
+        // trend here (valid shape, no fake data).
+        const trends: Array<{ date: string; pages: number }> = []
 
         return json({
             stats: {

@@ -440,6 +440,41 @@ Analytics, Community, News, Notes, Book Detail) at 3 viewports (390 / 834 /
 
 **Post-fix verification: 0 overflow across all 27 page/viewport combos.**
 
+## 18. Backend Strict Verification (2026-08-07)
+
+An automated sweep hit every endpoint with valid + edge-case inputs. Result:
+**27/27 checks passed.**
+
+| Area | Checks (all PASS) |
+|---|---|
+| Catalog | `/api/books` returns the 24-book catalog (`source: catalog`) |
+| Search | hit, no-results, and missing `q` → all correct shapes |
+| Recommend | sci-fi genre alias → sci-fi first; `prefs` JSON; malformed prefs → graceful 200; free-text `q`; `similar_to` |
+| Book id | found, 404 for unknown, `/similar` works |
+| Web | `/trending`, `/web-search` (incl. empty `q`), `/resolve` (isbn + bad-isbn 404), `/insights` (≥2 facts) |
+| News | real RSS (USA Today/KWTX/BBC) with links |
+| AI chat | GET → 405, POST → reply+picks, empty message → 400, bad JSON → 400 |
+| Analytics | dashboard 200; reading 200 |
+| Errors | `/api/*` catch-all → 404 JSON; `/assets/*` guard → 404 no-store |
+
+**Issues found & fixed:**
+1. **Fabricated analytics trend** — `/api/analytics/reading` generated a
+   14-day trend with `Math.random()` (dishonest data). The reader's real
+   sessions live client-side, so the server now returns an honest empty
+   `trends` array (the client builds its real trend from the reading log).
+2. **API responses lacked `X-Content-Type-Options: nosniff`** — added to the
+   books API's JSON responses (defense-in-depth for JSON endpoints).
+3. **Apple Double files (`._*`) broke the Functions bundle** mid-deploy — the
+   `find -delete` step is mandatory immediately before every deploy; they can
+   reappear after editing (macOS creates them).
+
+**Note on AI chat**: the live model reports `goodbooks-hybrid`, meaning the
+LLM (`AI_API_KEY`/`AI_MODEL`) is not active on the production project — chat
+gracefully uses the local hybrid engine with real picks. To enable the LLM,
+add `AI_API_KEY` (+ `AI_MODEL`) as a secret on the Pages project; no code
+change needed.
+
+
 
 
 
