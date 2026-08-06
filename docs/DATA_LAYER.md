@@ -123,9 +123,22 @@ npx wrangler pages dev dist   # serves the built site + functions locally
 
 ## Verified live (2026-08-06)
 
+- **Custom domain**: `https://books.dalecabra.com` — ACTIVE, HTTPS 200, security
+  headers served (X-Frame-Options DENY, nosniff, referrer-policy,
+  permissions-policy), SPA deep links work, API + chat live.
+  (DNS: CNAME `books` → `goodbooks-recommender.pages.dev`, proxied.)
 - `GET /api/books` → 24 books, `source: catalog`
 - Sci-fi reader → The Martian 93%, Project Hail Mary 90%, Dune 82%
 - `q=cozy and uplifting` → The House in the Cerulean Sea, Beach Read
 - `similar_to=b-11` (Dune) → The Martian, Circe, A Psalm for the Wild-Built
 - `POST /api/ai/chat` → hybrid engine reply + 5 real book cards
 - Frontend Discover + AI Assistant consume the live API (scores render as %)
+
+## Remaining step: apply the schema
+
+The live API reports `source: catalog` until the Supabase schema is applied.
+Env vars are already set on the Pages project (SUPABASE_URL, SUPABASE_ANON_KEY,
+VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, AI_*). Apply `docs/supabase/schema.sql`
+in the Supabase SQL editor (project `rqorywqrimcsgekmsxmj`) — or enable the
+Supabase GitHub integration so `supabase/migrations/` applies on push. Once the
+`books` table exists, `/api/books` reports `source: database` automatically.
