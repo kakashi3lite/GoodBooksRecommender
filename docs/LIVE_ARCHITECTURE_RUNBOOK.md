@@ -359,5 +359,27 @@ fabricated):
 New shared module: `src/utils/readingInsights.ts` (computePace,
 estimateHoursLeft, formatHours, personaOf, personaEmoji, distinctReadingDays).
 
+## 15. Mobile Navigation Overhaul (2026-08-07)
+
+The phone view was button-dense with no thumb-zone navigation. Restructured
+around the standard mobile pattern:
+
+- **`MobileBottomNav`** (`src/components/Navigation/MobileBottomNav.tsx`, < 768px
+  only): persistent bottom tab bar — **Home · Discover · Shelf (with live active
+  book-count badge) · More**. Thumb-reachable primary navigation; active-state
+  highlighting; 48px min-height tabs; safe-area inset padding.
+- **Decluttered drawer**: the bottom bar now owns Home/Discover/Reading, so the
+  off-canvas drawer hides those three links on mobile (`.mobile-hide-on-phone`)
+  and becomes the "More" surface (Wishlist/Analytics/Community/News + quick
+  actions + account). Drawer nav links enforce a 44px min-height.
+- **Content clearance**: `.main-content` bottom padding bumped to
+  `safe-area + 5.25rem` so the fixed bar never covers content (verified: last
+  element scrolls above the bar); the AI FAB sits above the bar.
+- **Dashboard declutter**: welcome "Get Recommendation" hidden on mobile
+  (`hidden sm:inline-flex`) — Add Book remains, both live in the drawer too.
+- Bottom bar + drawer hide on ≥ 768px; iPad/desktop keep the sidebar.
+- Verified at 390px: tabs navigate, Shelf badge = active count, drawer opens via
+  More, drawer links hidden correctly, no content occlusion.
+
 
 

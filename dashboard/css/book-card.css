@@ -482,7 +482,8 @@
 .book-expanded-desc {
   margin: 0.5rem 0 0;
   font-size: 0.8125rem;
-  line-height: 1.65; /* relaxed for comfortable on-screen reading */
+  line-height: 1.65;
+  /* relaxed for comfortable on-screen reading */
   color: var(--text-secondary);
   display: -webkit-box;
   -webkit-line-clamp: 4;

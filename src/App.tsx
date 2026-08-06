@@ -25,6 +25,7 @@ import AIAssistant from './components/AI/AIAssistant'
 import { CompactAnalytics } from './components/Analytics/CompactAnalytics'
 import { PerformancePanel } from './components/Analytics/PerformancePanel'
 import NavigationSidebar from './components/Navigation/NavigationSidebar'
+import MobileBottomNav from './components/Navigation/MobileBottomNav'
 import ErrorBoundary from './components/UI/ErrorBoundary'
 import LoadingScreen from './components/UI/LoadingScreen'
 
@@ -169,6 +170,9 @@ const AppShell: React.FC = () => {
           onClick={() => dispatch(closeMobileNav())}
         />
       )}
+
+      {/* Mobile bottom tab bar — primary thumb-zone nav (< 768px) */}
+      <MobileBottomNav />
 
       <AnimatePresence mode="wait">
         <motion.div

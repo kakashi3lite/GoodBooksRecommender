@@ -130,17 +130,17 @@ const Dashboard: React.FC = () => {
   const activeEntry = currentlyReading.find((e) => e.finishedAt === null)
   const activeBook = activeEntry
     ? storeRecommendations.find((b) => b.id === activeEntry.bookId) ??
-      BOOK_CATALOG.find((b) => b.id === activeEntry.bookId) ??
-      (activeEntry.book
-        ? {
-            id: activeEntry.bookId,
-            title: activeEntry.book.title,
-            authors: activeEntry.book.authors,
-            cover_url: activeEntry.book.cover_url,
-            genres: activeEntry.book.genres,
-            page_count: activeEntry.book.page_count
-          }
-        : null)
+    BOOK_CATALOG.find((b) => b.id === activeEntry.bookId) ??
+    (activeEntry.book
+      ? {
+        id: activeEntry.bookId,
+        title: activeEntry.book.title,
+        authors: activeEntry.book.authors,
+        cover_url: activeEntry.book.cover_url,
+        genres: activeEntry.book.genres,
+        page_count: activeEntry.book.page_count
+      }
+      : null)
     : null
   const activePagesRead = activeEntry
     ? readingLog.filter((l) => l.bookId === activeEntry.bookId).reduce((a, l) => a + l.pages, 0)
@@ -148,8 +148,8 @@ const Dashboard: React.FC = () => {
   const activeHoursLeft =
     activeBook && activeBook.page_count && activeBook.page_count > 0
       ? formatHours(
-          estimateHoursLeft(Math.max(0, activeBook.page_count - activePagesRead), pace.avgPagesPerSession)
-        )
+        estimateHoursLeft(Math.max(0, activeBook.page_count - activePagesRead), pace.avgPagesPerSession)
+      )
       : null
 
   const quickLogActive = () => {
@@ -365,7 +365,7 @@ const Dashboard: React.FC = () => {
                   </button>
                   <button
                     onClick={refreshRecommendations}
-                    className="bg-white/20 hover:bg-white/30 px-4 py-2.5 rounded-lg transition-all duration-200 flex items-center space-x-2"
+                    className="hidden sm:inline-flex bg-white/20 hover:bg-white/30 px-4 py-2.5 rounded-lg transition-all duration-200 items-center space-x-2"
                   >
                     <Sparkles className="w-4 h-4" />
                     <span>Get Recommendation</span>

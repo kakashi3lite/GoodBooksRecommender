@@ -43,7 +43,8 @@ const navigationItems = [
     label: 'Dashboard',
     description: 'Your reading overview',
     badge: null,
-    color: 'text-blue-600'
+    color: 'text-blue-600',
+    mobileHide: true
   },
   {
     id: 'discover',
@@ -52,7 +53,8 @@ const navigationItems = [
     label: 'Discover',
     description: 'Find new books',
     badge: 'New',
-    color: 'text-green-600'
+    color: 'text-green-600',
+    mobileHide: true
   },
   {
     id: 'reading',
@@ -61,7 +63,8 @@ const navigationItems = [
     label: 'Currently Reading',
     description: 'Pick up where you left off',
     badge: null,
-    color: 'text-orange-600'
+    color: 'text-orange-600',
+    mobileHide: true
   },
   {
     id: 'wishlist',
@@ -345,7 +348,7 @@ const NavigationSidebar: React.FC<NavigationSidebarProps> = ({ className = '' })
                 key={item.id}
                 to={item.path}
                 className={({ isActive }) =>
-                  `group flex items-center space-x-3 px-3 py-3 rounded-xl transition-all duration-200 relative ${isActive
+                  `group flex items-center space-x-3 px-3 py-3 rounded-xl transition-all duration-200 relative ${item.mobileHide ? 'mobile-hide-on-phone' : ''} ${isActive
                     ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 shadow-lg'
                     : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
                   }`
