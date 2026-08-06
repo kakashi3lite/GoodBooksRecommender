@@ -562,6 +562,12 @@
   min-width: 0;
 }
 
+/* Cards fill their bento cell regardless of the card's default width */
+.bento-item .book-card {
+  width: 100%;
+  min-width: 0;
+}
+
 /* Hero: wide + tall (large cover band + open blurb) */
 .bento-item.bento-hero {
   grid-column: span 2;

@@ -297,9 +297,10 @@ const Dashboard: React.FC = () => {
       initial="hidden"
       animate="visible"
     >
-      {/* Enhanced Header with Search and Controls */}
+      {/* Enhanced Header with Search and Controls — hidden on phones (the
+          mobile top bar owns the header there; search lives on Discover) */}
       <motion.header
-        className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-b border-gray-200 dark:border-gray-700"
+        className="hidden md:block sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-b border-gray-200 dark:border-gray-700"
         variants={itemVariants}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -705,7 +706,7 @@ const Dashboard: React.FC = () => {
                                 )
                               }
                             }}
-                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs py-2.5 px-3 rounded-lg transition-colors"
+                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs py-3 px-3 rounded-lg transition-colors"
                           >
                             {progressFor(book.id) > 0
                               ? `Log ${pace.avgPagesPerSession} pg`
@@ -713,7 +714,7 @@ const Dashboard: React.FC = () => {
                           </button>
                           <button
                             onClick={() => dispatch(toggleFavorite(book.id))}
-                            className={`p-2.5 transition-colors ${favorites.includes(book.id) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
+                            className={`p-3 transition-colors ${favorites.includes(book.id) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
                             aria-label="Toggle wishlist"
                           >
                             <Heart className="w-4 h-4" />
@@ -726,7 +727,7 @@ const Dashboard: React.FC = () => {
                                 .then(() => toast.success('Link copied — share it with a reader 📎'))
                                 .catch(() => toast.error('Could not copy the link'))
                             }}
-                            className="p-2.5 text-gray-400 hover:text-blue-500 transition-colors"
+                            className="p-3 text-gray-400 hover:text-blue-500 transition-colors"
                             aria-label="Share book"
                           >
                             <Share className="w-4 h-4" />

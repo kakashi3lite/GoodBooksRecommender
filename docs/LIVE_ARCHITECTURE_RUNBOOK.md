@@ -417,6 +417,29 @@ around the standard mobile pattern:
   - **Amber/orange** = warmth, motivation → streak, flame
   - **Red** = alerts/badges only
 
+## 17. Alignment & Placement Audit (2026-08-07)
+
+A systematic audit ran every page (Dashboard, Discover, Reading, Wishlist,
+Analytics, Community, News, Notes, Book Detail) at 3 viewports (390 / 834 /
+1280 px) measuring horizontal overflow and touch-target sizes.
+
+**Issues found & fixed:**
+1. **Mobile Dashboard overflow** — the Dashboard's own sticky header (logo +
+   search + theme/bell/settings) duplicated the mobile top bar and pushed the
+   header buttons past the viewport. Fixed: the Dashboard header is now
+   `hidden md:block` (mobile gets ONE top bar; search lives on Discover).
+2. **Mobile Notes overflow** — the composer (select + Add Note) was a fixed
+   flex row wider than 390px. Fixed: `flex-col sm:flex-row` + `min-w-0`.
+3. **iPad Discover overflow** — bento cards didn't shrink to their grid cells
+   (the card's default width won). Fixed: `.bento-item .book-card { width:100%;
+   min-width:0 }`.
+4. **Touch targets** — card action buttons (Start Reading / wishlist / share)
+   and the BookCard share icon bumped to 40px (`p-3` / `py-3`).
+5. **Page-padding consistency** — all feature pages standardized to
+   `p-4 sm:p-8` (was mixed `p-8` on mobile).
+
+**Post-fix verification: 0 overflow across all 27 page/viewport combos.**
+
 
 
 
