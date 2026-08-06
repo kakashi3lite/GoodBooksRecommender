@@ -256,3 +256,44 @@ curl -s "https://books.dalecabra.com/api/books/recommend?genres=sci-fi&limit=3"
 - `8b914b1` → `6c17411` — remove last demo fallback, trim dead code, fix genre-alias recommender
 - `d54feb0` — security: upgrade react-router-dom to 7.18.2
 - `6e6f5ff` — fix(mobile): onboarding gate escape + guest path; book sharing + auto-fetch; live web trending; Discover search wired
+- `c79e977` — docs: live architecture runbook
+
+## 11. UI/UX Pass (2026-08-07) — dark header, expandable blurbs, bento grid
+
+### Dark-mode header fix (root cause)
+`--glass-bg` / `--glass-border` were referenced (mobile topbar, sidebar,
+toasts) but **never defined**, so the mobile header fell back to
+`rgba(255,255,255,0.85)` — white in dark mode. Fixed by defining both
+variables in `design-system.css` light + dark theme blocks:
+- Light: `--glass-bg: rgba(255,255,255,0.78)`, `--glass-border: rgba(148,163,184,0.28)`
+- Dark: `--glass-bg: rgba(30,30,30,0.72)`, `--glass-border: rgba(148,163,184,0.22)`
+
+Verified computed style in dark mode: `rgba(30, 30, 30, 0.72)`.
+
+### Expandable descriptions
+- Every `BookCard` now has a **"Show description / Hide description"** toggle
+  (`.book-expand-toggle` + `.book-expanded-desc`) — works on touch (no hover
+  dependency). Featured cards keep the blurb open by default.
+- **Backend**: Open Library trending works often omit descriptions. Added
+  `enrichWithDescriptions` in `webCatalog.ts` — fetches real work records in
+  parallel (bounded to 6) and attaches clean blurbs. A `cleanDescription`
+  sanitizer strips HTML tags, markdown links, `&nbsp;`, backslashes.
+
+### Bento grid (distinctive sizes)
+- New `.bento-grid` + `.bento-item` classes in `book-card.css` with
+  `bento-hero` (span 2×2), `bento-wide` (span 2 cols), `bento-tall` (span 2
+  rows), `bento-standard`; `grid-auto-flow: dense`; responsive (2-col on
+  mobile).
+- `src/utils/bento.ts` `bentoPlacement(index)` assigns a size per item (repeats
+  every 8). Applied to `AIBookRecommendations` and `WebTrending`.
+- `BookCard` gained a `variant?: 'standard' | 'featured'` prop; featured cards
+  use a 16:9 cinematic cover band + always-open blurb.
+- Search results stay a uniform grid (scannable) but inherit the expand toggle.
+
+### Deployment gotcha reconfirmed
+Right after `wrangler pages deploy`, the new deployment's index.html can
+reference assets/function bundles that 404 for 30–60 s (propagation). The
+browser error boundary can latch onto a transient 404 — hard-reload after the
+deploy settles. Verify the fresh deployment URL via curl before testing the
+main domain.
+

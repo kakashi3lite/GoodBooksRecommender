@@ -101,12 +101,42 @@ export const fetchOpenLibraryTrending = async (limit: number): Promise<Book[]> =
                 .map(normalizeOpenLibraryWork)
                 .filter((b): b is Book => Boolean(b))
                 .slice(0, limit)
-            if (books.length > 0) return books
+            if (books.length > 0) return enrichWithDescriptions(books)
         } catch {
             // try next source
         }
     }
     return []
+}
+
+/**
+ * Open Library trending works often omit descriptions. For any book still
+ * carrying the generic fallback text, fetch the real work record (in
+ * parallel, bounded) and attach its description so every expanded card has
+ * a genuine blurb rather than filler.
+ */
+const enrichWithDescriptions = async (books: Book[]): Promise<Book[]> => {
+    const needsEnrich = books
+        .map((b, i) => ({ b, i }))
+        .filter(({ b }) => !b.description || b.description.includes('a trending read from'))
+        .slice(0, 6) // bound the parallel fan-out
+    if (needsEnrich.length === 0) return books
+
+    const enriched = await Promise.all(
+        needsEnrich.map(async ({ b, i }) => {
+            if (!b.id.startsWith('ol:')) return { i, b }
+            try {
+                const w = (await fetchJson(`https://openlibrary.org/works/${b.id.slice(3)}.json`, 4000)) as OpenLibraryWork
+                const desc = extractDescription(w.description)
+                if (desc && desc.length > 20) return { i, b: { ...b, description: desc.slice(0, 600) } }
+            } catch {
+                // keep the fallback description
+            }
+            return { i, b }
+        })
+    )
+    const byIndex = new Map(enriched.map((e) => [e.i, e.b]))
+    return books.map((b, i) => byIndex.get(i) ?? b)
 }
 
 // ─── Google Books ───────────────────────────────────────────────────────────
@@ -180,10 +210,25 @@ export const fetchGoogleBooksNew = async (limit: number): Promise<Book[]> => {
 // ─── Resolve a single book by ISBN / Open Library key ───────────────────────
 
 const extractDescription = (d: unknown): string => {
-    if (typeof d === 'string') return d
-    if (d && typeof d === 'object') return (d as { value?: string }).value ?? ''
+    if (typeof d === 'string') return cleanDescription(d)
+    if (d && typeof d === 'object') return cleanDescription((d as { value?: string }).value ?? '')
     return ''
 }
+
+/**
+ * Open Library blurbs sometimes carry markdown/HTML noise (e.g. `[text](url)`
+ * links, `<u>` tags, `&nbsp;` entities, `#` headers). Strip the worst of it
+ * so the expandable blurb reads cleanly in the UI.
+ */
+const cleanDescription = (raw: string): string =>
+    raw
+        .replace(/<[^>]*>/g, ' ') // HTML tags → space
+        .replace(/&nbsp;/g, ' ') // common entity
+        .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1') // markdown links → link text
+        .replace(/[#*_`]/g, '') // stray markdown markers
+        .replace(/\\/g, '') // escaped backslashes from markdown sources
+        .replace(/\s+/g, ' ')
+        .trim()
 
 /** Look up a book by ISBN on Open Library (data API + work description). */
 export const resolveByIsbn = async (isbn: string): Promise<Book | null> => {

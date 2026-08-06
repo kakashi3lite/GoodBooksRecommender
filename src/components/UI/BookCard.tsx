@@ -28,15 +28,29 @@ interface BookCardProps {
   book: Book;
   isNew?: boolean;
   onClick?: () => void;
+  /** 'featured' renders a larger card with the description always visible (bento grid). */
+  variant?: 'standard' | 'featured';
 }
 
 export const BookCard: React.FC<BookCardProps> = ({
   book,
   isNew = false,
-  onClick
+  onClick,
+  variant = 'standard'
 }) => {
   // Local state for interaction tracking
   const [isHovered, setIsHovered] = useState(false);
+  /**
+   * Chain-of-Thought: every card can expand a short description inline — this
+   * is the mobile-friendly way to read a blurb (hover panels don't exist on
+   * touch screens). Featured cards keep the blurb open by default.
+   */
+  const [expanded, setIsExpanded] = useState(variant === 'featured');
+
+  const toggleExpanded = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsExpanded((v) => !v);
+  };
 
   /**
    * Chain-of-Thought: Generate star rating display
@@ -113,7 +127,7 @@ export const BookCard: React.FC<BookCardProps> = ({
 
   return (
     <motion.div
-      className={`book-card ${isNew ? 'new-book' : ''}`}
+      className={`book-card ${isNew ? 'new-book' : ''} ${variant === 'featured' ? 'book-card-featured' : ''}`}
       variants={cardVariants}
       initial="initial"
       animate={isHovered ? "hover" : "initial"}
@@ -171,6 +185,21 @@ export const BookCard: React.FC<BookCardProps> = ({
       {/* Rating stars */}
       {renderRating()}
 
+      {/* Short description — expandable on every card (mobile friendly) */}
+      {book.description && (
+        <>
+          <button
+            type="button"
+            onClick={toggleExpanded}
+            aria-expanded={expanded}
+            className="book-expand-toggle"
+          >
+            {expanded ? 'Hide description' : 'Show description'}
+          </button>
+          {expanded && <p className="book-expanded-desc">{book.description}</p>}
+        </>
+      )}
+
       {/* AI recommendation score */}
       {book.ai_recommendation_score !== undefined && (
         <div className="ai-score" title="AI recommendation score">
@@ -190,7 +219,7 @@ export const BookCard: React.FC<BookCardProps> = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: isHovered ? 1 : 0 }}
       >
-        {book.description && (
+        {!expanded && book.description && (
           <p className="book-description">
             {book.description.length > 120
               ? `${book.description.substring(0, 120)}...`

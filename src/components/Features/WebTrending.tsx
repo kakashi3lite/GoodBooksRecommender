@@ -11,6 +11,7 @@ import { Globe, TrendingUp } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { API_ENDPOINTS } from '../../utils/api'
+import { bentoPlacement } from '../../utils/bento'
 import { BookCard } from '../UI/BookCard'
 
 interface TrendingBook {
@@ -82,21 +83,19 @@ const WebTrending: React.FC<{ limit?: number }> = ({ limit = 12 }) => {
             )}
 
             {!loading && !error && books.length > 0 && (
-                <div
-                    className="grid gap-5"
-                    style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
-                        gap: '1.25rem'
-                    }}
-                >
-                    {books.map((book) => (
-                        <BookCard
-                            key={book.id}
-                            book={book}
-                            onClick={() => navigate(`/book/${encodeURIComponent(book.id)}`)}
-                        />
-                    ))}
+                <div className="bento-grid">
+                    {books.map((book, index) => {
+                        const placement = bentoPlacement(index)
+                        return (
+                            <div key={book.id} className={`bento-item ${placement.className}`}>
+                                <BookCard
+                                    book={book}
+                                    variant={placement.featured ? 'featured' : 'standard'}
+                                    onClick={() => navigate(`/book/${encodeURIComponent(book.id)}`)}
+                                />
+                            </div>
+                        )
+                    })}
                 </div>
             )}
         </section>

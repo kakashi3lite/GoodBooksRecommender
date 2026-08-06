@@ -15,6 +15,7 @@ import {
   setError,
   setLoading
 } from '../../stores/books/booksSlice';
+import { bentoPlacement } from '../../utils/bento';
 import { getPersonalizedRecommendations } from '../../utils/personalization';
 import { BookCard } from '../UI/BookCard';
 import { ErrorMessage } from '../UI/ErrorMessage';
@@ -116,18 +117,6 @@ export const AIBookRecommendations: React.FC<RecommendationProps> = ({
     navigate(`/book/${encodeURIComponent(book.id)}`);
   };
 
-  /**
-   * Chain-of-Thought: Responsive column count for the book grid.
-   * Time Complexity: O(1) computation per render.
-   */
-  const columnCount = useMemo(() => {
-    if (typeof window === 'undefined') return 4;
-    const width = window.innerWidth;
-    if (width < 640) return 2;
-    if (width < 1024) return 3;
-    return 4;
-  }, []);
-
   // Error state (prefer store error, fall back to local) — skipped when
   // personalized picks are already available.
   const displayError = storeError ?? null;
@@ -187,24 +176,20 @@ export const AIBookRecommendations: React.FC<RecommendationProps> = ({
         )}
       </div>
 
-      <div
-        className="recommendations-grid"
-        style={{
-          display: 'grid',
-          gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))`,
-          gap: '1.5rem',
-          padding: '1rem 0'
-        }}
-      >
-        {booksToRender.map((book) => (
-          <div key={book.id} className="book-grid-cell">
-            <BookCard
-              book={book}
-              isNew={!viewedRecommendations.has(book.id)}
-              onClick={() => handleBookClick(book)}
-            />
-          </div>
-        ))}
+      <div className="bento-grid">
+        {booksToRender.map((book, index) => {
+          const placement = bentoPlacement(index)
+          return (
+            <div key={book.id} className={`bento-item ${placement.className}`}>
+              <BookCard
+                book={book}
+                variant={placement.featured ? 'featured' : 'standard'}
+                isNew={!viewedRecommendations.has(book.id)}
+                onClick={() => handleBookClick(book)}
+              />
+            </div>
+          )
+        })}
       </div>
 
       <div className="recommendations-footer">
