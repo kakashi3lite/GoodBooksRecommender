@@ -114,6 +114,28 @@ Optional AI chat upgrade (adds an LLM to the chat assistant):
 - Frontend builds use `src/data/bookCatalog.ts`; Pages Functions bundle
   `shared/book-catalog.json`.
 
+## Real book covers (Open Library)
+
+Every catalog book has a real `cover_url` (baked into the catalog + shared
+JSON). Source: **Open Library** (`https://covers.openlibrary.org/b/id/{id}-M.jpg`)
+— free, no API key, real cover scans. (Google Books API was evaluated but its
+anonymous daily quota is frequently exhausted → 429.)
+
+- Regenerate/fetch: `node scripts/fetch-covers.cjs` → writes
+  `scripts/.covers.json` (gitignored) for review → bake into the catalog.
+- `BookCover` lazy-loads the real image and fades it in over the generated art;
+  on error it keeps the generated cover (never a broken image).
+- Supabase seed includes the covers; the DB row `cover_url` is the source of
+  truth once `/api/books` reports `source: database`.
+
+## Asset-cache guard
+
+`_headers` marks `/assets/*` as `immutable`. The Pages Function
+`functions/assets/[[route]].ts` prevents the SPA fallback from serving
+`index.html` (200 text/html) for a missing hashed asset — which browsers would
+otherwise cache for a year (breaking the app with a MIME error). Real assets
+pass through untouched; missing assets return a non-cacheable 404.
+
 ## Local dev
 
 ```bash
