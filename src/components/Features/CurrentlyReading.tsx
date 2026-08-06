@@ -8,6 +8,7 @@ import { motion } from 'framer-motion'
 import { BookOpen, Clock } from 'lucide-react'
 import React from 'react'
 import { useAppSelector } from '../../hooks/redux'
+import BookCover from '../UI/BookCover'
 
 /**
  * CurrentlyReading — a clean shelf view of in-progress books.
@@ -54,7 +55,15 @@ const CurrentlyReading: React.FC = () => {
                                 key={book.id}
                                 className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 shadow-lg hover:shadow-xl transition-shadow"
                             >
-                                <div className="text-4xl mb-4">📖</div>
+                                <div className="mb-4 flex justify-center">
+                                    <BookCover
+                                        title={book.title}
+                                        author={book.authors}
+                                        genres={book.genres}
+                                        seed={book.id}
+                                        size="lg"
+                                    />
+                                </div>
                                 <h3 className="font-semibold text-gray-900 dark:text-white">
                                     {book.title}
                                 </h3>

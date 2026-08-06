@@ -6,9 +6,10 @@
  */
 
 import { AnimatePresence, motion } from 'framer-motion'
-import { BookOpen, Bot, Send, Sparkles, X } from 'lucide-react'
+import { Bot, Send, Sparkles, X } from 'lucide-react'
 import React, { useEffect, useRef, useState } from 'react'
 import { useAppDispatch, useAppSelector } from '../../hooks/redux'
+import BookCover from '../UI/BookCover'
 import type { ChatMessage } from '../../stores/ai/aiSlice'
 import {
   addMessage,
@@ -51,9 +52,13 @@ const MessageBubble: React.FC<{ message: ChatMessage }> = ({ message }) => {
                 key={book.id}
                 className="flex items-center gap-3 rounded-xl bg-gray-50 dark:bg-gray-700/60 p-2.5 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
               >
-                <div className="w-10 h-14 rounded-md bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0 shadow">
-                  <BookOpen className="w-5 h-5 text-white" />
-                </div>
+                <BookCover
+                  title={book.title}
+                  author={book.authors}
+                  size="xs"
+                  rounded="sm"
+                  showText={false}
+                />
                 <div className="min-w-0 flex-1">
                   <p className="font-semibold text-sm truncate">{book.title}</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 truncate">

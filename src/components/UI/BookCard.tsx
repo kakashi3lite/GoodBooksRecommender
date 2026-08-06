@@ -7,6 +7,7 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import BookCover from './BookCover';
 
 interface Book {
   id: string;
@@ -34,7 +35,6 @@ export const BookCard: React.FC<BookCardProps> = ({
 }) => {
   // Local state for interaction tracking
   const [isHovered, setIsHovered] = useState(false);
-  const [loaded, setLoaded] = useState(false);
   
   /**
    * Chain-of-Thought: Generate star rating display
@@ -102,29 +102,17 @@ export const BookCard: React.FC<BookCardProps> = ({
         </motion.div>
       )}
       
-      {/* Book cover with loading effect */}
+      {/* Book cover — generated art by default, real image when available */}
       <div className="book-cover-container">
-        <motion.img
-          src={book.cover_url}
-          alt={`Cover of ${book.title}`}
-          className="book-cover"
-          loading="lazy"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: loaded ? 1 : 0 }}
-          onLoad={() => setLoaded(true)}
-          onError={(e) => {
-            // Fallback for missing covers
-            const target = e.target as HTMLImageElement;
-            target.src = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 150' width='100' height='150'%3E%3Crect width='100' height='150' fill='%234B5563'/%3E%3Ctext x='50' y='75' font-family='Arial' font-size='14' text-anchor='middle' fill='white'%3E${encodeURIComponent(book.title.substring(0, 2))}%3C/text%3E%3C/svg%3E`;
-            setLoaded(true);
-          }}
+        <BookCover
+          title={book.title}
+          author={book.authors}
+          coverUrl={book.cover_url}
+          genres={book.genres}
+          seed={book.id}
+          size="md"
+          rounded="md"
         />
-        
-        {!loaded && (
-          <div className="book-cover-skeleton">
-            <div className="skeleton-animation" />
-          </div>
-        )}
       </div>
       
       {/* Book info */}

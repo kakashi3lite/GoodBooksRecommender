@@ -9,6 +9,7 @@ import { Heart } from 'lucide-react'
 import React from 'react'
 import { useAppDispatch, useAppSelector } from '../../hooks/redux'
 import { toggleFavorite } from '../../stores/user/userSlice'
+import BookCover from '../UI/BookCover'
 
 /**
  * Wishlist — the reader's saved-for-later shelf.
@@ -56,6 +57,15 @@ const Wishlist: React.FC = () => {
                                 key={book.id}
                                 className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 shadow-lg hover:shadow-xl transition-shadow"
                             >
+                                <div className="mb-4 flex justify-center">
+                                    <BookCover
+                                        title={book.title}
+                                        author={book.authors}
+                                        genres={book.genres}
+                                        seed={book.id}
+                                        size="lg"
+                                    />
+                                </div>
                                 <div className="flex items-start justify-between">
                                     <div>
                                         <h3 className="font-semibold text-gray-900 dark:text-white">

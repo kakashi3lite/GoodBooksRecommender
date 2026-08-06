@@ -30,6 +30,7 @@ import {
 } from 'lucide-react'
 import React, { useEffect, useMemo, useState } from 'react'
 import { useAppDispatch, useAppSelector } from '../../hooks/redux'
+import BookCover from '../UI/BookCover'
 import { fetchRecommendations } from '../../stores/books/booksSlice'
 import { describeProfile, getPersonalizedRecommendations } from '../../utils/personalization'
 
@@ -467,7 +468,14 @@ const Dashboard: React.FC = () => {
                       whileHover="hover"
                     >
                       <div className="flex items-start space-x-3 mb-3">
-                        <div className="text-3xl">{book.cover}</div>
+                        <BookCover
+                          title={book.title}
+                          author={book.author}
+                          genres={book.genre ? [book.genre] : undefined}
+                          size="sm"
+                          rounded="md"
+                          showText={false}
+                        />
                         <div className="flex-1 min-w-0">
                           {book.trending && (
                             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 mb-1">

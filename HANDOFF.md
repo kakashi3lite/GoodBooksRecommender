@@ -95,6 +95,9 @@ behind demo data. Fix the code before documenting "production ready."
   the curated catalog (`src/data/bookCatalog.ts`, 24 books) against the reader's taste profile
   (genres, moods, goal) and shows a *reason* on every pick ("Because you love Science Fiction").
   Works instantly, offline — no backend required. Account + preferences persist in localStorage.
+- **Intelligent covers**: `src/components/UI/BookCover.tsx` — deterministic, genre-aware gradient
+  covers (`src/utils/coverArt.ts`) render instantly for every book; real `cover_url` images
+  lazily fade in over them and fall back to the generated art on error. No broken images, no CLS.
 - **AI Assistant**: chat works even with the backend down (Cmd+K to toggle, quick actions,
   book-suggestion cards with ratings).
 - **Redux**: 7 slices, localStorage persistence (`dashboard_state` + `goodbooks_user`), typed hooks.
