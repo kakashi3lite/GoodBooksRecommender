@@ -1,11 +1,11 @@
-import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
+import { defineConfig } from 'vite'
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  
+
   // Chain-of-Thought: Resolve paths for seamless component imports
   resolve: {
     alias: {
@@ -19,7 +19,7 @@ export default defineConfig({
       '@styles': path.resolve(__dirname, './dashboard/css')
     }
   },
-  
+
   // Development server configuration
   server: {
     port: 3000,
@@ -39,7 +39,7 @@ export default defineConfig({
       }
     }
   },
-  
+
   // Build configuration for production
   build: {
     outDir: 'dist',
@@ -60,14 +60,14 @@ export default defineConfig({
       }
     }
   },
-  
+
   // Forward-Thinking: Environment variables for different deployment stages
   define: {
     __DEV__: JSON.stringify(process.env.NODE_ENV === 'development'),
     __PROD__: JSON.stringify(process.env.NODE_ENV === 'production'),
     __VERSION__: JSON.stringify(process.env.npm_package_version)
   },
-  
+
   // Memory: Optimize dependencies for faster loading
   optimizeDeps: {
     include: [
