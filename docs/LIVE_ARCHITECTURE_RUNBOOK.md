@@ -19,11 +19,11 @@
 | Database | Supabase `rqorywqrimcsgekmsxmj` | Schema **not yet applied** — API currently serves the embedded catalog (`source: "catalog"`) |
 | Live data | Open Library + Google Books | Trending, ISBN/key resolution, book covers (all key-less) |
 | News | Google News RSS → JSON | `functions/api/news/[[route]].ts` |
-| AI chat | OpenAI-compatible (env-gated) | MiniMax: `OPENAI_API_KEY`, `AI_BASE_URL`, `AI_MODEL` as Cloudflare secrets |
+| AI chat | OpenAI-compatible (env-gated) | MiniMax: `MINIMAX_API_KEY`, `AI_BASE_URL`, `AI_MODEL` as Cloudflare secrets |
 
 ### Env vars on the Pages project
 - Plain: `SUPABASE_URL`, `SUPABASE_ANON_KEY` (publishable), `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `AI_PROVIDER`
-- **Secret**: `SUPABASE_SERVICE_ROLE_KEY`, `OPENAI_API_KEY`, `AI_BASE_URL` (`https://api.minimax.io/v1`), `AI_MODEL` (`MiniMax-M2`)
+- **Secret**: `SUPABASE_SERVICE_ROLE_KEY`, `MINIMAX_API_KEY`, `AI_BASE_URL` (`https://api.minimax.io/v1`), `AI_MODEL` (`MiniMax-M2`)
 - `VITE_*` vars are baked at **build time** (see runbook §8). Never commit secrets.
 
 ---
@@ -469,7 +469,7 @@ An automated sweep hit every endpoint with valid + edge-case inputs. Result:
    reappear after editing (macOS creates them).
 
 **Note on AI chat**: the LLM layer is OpenAI-compatible and the live provider
-is **MiniMax** — `OPENAI_API_KEY` = MiniMax key (secret), `AI_BASE_URL` =
+is **MiniMax** — `MINIMAX_API_KEY` (secret), `AI_BASE_URL` =
 `https://api.minimax.io/v1`, `AI_MODEL` = `MiniMax-M2`. Chat falls back to the
 local hybrid engine (real picks, `model: goodbooks-hybrid`) whenever the LLM
 is unreachable. A bounded retry (2 retries with backoff) is in place so

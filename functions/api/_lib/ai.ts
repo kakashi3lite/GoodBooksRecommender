@@ -5,25 +5,28 @@
  * LLM would be overkill; the TF-IDF + profile engine does that in microseconds
  * for free. So this module:
  *
- *   - Uses an OpenAI-compatible chat-completions API when OPENAI_API_KEY
- *     (+ optional AI_MODEL) are configured on the Pages project.
+ *   - Uses an OpenAI-compatible chat-completions API when a provider key is
+ *     configured: MINIMAX_API_KEY (MiniMax — live provider) or OPENAI_API_KEY
+ *     (+ optional AI_MODEL).
  *   - Falls back to the local semantic engine (query matching + profile
  *     scoring) otherwise — so chat always works live, with real book picks.
  *
- * Any OpenAI-compatible provider works. MiniMax is the live provider:
- * OPENAI_API_KEY = MiniMax key, AI_BASE_URL = https://api.minimax.io/v1,
- * AI_MODEL = MiniMax-M2.
+ * Any OpenAI-compatible provider works. MiniMax is auto-selected when
+ * MINIMAX_API_KEY is present (base URL defaults to https://api.minimax.io/v1,
+ * model to MiniMax-M2 — overridable via AI_BASE_URL / AI_MODEL).
  *
  * Env vars (server-side only, never in the browser bundle):
- *   OPENAI_API_KEY = provider key — legacy AI_API_KEY also accepted
- *   AI_PROVIDER    = optional "openai" (default) | any OpenAI-compatible
- *   AI_MODEL       = e.g. "gpt-4o-mini" (default), "MiniMax-M2"
- *   AI_BASE_URL    = optional custom base URL for OpenAI-compatible endpoints
+ *   MINIMAX_API_KEY = MiniMax subscription key (takes priority)
+ *   OPENAI_API_KEY  = OpenAI key (sk-...) — legacy AI_API_KEY also accepted
+ *   AI_PROVIDER     = optional "openai" (default) | any OpenAI-compatible
+ *   AI_MODEL        = e.g. "gpt-4o-mini" (default), "MiniMax-M2"
+ *   AI_BASE_URL     = optional custom base URL for OpenAI-compatible endpoints
  */
 import { type RecommendationResult, BOOK_CATALOG } from './catalog'
 import { buildProfile, recommendForProfile, recommendFromQuery } from './recommender'
 
 interface Env {
+    MINIMAX_API_KEY?: string
     OPENAI_API_KEY?: string
     /** @deprecated legacy alias — prefer OPENAI_API_KEY */
     AI_API_KEY?: string
@@ -55,30 +58,51 @@ const suggestionsFromResults = (results: RecommendationResult[]): ChatSuggestion
         rating: book.rating
     }))
 
-/** Resolve the LLM key — OPENAI_API_KEY preferred, legacy AI_API_KEY fallback. */
-const llmApiKey = (env: Env): string | undefined =>
-    env.OPENAI_API_KEY ?? env.AI_API_KEY
+interface ProviderConfig {
+    key: string
+    baseUrl: string
+    defaultModel: string
+}
 
-const isLlmConfigured = (env: Env): boolean => {
-    const key = llmApiKey(env)
+/** Resolve which LLM provider is configured, if any. MiniMax wins when its
+ * key is present; otherwise OpenAI (or a custom OpenAI-compatible endpoint). */
+const resolveProvider = (env: Env): ProviderConfig | null => {
+    if (env.MINIMAX_API_KEY) {
+        return {
+            key: env.MINIMAX_API_KEY,
+            baseUrl: env.AI_BASE_URL ?? 'https://api.minimax.io/v1',
+            defaultModel: 'MiniMax-M2'
+        }
+    }
+    const key = env.OPENAI_API_KEY ?? env.AI_API_KEY
+    if (!key) return null
     // OpenAI keys start with "sk-" → a bare key is treated as OpenAI.
-    return Boolean(
-        key && (env.AI_PROVIDER || env.AI_BASE_URL || key.startsWith('sk-'))
-    )
+    if (!(env.AI_PROVIDER || env.AI_BASE_URL || key.startsWith('sk-'))) return null
+    return {
+        key,
+        baseUrl: env.AI_BASE_URL ?? 'https://api.openai.com/v1',
+        defaultModel: 'gpt-4o-mini'
+    }
 }
 
 const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms))
+
+/** Strip a model's reasoning block (e.g. MiniMax-M2 `<think>…</think>`) so
+ * users only see the actual answer. */
+const stripThinkBlocks = (text: string): string =>
+    text.replace(/<think>[\s\S]*?<\/think>/g, '').trim()
 
 /** Call an OpenAI-compatible chat completions endpoint. Bounded retry with
  * backoff so a transient 429/5xx doesn't drop the LLM reply. */
 const callLlm = async (
     env: Env,
+    provider: ProviderConfig,
     system: string,
     user: string
 ): Promise<string> => {
-    const base = env.AI_BASE_URL ?? 'https://api.openai.com/v1'
-    const model = env.AI_MODEL ?? 'gpt-4o-mini'
-    const key = llmApiKey(env) ?? ''
+    const base = provider.baseUrl
+    const model = env.AI_MODEL ?? provider.defaultModel
+    const key = provider.key
     let last: Error | null = null
     for (let attempt = 0; attempt < 3; attempt++) {
         if (attempt > 0) await sleep(attempt === 1 ? 900 : 1800)
@@ -117,7 +141,12 @@ const callLlm = async (
             last = new Error('LLM empty reply')
             break
         }
-        return content.trim()
+        const cleaned = stripThinkBlocks(content)
+        if (!cleaned) {
+            last = new Error('LLM empty reply')
+            break
+        }
+        return cleaned
     }
     throw last ?? new Error('LLM failed')
 }
@@ -138,10 +167,11 @@ export const handleChat = async (
 ): Promise<ChatReply> => {
     const profile = buildProfile(prefs ?? {})
 
-    if (isLlmConfigured(env)) {
+    const provider = resolveProvider(env)
+    if (provider) {
         try {
             const user = `Reader taste: ${profile.favoriteGenres.join(', ') || 'eclectic'}.\n\nQuestion: ${message}`
-            const reply = await callLlm(env, SYSTEM_PROMPT, user)
+            const reply = await callLlm(env, provider, SYSTEM_PROMPT, user)
             // Attach local engine picks so the chat renders book cards even
             // with an LLM reply (best of both worlds, still free).
             const picks = recommendFromQuery(BOOK_CATALOG, message, {
@@ -151,7 +181,7 @@ export const handleChat = async (
             return {
                 reply,
                 bookSuggestions: suggestionsFromResults(picks),
-                model: env.AI_MODEL ?? 'llm'
+                model: env.AI_MODEL ?? provider.defaultModel
             }
         } catch {
             // Fall through to the local engine on any LLM failure.

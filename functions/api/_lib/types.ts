@@ -8,6 +8,7 @@ export interface PagesEnv {
     SUPABASE_URL?: string
     SUPABASE_SERVICE_ROLE_KEY?: string
     SUPABASE_ANON_KEY?: string
+    MINIMAX_API_KEY?: string
     OPENAI_API_KEY?: string
     /** @deprecated legacy alias — prefer OPENAI_API_KEY */
     AI_API_KEY?: string

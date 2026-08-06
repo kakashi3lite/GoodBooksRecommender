@@ -47,7 +47,8 @@ explainable, real-time, cheap.
 3. **MMR diversity** — re-ranks personalized picks so the top list isn't
    repetitive (λ = 0.3 similarity penalty).
 4. **LLM layer (optional, env-gated)** — only for conversational chat
-   (`OPENAI_API_KEY` + `AI_BASE_URL` + `AI_MODEL`). Never for ranking.
+   (`MINIMAX_API_KEY`/`OPENAI_API_KEY` + `AI_BASE_URL` + `AI_MODEL`). Never
+   for ranking.
 
 ## API Reference
 
@@ -95,9 +96,11 @@ serves the embedded curated catalog (same shape, always works).
 
 Optional AI chat upgrade (adds an LLM to the chat assistant — any
 OpenAI-compatible provider):
-- `OPENAI_API_KEY` = provider key — set as a Cloudflare **secret**
+- `MINIMAX_API_KEY` = MiniMax subscription key — set as a Cloudflare **secret**
+  (live provider; auto-selects MiniMax base URL + `MiniMax-M2` model)
+- `OPENAI_API_KEY` = OpenAI key (`sk-...`), or any other provider key
 - `AI_BASE_URL` = provider base URL, e.g. `https://api.minimax.io/v1` (MiniMax)
-- `AI_MODEL` = e.g. `MiniMax-M2` (current live provider) or `gpt-4o-mini`
+- `AI_MODEL` = e.g. `MiniMax-M2` (default) or `gpt-4o-mini`
 - `AI_PROVIDER` = optional, for custom providers
 
 **Data tables** (see `docs/supabase/schema.sql`): `books`, `profiles`,

@@ -23,8 +23,9 @@ pages_build_output_dir = "./dist"
 #     SUPABASE_JWKS_URL           https://<ref>.supabase.co/auth/v1/.well-known/jwks.json
 #                                 (for verifying user JWTs server-side)
 #     AI_PROVIDER                 openai (default) | any OpenAI-compatible
-#     OPENAI_API_KEY              LLM key for /api/ai/chat (secret). Live
-#                                 provider: MiniMax (api.minimax.io)
+#     MINIMAX_API_KEY             MiniMax subscription key (secret) — live
+#                                 provider; auto-selects MiniMax defaults
+#     OPENAI_API_KEY              OpenAI key (sk-...) — legacy AI_API_KEY too
 #     AI_MODEL                    e.g. gpt-4o-mini, MiniMax-M2
 #     AI_BASE_URL                 custom endpoint, e.g. https://api.minimax.io/v1
 #
