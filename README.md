@@ -30,7 +30,10 @@ Most book platforms show you *popular* books. GoodBooks shows you **your** books
   suggestion cards, instantly (works even offline).
 - 📊 **Reading insights** — goals, streaks, and a futuristic dashboard that makes your
   reading life feel trackable and beautiful.
-- 💾 **Private by design** — your taste profile lives on your device; no credit card, no spam.
+- 💾 **Private by design** — your taste profile lives on your device (or a database you own,
+  via optional Supabase sync); no credit card, no spam.
+- 🔗 **Share-ready** — rich link previews (Open Graph + Twitter cards) for posting on Reddit,
+  X, Discord, and more (see `docs/SOCIAL_LAUNCH.md`).
 - ⚡ **Fast & resilient** — instant personalized picks, graceful fallbacks, and a buttery
   animated UI (light & dark themes).
 

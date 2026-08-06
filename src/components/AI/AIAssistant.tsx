@@ -9,7 +9,6 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Bot, Send, Sparkles, X } from 'lucide-react'
 import React, { useEffect, useRef, useState } from 'react'
 import { useAppDispatch, useAppSelector } from '../../hooks/redux'
-import BookCover from '../UI/BookCover'
 import type { ChatMessage } from '../../stores/ai/aiSlice'
 import {
   addMessage,
@@ -17,6 +16,7 @@ import {
   sendMessage,
   toggleAssistant
 } from '../../stores/ai/aiSlice'
+import BookCover from '../UI/BookCover'
 
 // Quick actions shown as suggestion chips
 const QUICK_ACTIONS = [
@@ -39,8 +39,8 @@ const MessageBubble: React.FC<{ message: ChatMessage }> = ({ message }) => {
     >
       <div
         className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm shadow-lg ${isUser
-            ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-br-sm'
-            : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-bl-sm border border-gray-200 dark:border-gray-700'
+          ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-br-sm'
+          : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-bl-sm border border-gray-200 dark:border-gray-700'
           }`}
       >
         <p className="leading-relaxed whitespace-pre-wrap">{message.content}</p>

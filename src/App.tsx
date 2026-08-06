@@ -15,6 +15,7 @@ import {
   togglePerformancePanel,
   trackPerformanceMetrics
 } from './stores/dashboard/dashboardSlice'
+import { syncAccountToServer } from './stores/user/userSlice'
 
 // Core components
 import AIAssistant from './components/AI/AIAssistant'
@@ -109,6 +110,14 @@ const AppShell: React.FC = () => {
     (state) => state.user.hasCompletedOnboarding
   )
   const showOnboarding = !isAuthenticated || !hasCompletedOnboarding
+
+  // Chain-of-Thought: When a returning user is restored from localStorage, push
+  // their account to the database (best-effort) so it stays in sync.
+  useEffect(() => {
+    if (isAuthenticated && hasCompletedOnboarding) {
+      dispatch(syncAccountToServer())
+    }
+  }, [dispatch, isAuthenticated, hasCompletedOnboarding])
 
   if (!isInitialized) {
     return <LoadingScreen message="Initializing AI systems..." />

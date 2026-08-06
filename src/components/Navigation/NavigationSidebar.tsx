@@ -347,8 +347,8 @@ const NavigationSidebar: React.FC<NavigationSidebarProps> = ({ className = '' })
                             </div>
                             {item.badge && (
                               <span className={`px-2 py-1 text-xs rounded-full ${item.badge === 'New' || item.badge === 'Hot'
-                                  ? 'bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400'
-                                  : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+                                ? 'bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400'
+                                : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
                                 }`}>
                                 {item.badge}
                               </span>

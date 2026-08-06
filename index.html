@@ -1,12 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="GoodBooks Recommender Dashboard - AI-powered book recommendation system">
-    <meta name="keywords" content="books, recommendations, AI, machine learning, reading">
+    <meta name="description"
+        content="GoodBooks — discover books made for you. AI-personalized recommendations with reasons, a reading companion, and a beautiful dashboard.">
+    <meta name="keywords" content="books, recommendations, AI, reading, book tracker, personalized">
     <meta name="author" content="GoodBooks Recommender Team">
-    
+    <meta name="theme-color" content="#3b82f6">
+
+    <!-- Canonical + share URL (update if you attach a custom domain) -->
+    <link rel="canonical" href="https://goodbooks-recommender.pages.dev/">
+
+    <!-- Open Graph (Facebook, LinkedIn, WhatsApp, iMessage, etc.) -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="GoodBooks">
+    <meta property="og:title" content="GoodBooks — Discover Books Made For You">
+    <meta property="og:description"
+        content="Tell us what you love and get personalized book recommendations with reasons — plus an AI reading companion. Free, private, beautiful.">
+    <meta property="og:url" content="https://goodbooks-recommender.pages.dev/">
+    <meta property="og:image" content="https://goodbooks-recommender.pages.dev/og-cover.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:locale" content="en_US">
+
+    <!-- Twitter / X Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="GoodBooks — Discover Books Made For You">
+    <meta name="twitter:description"
+        content="AI-personalized book recommendations with reasons. Tell us what you love, we’ll find your next favorite read.">
+    <meta name="twitter:image" content="https://goodbooks-recommender.pages.dev/og-cover.png">
+
     <!-- Content Security Policy -->
     <meta http-equiv="Content-Security-Policy" content="
         default-src 'self';
@@ -14,37 +39,42 @@
         style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
         font-src 'self' https://fonts.gstatic.com;
         img-src 'self' data: https:;
-        connect-src 'self' ws: wss:;
+        connect-src 'self' https: ws: wss:;
         base-uri 'self';
         form-action 'self';
         frame-ancestors 'none';
         object-src 'none';
     ">
-    
+
     <!-- Security headers -->
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta http-equiv="X-Frame-Options" content="DENY">
     <meta http-equiv="X-XSS-Protection" content="1; mode=block">
     <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
-    
-    <title>🤖 Futuristic Book Recommender Dashboard</title>
-    
+
+    <title>GoodBooks — Discover Books Made For You</title>
+
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
-    
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
+    <link rel="apple-touch-icon" href="/og-cover.png">
+
     <!-- Google Fonts with font-display optimization -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+
     <!-- Futuristic Dashboard Styles -->
     <link rel="stylesheet" href="/dashboard/css/futuristic-dashboard.css">
     <link rel="stylesheet" href="/dashboard/css/react-components.css">
-    
+
     <!-- Performance hints -->
     <link rel="dns-prefetch" href="//fonts.googleapis.com">
     <link rel="preload" href="/dashboard/css/futuristic-dashboard.css" as="style">
 </head>
+
 <body>
     <!-- React Root -->
     <div id="root">
@@ -55,8 +85,9 @@
             <p>Please enable JavaScript for the full experience.</p>
         </div>
     </div>
-    
+
     <!-- React App will be mounted here by Vite -->
     <script type="module" src="/src/main.tsx"></script>
 </body>
+
 </html>

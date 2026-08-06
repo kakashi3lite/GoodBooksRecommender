@@ -30,9 +30,9 @@ import {
 } from 'lucide-react'
 import React, { useEffect, useMemo, useState } from 'react'
 import { useAppDispatch, useAppSelector } from '../../hooks/redux'
-import BookCover from '../UI/BookCover'
 import { fetchRecommendations } from '../../stores/books/booksSlice'
 import { describeProfile, getPersonalizedRecommendations } from '../../utils/personalization'
+import BookCover from '../UI/BookCover'
 
 // Enhanced Animation Variants
 const containerVariants = {
@@ -229,7 +229,7 @@ const Dashboard: React.FC = () => {
           progress: 0,
           genre: rec.book.genres[0] ?? 'Fiction',
           trending: false,
-          timeToRead: `${Math.max(2, Math.round(rec.book.page_count / 120))}h`, 
+          timeToRead: `${Math.max(2, Math.round(rec.book.page_count / 120))}h`,
           description: rec.book.description,
           reason: rec.reasons[0] ?? undefined
         })
@@ -400,8 +400,8 @@ const Dashboard: React.FC = () => {
                 key={filter}
                 onClick={() => setActiveFilter(filter)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${activeFilter === filter
-                    ? 'bg-blue-600 text-white shadow-lg'
-                    : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                  ? 'bg-blue-600 text-white shadow-lg'
+                  : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
                   }`}
               >
                 {filter.charAt(0).toUpperCase() + filter.slice(1)}

@@ -167,6 +167,28 @@ export const updatePreferences = createAsyncThunk(
   }
 )
 
+/**
+ * Push the local account to the database (best-effort).
+ * No-op when Supabase isn't configured — the app stays fully local.
+ * Chain-of-Thought: dynamically import the repository so the Supabase SDK only
+ * ships to the browser when an account actually syncs (keeps the main bundle lean).
+ */
+export const syncAccountToServer = createAsyncThunk(
+  'user/syncAccountToServer',
+  async (_, { getState }) => {
+    const { user } = getState() as { user: UserSliceState }
+    if (!user.isAuthenticated) return { synced: false }
+    const { syncUserAccount } = await import('../../lib/userRepository')
+    return syncUserAccount({
+      email: user.profile.email,
+      name: user.profile.name,
+      favoriteGenres: user.preferences.favoriteGenres,
+      readingGoal: user.preferences.readingGoal,
+      readingLevel: user.profile.readingLevel
+    })
+  }
+)
+
 // ─── Slice ─────────────────────────────────────────────────────────────────
 
 const userSlice = createSlice({
@@ -302,6 +324,12 @@ const userSlice = createSlice({
       })
       .addCase(updatePreferences.fulfilled, (state, action) => {
         state.preferences = { ...state.preferences, ...action.payload }
+      })
+      .addCase(syncAccountToServer.fulfilled, (state, action) => {
+        // Non-fatal: the app continues on local accounts either way
+        if (action.payload.synced) {
+          state.error = null
+        }
       })
   }
 })
