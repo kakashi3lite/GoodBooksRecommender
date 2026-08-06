@@ -4,14 +4,17 @@
  */
 
 import { AnimatePresence, motion } from 'framer-motion'
+import { Menu, X } from 'lucide-react'
 import React, { Suspense, lazy, useEffect } from 'react'
 import { Toaster } from 'react-hot-toast'
-import { Route, Routes } from 'react-router-dom'
+import { Route, Routes, useLocation } from 'react-router-dom'
 
 // Redux hooks and actions
 import { useAppDispatch, useAppSelector } from './hooks/redux'
 import {
+  closeMobileNav,
   initializeDashboard,
+  toggleMobileNav,
   togglePerformancePanel,
   trackPerformanceMetrics
 } from './stores/dashboard/dashboardSlice'
@@ -19,7 +22,7 @@ import { syncAccountToServer } from './stores/user/userSlice'
 
 // Core components
 import AIAssistant from './components/AI/AIAssistant'
-import { DashboardAnalytics } from './components/Analytics/DashboardAnalytics'
+import { CompactAnalytics } from './components/Analytics/CompactAnalytics'
 import { PerformancePanel } from './components/Analytics/PerformancePanel'
 import NavigationSidebar from './components/Navigation/NavigationSidebar'
 import ErrorBoundary from './components/UI/ErrorBoundary'
@@ -43,18 +46,13 @@ const fadeInOut = {
   exit: { opacity: 0 }
 }
 
-const slideInFromLeft = {
-  initial: { x: -300, opacity: 0 },
-  animate: { x: 0, opacity: 1 },
-  exit: { x: -300, opacity: 0 }
-}
-
 /**
  * App Shell Component
  * Memory: Remembers layout preferences and user state
  */
 const AppShell: React.FC = () => {
   const dispatch = useAppDispatch()
+  const location = useLocation()
   const {
     isInitialized,
     theme,
@@ -62,8 +60,16 @@ const AppShell: React.FC = () => {
     layout,
     performanceMode,
     performancePanelVisible,
-    sidebarCollapsed
+    sidebarCollapsed,
+    mobileNavOpen
   } = useAppSelector(state => state.dashboard)
+
+  // Chain-of-Thought: Close the mobile drawer on navigation so the reader
+  // lands on the new page with a clear view.
+  useEffect(() => {
+    if (mobileNavOpen) dispatch(closeMobileNav())
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname])
 
   // Chain-of-Thought: Initialize AI systems and performance tracking on app mount
   useEffect(() => {
@@ -124,9 +130,33 @@ const AppShell: React.FC = () => {
   }
 
   return (
-    <div className={`app-shell theme-${theme} ai-mode-${aiMode} layout-${layout} performance-${performanceMode}${sidebarCollapsed ? ' layout-collapsed' : ''}`}>
+    <div className={`app-shell theme-${theme} ai-mode-${aiMode} layout-${layout} performance-${performanceMode}${sidebarCollapsed ? ' layout-collapsed' : ''}${mobileNavOpen ? ' mobile-open' : ''}`}>
       {/* Neural network background animation */}
       <div className="neural-background" />
+
+      {/* Mobile top bar — hamburger + brand (visible < 768px) */}
+      <header className="mobile-topbar">
+        <button
+          type="button"
+          className="mobile-menu-button"
+          onClick={() => dispatch(toggleMobileNav())}
+          aria-label={mobileNavOpen ? 'Close menu' : 'Open menu'}
+          aria-expanded={mobileNavOpen}
+        >
+          {mobileNavOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        </button>
+        <span className="mobile-topbar-brand">📚 BookWise</span>
+      </header>
+
+      {/* Mobile drawer backdrop (closes the menu on tap outside) */}
+      {mobileNavOpen && (
+        <button
+          type="button"
+          className="mobile-backdrop"
+          aria-label="Close menu"
+          onClick={() => dispatch(closeMobileNav())}
+        />
+      )}
 
       <AnimatePresence mode="wait">
         <motion.div
@@ -136,20 +166,15 @@ const AppShell: React.FC = () => {
           animate="animate"
           exit="exit"
         >
-          {/* Navigation Sidebar */}
-          <motion.aside
-            className="navigation-sidebar"
-            variants={slideInFromLeft}
-            initial="initial"
-            animate="animate"
-          >
+          {/* Navigation Sidebar (CSS handles the mobile drawer transition) */}
+          <aside className="navigation-sidebar">
             <NavigationSidebar />
 
             {/* Show compact analytics in sidebar */}
             <div className="sidebar-analytics">
-              <DashboardAnalytics compact={true} />
+              <CompactAnalytics />
             </div>
-          </motion.aside>
+          </aside>
 
           {/* Main Content Area */}
           <main className="main-content">

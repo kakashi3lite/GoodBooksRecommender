@@ -17,6 +17,8 @@ export interface DashboardState {
   aiMode: 'basic' | 'enhanced' | 'neural'
   animations: boolean
   sidebarCollapsed: boolean
+  /** Mobile drawer visibility (hamburger menu < 768px). */
+  mobileNavOpen: boolean
   loading: boolean
   error: string | null
 
@@ -48,6 +50,7 @@ const initialState: DashboardState = {
   aiMode: 'enhanced',
   animations: true,
   sidebarCollapsed: false,
+  mobileNavOpen: false,
   loading: false,
   error: null,
   componentStates: {},
@@ -220,6 +223,16 @@ const dashboardSlice = createSlice({
       state.lastInteraction = Date.now()
     },
 
+    // Mobile drawer control (hamburger menu < 768px)
+    toggleMobileNav: (state) => {
+      state.mobileNavOpen = !state.mobileNavOpen
+      state.lastInteraction = Date.now()
+    },
+    closeMobileNav: (state) => {
+      state.mobileNavOpen = false
+      state.lastInteraction = Date.now()
+    },
+
     toggleAnimations: (state) => {
       state.animations = !state.animations
       state.lastInteraction = Date.now()
@@ -315,6 +328,8 @@ export const {
   setBrightness,
   setLayout,
   toggleSidebar,
+  toggleMobileNav,
+  closeMobileNav,
   toggleAnimations,
   setAIMode,
   setComponentState,

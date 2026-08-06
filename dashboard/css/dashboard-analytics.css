@@ -489,3 +489,68 @@
     display: block;
   }
 }
+
+/* ── CompactAnalytics (lightweight sidebar — pure CSS, no chart library) ── */
+.compact-genres {
+  margin-top: var(--space-md, 1rem);
+  padding-top: var(--space-sm, 0.5rem);
+  border-top: 1px solid var(--glass-border, rgba(148, 163, 184, 0.25));
+}
+
+.compact-genres-title {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary, #64748b);
+  margin: 0 0 0.5rem;
+}
+
+.compact-genre-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.compact-genre-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.compact-genre-name {
+  flex: 0 0 5.5rem;
+  font-size: 0.72rem;
+  color: var(--text-primary, #334155);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.compact-genre-track {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--glass-bg, rgba(148, 163, 184, 0.18));
+  overflow: hidden;
+}
+
+.compact-genre-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--ai-primary, #3b82f6), var(--ai-secondary, #8b5cf6));
+  transition: width 0.5s ease;
+}
+
+.compact-genre-count {
+  flex: 0 0 1.2rem;
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary, #64748b);
+  text-align: right;
+}

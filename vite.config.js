@@ -52,9 +52,7 @@ export default defineConfig({
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom'],
-          three: ['three', '@react-three/fiber', '@react-three/drei'],
-          animations: ['framer-motion', 'react-spring'],
-          charts: ['recharts'],
+          animations: ['framer-motion'],
           ui: ['lucide-react', 'react-hot-toast']
         }
       }
@@ -73,12 +71,7 @@ export default defineConfig({
     include: [
       'react',
       'react-dom',
-      'framer-motion',
-      'three',
-      '@react-three/fiber',
-      '@react-three/drei',
-      'recharts',
-      'zustand'
+      'framer-motion'
     ]
   }
 })
