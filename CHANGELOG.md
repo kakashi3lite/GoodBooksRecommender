@@ -5,6 +5,26 @@ All notable changes to the GoodBooks Recommender Dashboard will be documented in
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-08-07
+
+### ✨ Added
+- **Context-aware AI reading companion** — chat replies now use your real profile
+  (favorite genres, goal, persona, current book + progress, pace, streak, recently
+  finished) to give genuinely personalized answers, e.g. pace-based session estimates.
+- **AI Reading Insight** on the Analytics page — one click writes a warm reflection
+  on your real reading pace, streak, and goal progress (with "Regenerate").
+- Offline chat fallback now recommends **real catalog books** instead of hardcoded ids.
+
+### 🔧 Fixed
+- Chat abort timeout raised (4s → 30s) so slower AI replies aren't dropped.
+- Removed dead client endpoints and hardcoded fallback data.
+
+### ⚙️ Backend (Cloudflare Pages Functions)
+- `/api/ai/chat` accepts a reader `context` payload; new `POST /api/ai/insight`.
+- LLM call hardened with retries + `Retry-After` handling; honest template fallbacks
+  (never fabricated numbers). All 27 live endpoint checks + AI surfaces verified.
+- See `docs/LIVE_ARCHITECTURE_RUNBOOK.md` §18–§19 and `docs/PROJECT_STATUS.md`.
+
 ## [2.0.0] - 2025-07-17
 
 ### 🚀 MAJOR RELEASE: Futuristic Dashboard Complete Overhaul

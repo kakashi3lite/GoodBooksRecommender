@@ -1,86 +1,75 @@
 # 📊 GoodBooks Recommender — Project Status (Single Source of Truth)
 
-> **Verified as of**: 2026-08-06 (commit `d1ee337`, branch `main`)
-> **Purpose**: One honest status document. The many root-level `*COMPLETE*`/`MISSION*`/`*REPORT*`
-> files claim production readiness that the code does not support — treat this file as canonical.
+> **Verified as of**: 2026-08-07 (commit `925b659`, branch `main`)
+> **Production**: https://books.dalecabra.com — React 18/Vite SPA + **Cloudflare Pages
+> Functions** (`functions/api/**`) as the live backend. The Python FastAPI service in
+> `src/api` is **legacy and NOT deployed**. Full operational detail:
+> `docs/LIVE_ARCHITECTURE_RUNBOOK.md` (canonical runbook).
 
 ---
 
-## Overall Health
+## Overall Health (production = Cloudflare Pages Functions)
 
 | Dimension | Grade | Notes |
 |---|---|---|
-| Frontend UI & state | 🟢 **Good** | All 8 routes render, Redux wired, Tailwind live, 19 tests passing |
-| Frontend ↔ Backend connectivity | 🔴 **Broken** | Backend serves **zero** endpoints the frontend calls |
-| Backend code breadth | 🟡 **Extensive, unproven** | Auth/RBAC/cache/vector store/AB-testing exist but aren't wired end-to-end |
-| Data layer | 🔴 **Missing** | No Alembic migrations, no DB-backed user store, no real dataset loaded |
-| Reproducibility | 🔴 **Poor** | No Python lockfile, loose pins, hardcoded secrets in compose |
-| Deployment | 🔴 **Not deployable** | `docker-compose up` ships an API that 404s the frontend's contract |
-| Documentation | 🟡 **Mostly stale** | ~35 aspirational reports; `HANDOFF.md` + this file are the new source of truth |
+| Frontend UI & state | 🟢 **Good** | All routes render, Redux + localStorage, dark/light themes, mobile nav, 71 vitest tests |
+| Frontend ↔ Backend | 🟢 **Live** | All `/api/*` served by Pages Functions; live sweep **27/27** (runbook §18) |
+| AI chat + reading insight | 🟢 **Live** | Context-aware chat + "AI Reading Insight" on Analytics, personalized from the reader's **real** data (runbook §19) |
+| Data layer | 🟡 **Partial** | Supabase env vars configured; **schema not applied** → catalog fallback (`source: "catalog"`) |
+| Security | 🟢 **Good** | Security headers (frame/nosniff/referrer/permissions), CSP, secrets only via Cloudflare |
+| Reproducibility | 🟢 **Good** | npm + wrangler; documented deploy; `.env.example` + `wrangler.toml` |
+| Deployment | 🟢 **Live** | Production branch auto-deploys; `npx wrangler pages deploy dist` |
+| Documentation | 🟢 **Current** | `docs/LIVE_ARCHITECTURE_RUNBOOK.md` (19 sections) + this file are canonical |
 
 ---
 
-## What Works (verified)
+## What Works (verified live, 2026-08-07)
 
 ### Frontend
-- Vite dev/build pipelines; Tailwind + PostCSS configured; strict TS (`tsc --noEmit` clean)
-- 8 routes: `/`, `/dashboard`, `/discover`, `/reading`, `/wishlist`, `/news`, `/notes`,
-  `/community`, `/analytics`
-- Redux (7 slices) with localStorage persistence; typed hooks
-- **AI Assistant** chat with local fallback (book suggestion cards); Cmd+K toggle
-- Graceful fallback everywhere — the UI never breaks without a backend
-- Vitest: **19 tests / 5 files** passing (aiSlice, userSlice, notesSlice, AIAssistant,
-  NavigationSidebar)
-- ESLint 0 errors; production build succeeds with manual chunking
+- Vite dev/build; strict TS (`tsc --noEmit` clean); ESLint 0 errors
+- Routes: Dashboard, Discover, Currently Reading, Wishlist, Analytics, Community, News, Notes
+- Redux slices with localStorage persistence; reading log is the single source of reader data
+- **AI chat companion** (Cmd+K) with context-aware replies + real book cards; graceful offline fallback from the real catalog
+- **AI Reading Insight** card on `/analytics` (Reflect / Regenerate)
+- Responsive 390/834/1280 verified; dark/light themes; no model names in UI
 
-### Backend (module-level)
-- FastAPI app with JWT/OAuth2, RBAC, rate limiting, security middleware, CSP
-- `HybridRecommender` (TF-IDF content + SVD collaborative, 0.5/0.5), FAISS `BookVectorStore`,
-  SHAP explainer, RAG explanation service
-- Redis cache (`AsyncCacheManager`, in-memory fallback), session store, privacy/GDPR service
-- Prometheus `/metrics`, enhanced multi-component `/health`
+### Backend — Cloudflare Pages Functions (`functions/api/**`)
+- `books/[[route]].ts` — catalog, search, recommend (TF-IDF + profile + MMR), trending, web-search,
+  resolve, insights, `/:id`, `/:id/similar` (real Open Library / Google Books data)
+- `ai/[[route]].ts` — `POST /api/ai/chat` (context-aware LLM + hybrid fallback), `POST /api/ai/insight`
+  (reflection + honest template fallback); GET → 405, empty msg/bad JSON → 400
+- `news/[[route]].ts` — real Google News RSS (no fabricated fallback)
+- `analytics/[[route]].ts` — honest numbers (no fake trends; empty `trends` is intentional)
+- `assets/[[route]].ts` — non-cacheable 404 guard; catch-all → JSON 404
+- Live endpoint sweep: **27/27 PASS** (runbook §18) + AI surface audit (runbook §19)
 
----
-
-## What's Broken / Blocking (in priority order)
-
-| # | Issue | File | Impact |
-|---|---|---|---|
-| 1 | **Duplicate `app = FastAPI(...)`** — second assignment discards the first; news routers die | `src/api/main.py` (~L308 vs ~L571) | `/api/news/*` 404s at runtime |
-| 2 | **Missing REST layer** — `/api/books/*`, `/api/ai/*`, `/api/user/*`, `/api/notes/*`, `/api/community/*`, `/api/analytics/*` don't exist | `src/api/` | Every frontend API call fails |
-| 3 | **`BookRecommendation(score=...)` vs `hybrid_score`** → Pydantic 500 | `src/api/main.py` | `/recommendations` unusable |
-| 4 | Auth mismatch — product endpoint requires JWT, frontend sends none | `src/api/main.py` | No anonymous read path |
-| 5 | `fakenews` router never mounted; `/api/v2/*` mounted only via unused `EnhancedFeaturesManager` | `src/api/` | Features invisible |
-| 6 | No Alembic migrations; no DB user layer | repo-wide | Auth/persistence not real |
-| 7 | Model trains on boot (torch/FAISS) | `src/models/` | Minutes-long startup |
-| 8 | No Python lockfile; loose `>=` pins; Pydantic v1/v2 conflict | `requirements.txt` | Non-reproducible |
+### Tests
+- **71/71 vitest** (16 files), `tsc --noEmit` clean, `npm run build` succeeds
+- Live API checks via `/tmp/llm_audit.sh` and `/tmp/backend_sweep.py` (both pass)
 
 ---
 
-## Feature-by-Feature
+## Open Items (priority order)
 
-| Feature | Frontend | Backend | Wired End-to-End? |
-|---|---|---|---|
-| Account creation + taste onboarding | ✅ 3-step flow + localStorage | 🔴 /auth routes exist, not wired to UI | ✅ (client-side) |
-| Personalized recommendations | ✅ engine ranks catalog w/ reasons | 🔴 logic exists, wrong endpoint/contract | ✅ (client-side engine) |
-| Hybrid recommendations (server) | ✅ UI + slice thunks | ⚠️ logic exists, wrong endpoint/contract | 🔴 No |
-| Semantic/vector search | — | ⚠️ `BookVectorStore` exists, no endpoint | 🔴 No |
-| AI chat assistant | ✅ works w/ fallback | 🔴 no `/api/ai/*` | 🔴 No |
-| News dashboard | ✅ demo fallback | ⚠️ routers exist but dead (bug #1) | 🔴 No |
-| False-news detection | — | ⚠️ ~85% code, router unmounted | 🔴 No |
-| Reading notes | 🚧 placeholder | 🔴 no routes | 🔴 No |
-| Community hub | 🚧 placeholder | 🔴 no routes | 🔴 No |
-| Analytics dashboard | 🚧 placeholder (charts exist) | 🔴 no `/api/analytics/*` | 🔴 No |
-| Theme / brightness / virtualization | ✅ implemented | n/a | ✅ |
-| Reading goals / wishlist | ✅ new routes | 🔴 no `/api/user/*` | 🔴 No |
+1. **Apply Supabase schema** — run `docs/supabase/schema.sql` in the Supabase SQL editor, then
+   `/api/books` reports `source: "database"` instead of the catalog. No code change needed.
+2. **LLM provider key (optional)** — the AI features already degrade to honest fallbacks when the
+   key is missing/rate-limited. To enable the full AI: set the provider secret on the Pages project
+   (`npx wrangler pages secret put …`) — see runbook §19 env contract.
+3. **CI gates for functions** — add a workflow step that runs `find -delete` for Apple Double files
+   (`._*`) before deploy (they break the Functions bundle on macOS); see runbook §18 pitfall.
+4. **Archive legacy root reports** — the ~35 root `*COMPLETE*`/`MISSION*`/`*REPORT*` files are
+   historical; move to `docs/archive/` (don't delete).
 
 ---
 
-## Test Coverage (actual)
+## Legacy Python backend (`src/api`, `src/models` — NOT deployed)
 
-- **Frontend**: 19 tests (slices + components). No E2E.
-- **Backend**: no verified passing suite (pytest configured, `requirements-dev.txt` missing).
-- The legacy `TEST_MATRIX.md` (~60% FE / ~70% BE / 0% E2E) is directionally honest.
+Preserved for the ML/vector-store code; not wired to production. Known issues (from the previous
+phase, commit `d1ee337` era) remain open in that code path: duplicate `FastAPI` app in
+`src/api/main.py`, missing REST layer, `BookRecommendation` Pydantic field mismatch, `fakenews`
+router unmounted, no Alembic migrations, model trains on boot, loose pins in `requirements.txt`.
+None of these affect the live product.
 
 ---
 
@@ -88,28 +77,23 @@
 
 | Document | Accurate? | Action |
 |---|---|---|
-| `HANDOFF.md` (new) | ✅ canonical | Keep current |
+| `docs/LIVE_ARCHITECTURE_RUNBOOK.md` | ✅ **canonical** | Keep current (§18 backend audit, §19 AI v2) |
 | `docs/PROJECT_STATUS.md` (this) | ✅ canonical | Keep current |
-| `docs/DEPLOYMENT_PLAN.md` (new) | ✅ canonical | Keep current |
-| `TEST_MATRIX.md` | 🟡 mostly | Update after backend tests land |
-| `CHANGELOG.md` | 🟡 real history | Continue appending |
-| `docs/API_REFERENCE.md` | 🔴 stale | Rewrite after Phase 1 (or mark deprecated) |
-| `API_CATALOG.md` | 🔴 inaccurate | Rewrite or archive |
+| `CHANGELOG.md` | 🟡 real history | Continue appending (needs an entry for the AI v2 release) |
+| `API_CATALOG.md` | 🟡 partial | Verify/refresh against `functions/api/**` |
 | `PROJECT_STATUS.md` (root) | 🔴 aspirational | Superseded by this file |
-| ~35 × `*COMPLETE*` / `MISSION*` / `*REPORT*` | 🔴 aspirational/duplicative | Move to `docs/archive/` (do not delete — history) |
+| `TEST_MATRIX.md` | 🟡 legacy | Reflects old Python-era numbers; frontend suite is 71 tests |
+| ~35 × `*COMPLETE*` / `MISSION*` / `*REPORT*` | 🔴 historical | Move to `docs/archive/` |
 
 ---
 
 ## Next Milestones
 
-1. **M1 (half day)** — Phase 0: fix double-app bug, `BookRecommendation` field, mount routers →
-   `/api/news/*` + `/health` verified live.
-2. **M2 (1–2 wks)** — Phase 1: `/api/books/*` + `/api/ai/*` + `/api/user/*` + `/api/analytics/*`
-   matching `src/utils/api.ts`; frontend shows real data with backend up.
-3. **M3 (1–2 wks)** — Phase 2: Alembic, DB-backed auth, model serialization, Python lockfile,
-   secrets cleanup.
-4. **M4 (1 wk)** — Phase 3: `docker-compose.prod.yml` + nginx + smoke tests; staging deploy.
-5. **M5 (later)** — Phase 4: CI gates, E2E, K8s manifests, product features (semantic discovery,
-   wrapped, clubs).
+1. Apply Supabase schema → real `source: "database"` + server-side analytics.
+2. CI: add `._*` cleanup + function smoke tests to `.github/workflows/cloudflare-pages.yml`.
+3. E2E (frontend) for chat + insight flows.
+4. Archive legacy root reports; refresh `API_CATALOG.md`.
+5. Product: news digest, community feeds, semantic discovery (all can reuse the AI layer).
 
-**Full detail**: `docs/DEPLOYMENT_PLAN.md`
+**Full detail**: `docs/LIVE_ARCHITECTURE_RUNBOOK.md`
+
