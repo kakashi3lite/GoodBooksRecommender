@@ -13,10 +13,24 @@ import { type Book, BOOK_CATALOG } from './catalog'
 interface Env {
     SUPABASE_URL?: string
     SUPABASE_SERVICE_ROLE_KEY?: string
+    SUPABASE_ANON_KEY?: string
 }
 
+/**
+ * Configured when we have a URL plus at least one key. The service-role key is
+ * preferred (full access); the anon/publishable key also works for reading
+ * public tables (books has a public SELECT policy).
+ */
 export const isDbConfigured = (env: Env): boolean =>
-    Boolean(env.SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY)
+    Boolean(env.SUPABASE_URL && (env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_ANON_KEY))
+
+const authHeaders = (env: Env): Record<string, string> => {
+    const key = env.SUPABASE_SERVICE_ROLE_KEY ?? env.SUPABASE_ANON_KEY ?? ''
+    return {
+        apikey: key,
+        Authorization: `Bearer ${key}`
+    }
+}
 
 interface SupabaseRow {
     id: string
@@ -52,12 +66,7 @@ export const fetchBooks = async (env: Env): Promise<Book[] | null> => {
     try {
         const res = await fetch(
             `${env.SUPABASE_URL}/rest/v1/books?select=*&order=rating.desc`,
-            {
-                headers: {
-                    apikey: env.SUPABASE_SERVICE_ROLE_KEY!,
-                    Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY!}`
-                }
-            }
+            { headers: authHeaders(env) }
         )
         if (!res.ok) return null
         const rows = (await res.json()) as SupabaseRow[]
@@ -83,6 +92,7 @@ export const loadCatalog = async (
 /**
  * Record a recommendation event (audit + future evaluation data).
  * Fire-and-forget; never blocks the response and never fails the request.
+ * Only the service-role key can write — anon key skips silently.
  */
 export const logRecommendation = async (
     env: Env,
@@ -93,13 +103,13 @@ export const logRecommendation = async (
         context?: string
     }
 ): Promise<void> => {
-    if (!isDbConfigured(env)) return
+    if (!env.SUPABASE_SERVICE_ROLE_KEY || !env.SUPABASE_URL) return
     try {
         await fetch(`${env.SUPABASE_URL}/rest/v1/recommendations_log`, {
             method: 'POST',
             headers: {
-                apikey: env.SUPABASE_SERVICE_ROLE_KEY!,
-                Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY!}`,
+                apikey: env.SUPABASE_SERVICE_ROLE_KEY,
+                Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
                 'Content-Type': 'application/json',
                 Prefer: 'return=minimal'
             },
