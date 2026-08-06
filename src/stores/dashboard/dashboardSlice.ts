@@ -5,7 +5,7 @@
  * Forward-Thinking: Extensible for new UI features and AI capabilities
  */
 
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit'
+import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { AnalyticsService } from '../../utils/api'
 
 // Type definitions
@@ -19,11 +19,11 @@ export interface DashboardState {
   sidebarCollapsed: boolean
   loading: boolean
   error: string | null
-  
+
   // Memory: Component states
   componentStates: Record<string, any>
   lastInteraction: number
-  
+
   // Performance metrics
   performanceMetrics: {
     loadTime: number
@@ -33,7 +33,7 @@ export interface DashboardState {
     lastUpdated: number
   }
   performancePanelVisible: boolean
-  
+
   // Forward-Thinking: Future UI features
   voiceEnabled: boolean
   accessibilityMode: boolean
@@ -52,7 +52,7 @@ const initialState: DashboardState = {
   error: null,
   componentStates: {},
   lastInteraction: Date.now(),
-  
+
   performanceMetrics: {
     loadTime: 0,
     renderTime: 0,
@@ -61,7 +61,7 @@ const initialState: DashboardState = {
     lastUpdated: Date.now()
   },
   performancePanelVisible: false,
-  
+
   voiceEnabled: false,
   accessibilityMode: false,
   performanceMode: 'smooth'
@@ -77,20 +77,20 @@ export const initializeDashboard = createAsyncThunk(
     try {
       // Record start time for performance metrics
       const startTime = performance.now()
-      
+
       // Memory: Load saved preferences
       const savedPreferences = localStorage.getItem('dashboard_preferences')
       const preferences = savedPreferences ? JSON.parse(savedPreferences) : {}
-      
+
       // Load performance mode based on device capabilities
       const performanceMode = detectOptimalPerformanceMode()
-      
+
       // Simulate AI initialization
       await new Promise(resolve => setTimeout(resolve, 1000))
-      
+
       // Calculate load time
       const loadTime = performance.now() - startTime
-      
+
       return {
         ...preferences,
         isInitialized: true,
@@ -122,11 +122,11 @@ export const trackPerformanceMetrics = createAsyncThunk(
       // Get memory usage if available in browser
       const memoryInfo = (performance as any).memory
       const memoryUsage = memoryInfo ? memoryInfo.usedJSHeapSize / (1024 * 1024) : null
-      
+
       // Get API performance metrics using the analytics dashboard endpoint
       const analyticsResponse = await AnalyticsService.getDashboardData()
       const performanceData = (analyticsResponse as any)?.performance || {}
-      
+
       return {
         renderTime: performanceData.averageRenderTime || 0,
         apiLatency: performanceData.endpointLatency || {},
@@ -134,7 +134,11 @@ export const trackPerformanceMetrics = createAsyncThunk(
         lastUpdated: Date.now()
       }
     } catch (error) {
-      console.error('Failed to track performance metrics:', error)
+      // The analytics API is only available when a backend is deployed.
+      // On a static host this fails on every poll — keep prod console clean.
+      if (import.meta.env.DEV) {
+        console.error('Failed to track performance metrics:', error)
+      }
       // Return empty metrics, don't fail the action
       return {
         renderTime: 0,
@@ -153,18 +157,18 @@ export const trackPerformanceMetrics = createAsyncThunk(
 function detectOptimalPerformanceMode(): 'smooth' | 'performance' | 'battery' {
   // Check if running in browser
   if (typeof window === 'undefined') return 'smooth'
-  
+
   // Check if device is mobile
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-  
+
   // Check if device has low memory (if memory API is available)
   const hasLowMemory = (navigator as any).deviceMemory && (navigator as any).deviceMemory < 4
-  
+
   // Check if device is in battery saving mode (if battery API is available)
   const isBatterySaving = (navigator as any).getBattery && (navigator as any).getBattery().then((battery: any) => {
     return battery.charging === false && battery.level < 0.2
   }).catch(() => false)
-  
+
   if (isMobile || hasLowMemory) return 'performance'
   if (isBatterySaving) return 'battery'
   return 'smooth'
@@ -181,12 +185,12 @@ const dashboardSlice = createSlice({
     setLoading: (state, action: PayloadAction<boolean>) => {
       state.loading = action.payload
     },
-    
+
     // Theme and appearance
     setTheme: (state, action: PayloadAction<'light' | 'dark' | 'auto'>) => {
       state.theme = action.payload
       state.lastInteraction = Date.now()
-      
+
       // Persist theme preference
       try {
         const preferences = localStorage.getItem('dashboard_preferences')
@@ -199,86 +203,86 @@ const dashboardSlice = createSlice({
         console.error('Failed to save theme preference:', e)
       }
     },
-    
+
     setBrightness: (state, action: PayloadAction<number>) => {
       state.brightness = Math.max(10, Math.min(100, action.payload))
       state.lastInteraction = Date.now()
     },
-    
+
     // Layout and UI
     setLayout: (state, action: PayloadAction<'grid' | 'list' | 'carousel'>) => {
       state.layout = action.payload
       state.lastInteraction = Date.now()
     },
-    
+
     toggleSidebar: (state) => {
       state.sidebarCollapsed = !state.sidebarCollapsed
       state.lastInteraction = Date.now()
     },
-    
+
     toggleAnimations: (state) => {
       state.animations = !state.animations
       state.lastInteraction = Date.now()
     },
-    
+
     // AI mode management
     setAIMode: (state, action: PayloadAction<'basic' | 'enhanced' | 'neural'>) => {
       state.aiMode = action.payload
       state.lastInteraction = Date.now()
     },
-    
+
     // Memory: Component state management
     setComponentState: (state, action: PayloadAction<{ componentId: string; state: any }>) => {
       state.componentStates[action.payload.componentId] = action.payload.state
       state.lastInteraction = Date.now()
     },
-    
+
     clearComponentState: (state, action: PayloadAction<string>) => {
       delete state.componentStates[action.payload]
     },
-    
+
     // Performance tracking
     updateRenderTime: (state, action: PayloadAction<number>) => {
       state.performanceMetrics.renderTime = action.payload
       state.performanceMetrics.lastUpdated = Date.now()
     },
-    
+
     updateApiLatency: (state, action: PayloadAction<{ endpoint: string; latency: number }>) => {
       state.performanceMetrics.apiLatency[action.payload.endpoint] = action.payload.latency
       state.performanceMetrics.lastUpdated = Date.now()
     },
-    
+
     // Forward-Thinking: Future features
     toggleVoice: (state) => {
       state.voiceEnabled = !state.voiceEnabled
       state.lastInteraction = Date.now()
     },
-    
+
     toggleAccessibilityMode: (state) => {
       state.accessibilityMode = !state.accessibilityMode
       state.lastInteraction = Date.now()
     },
-    
+
     togglePerformancePanel: (state) => {
       state.performancePanelVisible = !state.performancePanelVisible
       state.lastInteraction = Date.now()
     },
-    
+
     setPerformanceMode: (state, action: PayloadAction<'smooth' | 'performance' | 'battery'>) => {
       state.performanceMode = action.payload
       state.lastInteraction = Date.now()
     },
-    
+
     // Error handling
     setError: (state, action: PayloadAction<string | null>) => {
       state.error = action.payload
     },
-    
+
     clearError: (state) => {
       state.error = null
     }
   },
-  
+
   extraReducers: (builder) => {
     builder
       .addCase(initializeDashboard.pending, (state) => {
@@ -333,7 +337,7 @@ export const selectAIMode = (state: { dashboard: DashboardState }) => state.dash
 export const selectPerformanceMode = (state: { dashboard: DashboardState }) => state.dashboard.performanceMode
 export const selectPerformanceMetrics = (state: { dashboard: DashboardState }) => state.dashboard.performanceMetrics
 export const selectPerformancePanelVisible = (state: { dashboard: DashboardState }) => state.dashboard.performancePanelVisible
-export const selectComponentState = (componentId: string) => 
+export const selectComponentState = (componentId: string) =>
   (state: { dashboard: DashboardState }) => state.dashboard.componentStates[componentId]
 
 export default dashboardSlice.reducer

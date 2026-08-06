@@ -1,0 +1,4 @@
+{
+    "error": "not_found",
+    "message": "This static deployment does not serve API endpoints. The backend API is not part of the Cloudflare Pages deployment."
+}

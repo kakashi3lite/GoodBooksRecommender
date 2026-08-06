@@ -42,13 +42,13 @@
         connect-src 'self' https: ws: wss:;
         base-uri 'self';
         form-action 'self';
-        frame-ancestors 'none';
         object-src 'none';
     ">
 
-    <!-- Security headers -->
+    <!-- Security headers — the authoritative versions are served as HTTP
+         headers via public/_headers (X-Frame-Options DENY, nosniff, etc.).
+         Meta tags below are kept for defense-in-depth only where supported. -->
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
-    <meta http-equiv="X-Frame-Options" content="DENY">
     <meta http-equiv="X-XSS-Protection" content="1; mode=block">
     <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
 

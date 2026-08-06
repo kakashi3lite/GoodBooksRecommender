@@ -1,3 +1,10 @@
-# Cloudflare Pages — SPA fallback routing
-# All unmatched paths serve index.html so client-side routes work on deep links.
+# Cloudflare Pages — routing rules
+# Order matters: first match wins.
+#
+# API endpoints are NOT served by this static deployment. A Pages Function
+# (functions/api/[[route]].ts) intercepts every /api/* request and returns a
+# clean 404 JSON, so frontend API clients get a proper HTTP error instead of
+# this SPA HTML and can fall back gracefully.
+
+# SPA fallback routing — all unmatched client-side routes serve index.html.
 /*    /index.html   200
