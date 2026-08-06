@@ -75,6 +75,16 @@ export const fetchRecommendations = createAsyncThunk(
         page: page
       }
 
+      // Send the reader's taste profile so the server-side engine can rank
+      // picks personally (the API ignores it when absent → still works).
+      const userState = (getState() as { user?: { preferences?: { favoriteGenres?: string[]; readingGoal?: number } } }).user
+      if (userState?.preferences) {
+        params.prefs = JSON.stringify({
+          favoriteGenres: userState.preferences.favoriteGenres ?? [],
+          readingGoal: userState.preferences.readingGoal
+        })
+      }
+
       // Fetch with delta support - only get new items since last fetch if needed
       if (lastFetched && page === 1) {
         params.since = new Date(lastFetched).toISOString()

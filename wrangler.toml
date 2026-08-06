@@ -9,3 +9,21 @@ pages_build_output_dir = "./dist"
 
 # Production branch — pushes to this branch auto-deploy via CI
 [env.production]
+
+# ═════════════════════════════════════════════════════════════════════════════
+# Runtime environment (set in the Pages dashboard → Settings → Environment
+# variables, or via the Cloudflare API). See docs/DATA_LAYER.md.
+#
+#   Server-side (Pages Functions only — never shipped to the browser):
+#     SUPABASE_URL              https://<project-ref>.supabase.co
+#     SUPABASE_SERVICE_ROLE_KEY Settings → API → service_role
+#     AI_PROVIDER               openai | (any OpenAI-compatible)
+#     AI_API_KEY                optional LLM key for /api/ai/chat
+#     AI_MODEL                  e.g. gpt-4o-mini
+#     AI_BASE_URL               optional custom endpoint for AI_PROVIDER
+#
+#   Build-time (baked into the browser bundle):
+#     VITE_SUPABASE_URL         same URL (accounts + realtime)
+#     VITE_SUPABASE_ANON_KEY    Settings → API → anon (public key)
+# ═════════════════════════════════════════════════════════════════════════════
+

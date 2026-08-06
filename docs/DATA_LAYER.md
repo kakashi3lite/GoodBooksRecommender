@@ -1,0 +1,131 @@
+# 📡 GoodBooks — Real-Time Data & AI Layer
+
+How the live app serves real data, real-time recommendations, and an AI chat
+assistant — all from the edge, with no heavy backend to maintain.
+
+## Architecture
+
+```
+Browser (React SPA on Cloudflare Pages)
+   │  fetch /api/*            (relative — same origin, CSP-safe)
+   ▼
+Cloudflare Pages Functions  ─── edge compute, ~µs
+   ├── /api/books/*           catalog + recommendations + search + similar
+   ├── /api/ai/chat           conversational assistant
+   └── /api/* (catch-all)     clean 404 for unknown endpoints
+         │
+         ├── reads live Supabase Postgres (service-role key, server-side)
+         └── falls back to the embedded curated catalog when unconfigured
+```
+
+**Why serverless functions instead of a separate backend host?**
+- Already deployed on Cloudflare Pages — no new infra, no ops.
+- Real-time: every request computes fresh results at the edge (no stale caches).
+- Cost: $0 for this workload; scales automatically.
+- The existing FastAPI backend (`src/api/`) is documented in
+  `docs/DEPLOYMENT_PLAN.md` for a future dedicated host if/when full
+  collaborative filtering + training is needed.
+
+## The Recommendation Model (why this, and not something bigger)
+
+Goal: great picks for a curated catalog of ~24 books, personalized per reader,
+explainable, real-time, cheap.
+
+| Approach                 | Verdict for this workflow                                    |
+| ------------------------ | ------------------------------------------------------------ |
+| Collaborative filtering (SVD, matrix factorization) | ❌ No user×book interaction data at scale yet — nothing to learn from. Revisit after ~10k events (see `recommendations_log`). |
+| LLM ranking              | ❌ Overkill — ranking a few dozen items with an LLM is slow + costs per request. |
+| Embedding models (sentence-transformers) | ⚠️ Only worth it at ~1000+ books. Adds an API dependency for marginal gain on 24 items. |
+| **TF-IDF + cosine similarity + profile scoring (chosen)** | ✅ Runs in µs, $0, fully explainable, works cold-start. |
+
+**Implemented model** (`functions/api/_lib/recommender.ts`):
+1. **TF-IDF vectors** over weighted text (genres ×5, moods ×3, title ×4,
+   authors ×2, description ×1) → cosine similarity for "more like X" and
+   free-text queries.
+2. **Profile scoring** — exact port of the client engine:
+   genre 45% / mood 20% / rating 15% / popularity 10% / recency 10%.
+3. **MMR diversity** — re-ranks personalized picks so the top list isn't
+   repetitive (λ = 0.3 similarity penalty).
+4. **LLM layer (optional, env-gated)** — only for conversational chat
+   (`AI_PROVIDER` + `AI_API_KEY` + `AI_MODEL`). Never for ranking.
+
+## API Reference
+
+### `GET /api/books`
+Full catalog. `{ data: Book[], source: "database" | "catalog", count }`
+
+### `GET /api/books/recommend`
+Personalized recommendations. Returns a bare JSON array of books with
+`ai_recommendation_score` (0–1 — the frontend renders `×100%`) and
+`ai_explanation`.
+
+| Param       | Meaning                                        |
+| ----------- | ---------------------------------------------- |
+| `prefs`     | JSON `{ favoriteGenres[], readingGoal }`       |
+| `genres`    | comma list (used when `prefs` absent)          |
+| `q`         | free-text query ("something cozy like ...")    |
+| `similar_to`| book id → "more like this"                     |
+| `limit`     | result count (default 6)                       |
+| `exclude`   | comma list of ids to skip                      |
+
+### `GET /api/books/search?q=...`
+Text search across title/authors/genres/description.
+
+### `GET /api/books/:id` and `GET /api/books/:id/similar`
+
+### `POST /api/ai/chat`
+`{ message, prefs? }` → `{ reply, bookSuggestions[], model }`
+
+## Real-Time Data (Supabase)
+
+The API reads live rows from Supabase Postgres when configured; otherwise it
+serves the embedded curated catalog (same shape, always works).
+
+**Activate the database (one-time, ~5 minutes):**
+1. Create a free project at [supabase.com](https://supabase.com).
+2. SQL Editor → paste `docs/supabase/schema.sql` → Run (creates tables + RLS +
+   seeds the 24-book catalog).
+3. Set these env vars on the Cloudflare Pages project
+   (Settings → Environment variables → Production):
+   - `SUPABASE_URL` = `https://<project-ref>.supabase.co`
+   - `SUPABASE_SERVICE_ROLE_KEY` = Settings → API → service_role (server-only)
+   - `VITE_SUPABASE_URL` = same URL
+   - `VITE_SUPABASE_ANON_KEY` = Settings → API → anon (public, browser-safe)
+4. Redeploy. `/api/books` now reports `source: "database"`.
+
+Optional AI chat upgrade (adds an LLM to the chat assistant):
+- `AI_PROVIDER` = `openai` (or any OpenAI-compatible endpoint via `AI_BASE_URL`)
+- `AI_API_KEY` = your key
+- `AI_MODEL` = e.g. `gpt-4o-mini` (default)
+
+**Data tables** (see `docs/supabase/schema.sql`): `books`, `profiles`,
+`user_preferences`, `reading_activity` (real-time feed), `recommendations_log`
+(audit for future model evaluation).
+
+## Keeping the catalog in sync
+
+- Single source of truth: `src/data/bookCatalog.ts` (frontend) and
+  `shared/book-catalog.json` (server). Regenerate the JSON after editing the
+  catalog:
+  ```bash
+  node scripts/export-catalog.cjs   # -> shared/book-catalog.json
+  node scripts/seed-supabase.cjs    # -> upserts into Supabase (needs env vars)
+  ```
+- Frontend builds use `src/data/bookCatalog.ts`; Pages Functions bundle
+  `shared/book-catalog.json`.
+
+## Local dev
+
+```bash
+npm run dev            # Vite on :3000 (proxies /api to :8000)
+npx wrangler pages dev dist   # serves the built site + functions locally
+```
+
+## Verified live (2026-08-06)
+
+- `GET /api/books` → 24 books, `source: catalog`
+- Sci-fi reader → The Martian 93%, Project Hail Mary 90%, Dune 82%
+- `q=cozy and uplifting` → The House in the Cerulean Sea, Beach Read
+- `similar_to=b-11` (Dune) → The Martian, Circe, A Psalm for the Wild-Built
+- `POST /api/ai/chat` → hybrid engine reply + 5 real book cards
+- Frontend Discover + AI Assistant consume the live API (scores render as %)
