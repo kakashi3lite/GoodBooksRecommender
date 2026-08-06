@@ -43,7 +43,7 @@ export const store = configureStore({
       }
     }),
     
-  devTools: process.env.NODE_ENV !== 'production' && {
+  devTools: import.meta.env.MODE !== 'production' && {
     name: 'Futuristic Dashboard',
     trace: true,
     traceLimit: 25

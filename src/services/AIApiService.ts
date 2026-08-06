@@ -188,6 +188,7 @@ class AIApiService {
     return fallbackBooks.slice(0, count).map(book => ({
       ...book,
       score: Math.random() * 0.3 + 0.7, // 0.7-1.0
+      confidenceScore: Math.random() * 0.3 + 0.6, // 0.6-0.9
       matchFactors: {
         genreMatch: Math.random(),
         styleMatch: Math.random(),

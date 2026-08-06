@@ -5,8 +5,12 @@
  * Forward-Thinking: Extensible endpoints for future features
  */
 
-// Base API configuration
-export const API_BASE_URL = process.env.VITE_API_URL || 'http://localhost:8000'
+// Base API configuration.
+// Chain-of-Thought: Use relative `/api` paths so the Vite dev proxy (and the
+// nginx reverse proxy in production) route requests — this also keeps the
+// browser CSP (`connect-src 'self'`) happy. Override via VITE_API_URL when the
+// API lives on a separate origin behind a permissive proxy.
+export const API_BASE_URL = import.meta.env.VITE_API_URL || ''
 
 // API Endpoints
 export const API_ENDPOINTS = {
@@ -117,7 +121,8 @@ export const apiClient = new APIClient()
 // Specific API service functions
 export const BookService = {
   getRecommendations: async (userId?: string) => {
-    return apiClient.get(API_ENDPOINTS.books.recommend())
+    const query = userId ? `?user_id=${encodeURIComponent(userId)}` : ''
+    return apiClient.get(`${API_ENDPOINTS.books.recommend()}${query}`)
   },
   
   searchBooks: async (query: string) => {

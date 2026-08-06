@@ -63,8 +63,8 @@ export class GenerativeRecommender {
     const cacheKey = `user_${userId}_${JSON.stringify(options)}`
     
     // Check cache first
-    if (this.recommendationCache.has(cacheKey)) {
-      const cached = this.recommendationCache.get(cacheKey)!
+    const cached = this.recommendationCache.get(cacheKey)
+    if (cached !== undefined) {
       console.log('🎯 Using cached recommendations')
       return cached
     }
@@ -113,7 +113,10 @@ export class GenerativeRecommender {
     const cacheKey = `book_${book.id}_${JSON.stringify(options)}`
     
     if (this.recommendationCache.has(cacheKey)) {
-      return this.recommendationCache.get(cacheKey)!
+      const cached = this.recommendationCache.get(cacheKey)
+      if (cached !== undefined) {
+        return cached
+      }
     }
 
     try {

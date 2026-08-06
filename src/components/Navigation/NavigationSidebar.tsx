@@ -24,8 +24,13 @@ import {
   X,
   Zap
 } from 'lucide-react'
-import React, { useState } from 'react'
+import React from 'react'
+import toast from 'react-hot-toast'
 import { NavLink } from 'react-router-dom'
+import { useAppDispatch, useAppSelector } from '../../hooks/redux'
+import { setTheme, toggleSidebar } from '../../stores/dashboard/dashboardSlice'
+import { toggleAssistant } from '../../stores/ai/aiSlice'
+import { resetUser } from '../../stores/user/userSlice'
 
 // Navigation Items with Enhanced Icons and Descriptions
 const navigationItems = [
@@ -98,33 +103,28 @@ const userActions = [
   {
     id: 'profile',
     icon: User,
-    label: 'Profile',
-    action: () => console.log('Profile clicked')
+    label: 'Profile'
   },
   {
     id: 'notifications',
     icon: Bell,
     label: 'Notifications',
-    action: () => console.log('Notifications clicked'),
     badge: '3'
   },
   {
     id: 'theme',
     icon: Moon,
-    label: 'Dark Mode',
-    action: () => console.log('Theme toggled')
+    label: 'Dark Mode'
   },
   {
     id: 'settings',
     icon: Settings,
-    label: 'Settings',
-    action: () => console.log('Settings clicked')
+    label: 'Settings'
   },
   {
     id: 'logout',
     icon: LogOut,
-    label: 'Sign Out',
-    action: () => console.log('Logout clicked')
+    label: 'Sign Out'
   }
 ]
 
@@ -172,9 +172,40 @@ interface NavigationSidebarProps {
 }
 
 const NavigationSidebar: React.FC<NavigationSidebarProps> = ({ className = '' }) => {
-  const [isExpanded, setIsExpanded] = useState(true)
+  const dispatch = useAppDispatch()
+  // Memory: Sidebar collapse state lives in Redux so it persists across routes
+  const isExpanded = useAppSelector((state) => state.dashboard.sidebarCollapsed) === false
+  const theme = useAppSelector((state) => state.dashboard.theme)
 
-  const toggleSidebar = () => setIsExpanded(!isExpanded)
+  const handleCollapse = () => dispatch(toggleSidebar())
+
+  /**
+   * Chain-of-Thought: Route each user action to the correct Redux dispatch.
+   * Replaces the previous console.log stubs with real functionality.
+   */
+  const handleUserAction = (actionId: string) => {
+    switch (actionId) {
+      case 'theme':
+        dispatch(setTheme(theme === 'dark' ? 'light' : 'dark'))
+        toast.success(theme === 'dark' ? 'Light mode enabled' : 'Dark mode enabled')
+        break
+      case 'profile':
+        toast('Profile page coming soon')
+        break
+      case 'notifications':
+        toast('You have 3 new notifications')
+        break
+      case 'settings':
+        toast('Settings coming soon')
+        break
+      case 'logout':
+        dispatch(resetUser())
+        toast.success('Signed out')
+        break
+      default:
+        break
+    }
+  }
 
   return (
     <motion.aside
@@ -206,8 +237,9 @@ const NavigationSidebar: React.FC<NavigationSidebarProps> = ({ className = '' })
           </AnimatePresence>
           
           <button
-            onClick={toggleSidebar}
+            onClick={handleCollapse}
             className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            aria-label={isExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
           >
             {isExpanded ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
@@ -338,11 +370,17 @@ const NavigationSidebar: React.FC<NavigationSidebarProps> = ({ className = '' })
             className="p-4 border-t border-gray-200 dark:border-gray-700"
           >
             <div className="space-y-2">
-              <button className="w-full flex items-center justify-center space-x-2 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg">
+              <button
+                onClick={() => toast('Add Book feature coming soon')}
+                className="w-full flex items-center justify-center space-x-2 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg"
+              >
                 <BookmarkPlus className="w-4 h-4" />
                 <span className="font-medium">Add Book</span>
               </button>
-              <button className="w-full flex items-center justify-center space-x-2 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+              <button
+                onClick={() => dispatch(toggleAssistant())}
+                className="w-full flex items-center justify-center space-x-2 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              >
                 <Zap className="w-4 h-4" />
                 <span className="text-sm">Quick Recommendation</span>
               </button>
@@ -355,7 +393,7 @@ const NavigationSidebar: React.FC<NavigationSidebarProps> = ({ className = '' })
           {userActions.map((action) => (
             <button
               key={action.id}
-              onClick={action.action}
+              onClick={() => handleUserAction(action.id)}
               className="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-colors"
             >
               <action.icon className="w-4 h-4" />

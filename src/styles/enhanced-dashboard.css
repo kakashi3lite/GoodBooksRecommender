@@ -1,6 +1,12 @@
 /* Enhanced Futuristic Dashboard Styles - Production Ready */
 
+/* Font imports must precede all other statements */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+/* Tailwind CSS layers - enables all utility classes across components */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 /* CSS Variables for Consistent Design System */
 :root {
@@ -127,7 +133,8 @@ button:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
-  @apply focus-ring;
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
 /* Animations */
@@ -439,4 +446,116 @@ select:focus-visible {
   .book-card {
     break-inside: avoid;
   }
+}
+
+/* ===================================
+   ✨ AESTHETIC POLISH (added 2026)
+   =================================== */
+
+/* Smooth theme transitions — every theme-aware element fades between modes */
+body,
+.app-shell,
+.main-content,
+.dashboard,
+.navigation-sidebar,
+.card,
+.book-card,
+.stat-card,
+.header {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Futuristic dark scrollbars */
+.dark ::-webkit-scrollbar-track {
+  background: #1f2937;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #4b5563;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}
+
+/* Neural background — generate a subtle constellation of nodes */
+.neural-background {
+  background-image:
+    radial-gradient(circle at 15% 20%, rgba(59, 130, 246, 0.12) 0, transparent 18%),
+    radial-gradient(circle at 85% 15%, rgba(139, 92, 246, 0.10) 0, transparent 20%),
+    radial-gradient(circle at 70% 80%, rgba(6, 182, 212, 0.08) 0, transparent 18%),
+    radial-gradient(circle at 30% 75%, rgba(59, 130, 246, 0.08) 0, transparent 16%);
+}
+
+/* Selection color — brand-consistent highlight */
+::selection {
+  background: rgba(59, 130, 246, 0.25);
+  color: inherit;
+}
+
+/* Reading-optimized card text — subtle line height & anti-aliasing */
+.book-title,
+.book-author,
+.recommendation-explanation {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* AI recommendation grid spacing refinement */
+.recommendations-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-gray-900);
+  margin-bottom: 0.5rem;
+}
+
+.dark .recommendations-title {
+  color: #f9fafb;
+}
+
+.recommendation-explanation {
+  font-size: 0.85rem;
+  color: var(--color-gray-500);
+  text-align: center;
+  margin-top: 1.5rem;
+  line-height: 1.6;
+}
+
+.recommendation-empty {
+  text-align: center;
+  color: var(--color-gray-500);
+  padding: 3rem 1rem;
+  border: 1px dashed var(--color-gray-300);
+  border-radius: var(--radius-xl);
+}
+
+/* Skeleton shimmer for lazy-loaded covers */
+.skeleton-animation {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    var(--color-gray-200) 25%,
+    var(--color-gray-100) 50%,
+    var(--color-gray-200) 75%
+  );
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+  border-radius: var(--radius-lg);
+}
+
+/* Soft entrance for route transitions */
+@keyframes routeFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.main-content > * {
+  animation: routeFadeIn 0.35s ease-out;
 }

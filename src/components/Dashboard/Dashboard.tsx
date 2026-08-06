@@ -28,7 +28,9 @@ import {
     Users,
     Zap
 } from 'lucide-react'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
+import { useAppDispatch, useAppSelector } from '../../hooks/redux'
+import { fetchRecommendations } from '../../stores/books/booksSlice'
 
 // Enhanced Animation Variants
 const containerVariants = {
@@ -65,16 +67,21 @@ const cardHoverVariants = {
 
 // Enhanced Dashboard Component with Modern UI Elements
 const Dashboard: React.FC = () => {
+  const dispatch = useAppDispatch()
+  const storeRecommendations = useAppSelector((state) => state.books.recommendations)
+  const storeLoading = useAppSelector((state) => state.books.loading)
+  const userPreferences = useAppSelector((state) => state.user.preferences)
+
   const [activeFilter, setActiveFilter] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedGenre, setSelectedGenre] = useState('All Genres')
   const [showNotifications, setShowNotifications] = useState(false)
-  const [bookmarkCount, setBookmarkCount] = useState(15)
-  const [readingGoal, setReadingGoal] = useState(52)
-  const [currentProgress, setCurrentProgress] = useState(34)
+  // Chain-of-Thought: Derive goal + progress from persisted preferences;
+  // keeps the dashboard consistent with the user slice without local state churn.
+  const selectedGenre = 'All Genres'
+  const readingGoal = userPreferences.readingGoal
+  const currentProgress = 34
 
   // Sample data for enhanced dashboard
-  const genres = ['All Genres', 'Fiction', 'Non-Fiction', 'Mystery', 'Romance', 'Sci-Fi', 'Biography', 'History']
   const filterOptions = ['all', 'trending', 'recommended', 'new', 'favorites']
 
   const stats = [
@@ -198,10 +205,33 @@ const Dashboard: React.FC = () => {
     { action: "Shared review", book: "The Silent Patient", time: "2 days ago", icon: "📝" }
   ]
 
+  /**
+   * Chain-of-Thought: Merge real API recommendations with curated demo data.
+   * Memory: The dashboard stays populated even before the backend responds,
+   * then swaps in live recommendations the moment they arrive.
+   */
+  const displayBooks = useMemo(() => {
+    if (storeRecommendations.length === 0) return recentBooks
+
+    return storeRecommendations.map((book) => ({
+      id: Number(book.id),
+      title: book.title,
+      author: book.authors,
+      cover: '📖',
+      rating: book.rating,
+      progress: 0,
+      genre: book.genres?.[0] ?? 'Fiction',
+      trending: false,
+      timeToRead: '—',
+      description: book.description ?? 'A personalized recommendation for you.'
+    }))
+  }, [storeRecommendations])
+
   useEffect(() => {
-    console.log('🚀 Enhanced Futuristic Dashboard initializing...')
-    // Initialize dashboard data and AI recommendations
-  }, [])
+    // Chain-of-Thought: Fetch personalized recommendations from the backend on mount.
+    // The books slice caches results for 5 minutes to avoid redundant requests.
+    dispatch(fetchRecommendations({ limit: 6, strategy: 'hybrid' }))
+  }, [dispatch])
 
   return (
     <motion.div 
@@ -270,7 +300,7 @@ const Dashboard: React.FC = () => {
               <div>
                 <h1 className="text-3xl font-bold mb-2">Welcome back, Reader! 👋</h1>
                 <p className="text-blue-100 mb-4">
-                  You're {readingGoal - currentProgress} books away from your {readingGoal}-book goal. Keep it up!
+                  You&apos;re {readingGoal - currentProgress} books away from your {readingGoal}-book goal. Keep it up!
                 </p>
                 <div className="flex space-x-4">
                   <button className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition-all duration-200 flex items-center space-x-2">
@@ -379,6 +409,11 @@ const Dashboard: React.FC = () => {
                   <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center">
                     <Sparkles className="w-5 h-5 mr-2 text-blue-600" />
                     AI-Powered Recommendations
+                    {storeLoading && (
+                      <span className="ml-3 text-xs text-blue-600 dark:text-blue-400 animate-pulse">
+                        AI is analyzing…
+                      </span>
+                    )}
                   </h2>
                   <div className="flex space-x-2">
                     <button className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
@@ -393,7 +428,7 @@ const Dashboard: React.FC = () => {
 
               <div className="p-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {recentBooks.map((book) => (
+                  {displayBooks.map((book) => (
                     <motion.div
                       key={book.id}
                       className="group bg-gray-50 dark:bg-gray-700 rounded-xl p-4 hover:shadow-lg transition-all duration-200"
@@ -574,11 +609,11 @@ const Dashboard: React.FC = () => {
             <div className="space-y-3">
               <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                 <p className="text-sm font-medium text-blue-900 dark:text-blue-100">New Recommendation Available!</p>
-                <p className="text-xs text-blue-700 dark:text-blue-300">Based on your reading of "Atomic Habits"</p>
+                <p className="text-xs text-blue-700 dark:text-blue-300">Based on your reading of &ldquo;Atomic Habits&rdquo;</p>
               </div>
               <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
                 <p className="text-sm font-medium text-green-900 dark:text-green-100">Reading Goal Progress</p>
-                <p className="text-xs text-green-700 dark:text-green-300">You're 65% complete for this month!</p>
+                <p className="text-xs text-green-700 dark:text-green-300">You&apos;re 65% complete for this month!</p>
               </div>
             </div>
           </motion.div>

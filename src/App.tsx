@@ -30,6 +30,9 @@ const ReadingNotes = lazy(() => import('./components/Features/ReadingNotes'))
 const CommunityHub = lazy(() => import('./components/Features/CommunityHub'))
 const AdvancedAnalytics = lazy(() => import('./components/Features/AdvancedAnalytics'))
 const NewsDashboard = lazy(() => import('./components/News/NewsDashboard'))
+const Discover = lazy(() => import('./components/Features/Discover'))
+const CurrentlyReading = lazy(() => import('./components/Features/CurrentlyReading'))
+const Wishlist = lazy(() => import('./components/Features/Wishlist'))
 
 // Animation variants
 const fadeInOut = {
@@ -56,7 +59,8 @@ const AppShell: React.FC = () => {
     aiMode, 
     layout, 
     performanceMode, 
-    performancePanelVisible 
+    performancePanelVisible,
+    sidebarCollapsed 
   } = useAppSelector(state => state.dashboard)
   
   // Chain-of-Thought: Initialize AI systems and performance tracking on app mount
@@ -73,6 +77,16 @@ const AppShell: React.FC = () => {
     
     return () => clearInterval(intervalId)
   }, [dispatch, performanceMode])
+
+  // Chain-of-Thought: Sync Redux theme to the DOM so Tailwind `dark:` variants
+  // and the design-system `[data-theme]` selectors both respond to the toggle.
+  useEffect(() => {
+    const root = document.documentElement
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+    const isDark = theme === 'dark' || (theme === 'auto' && prefersDark)
+    root.classList.toggle('dark', isDark)
+    root.dataset.theme = theme
+  }, [theme])
   
   // Handle keyboard shortcut for performance panel
   useEffect(() => {
@@ -92,7 +106,7 @@ const AppShell: React.FC = () => {
   }
 
   return (
-    <div className={`app-shell theme-${theme} ai-mode-${aiMode} layout-${layout} performance-${performanceMode}`}>
+    <div className={`app-shell theme-${theme} ai-mode-${aiMode} layout-${layout} performance-${performanceMode}${sidebarCollapsed ? ' layout-collapsed' : ''}`}>
       {/* Neural network background animation */}
       <div className="neural-background" />
       
@@ -125,6 +139,9 @@ const AppShell: React.FC = () => {
               <Routes>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/discover" element={<Discover />} />
+                <Route path="/reading" element={<CurrentlyReading />} />
+                <Route path="/wishlist" element={<Wishlist />} />
                 <Route path="/news" element={<NewsDashboard />} />
                 <Route path="/notes" element={<ReadingNotes />} />
                 <Route path="/community" element={<CommunityHub />} />
@@ -135,9 +152,6 @@ const AppShell: React.FC = () => {
 
           {/* AI Assistant Overlay */}
           <AIAssistant />
-          
-          {/* Enhanced Performance Panel */}
-          <PerformancePanel />
         </motion.div>
       </AnimatePresence>
 
@@ -156,7 +170,7 @@ const AppShell: React.FC = () => {
         }}
       />
       
-      {/* Conditionally render performance panel */}
+      {/* Performance panel (conditionally rendered via Redux state) */}
       {performancePanelVisible && <PerformancePanel />}
     </div>
   )

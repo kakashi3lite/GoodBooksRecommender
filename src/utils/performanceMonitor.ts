@@ -123,21 +123,6 @@ export class PerformanceMonitor {
   }
   
   /**
-   * Create a performance measurement hook
-   * Chain-of-Thought: Custom hook for React components to measure render times
-   * Time Complexity: O(1) overhead per render
-   */
-  static usePerformanceTracking(componentId: string): void {
-    React.useEffect(() => {
-      PerformanceMonitor.startRenderTimer(componentId);
-      
-      return () => {
-        PerformanceMonitor.endRenderTimer(componentId);
-      };
-    }, [componentId]);
-  }
-  
-  /**
    * Track API call with automatic timing
    * Time Complexity: O(1) overhead per API call
    */
@@ -179,7 +164,7 @@ export class PerformanceMonitor {
     }
     
     // Log to console in development mode
-    if (process.env.NODE_ENV === 'development') {
+    if (import.meta.env.DEV) {
       console.debug('Performance snapshot:', snapshot);
     }
   }

@@ -299,7 +299,7 @@ const ExpandableNewsItem: React.FC<ExpandableNewsItemProps> = memo(({
                               </span>
                             </div>
                             
-                            <p className="text-sm mb-2 italic">"{fact.claim}"</p>
+                            <p className="text-sm mb-2 italic">&ldquo;{fact.claim}&rdquo;</p>
                             <p className="text-xs opacity-90">{fact.explanation}</p>
                             
                             {fact.sources.length > 0 && (

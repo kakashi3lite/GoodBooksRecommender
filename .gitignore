@@ -170,3 +170,30 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 node_modules/
+
+# ===== macOS artifacts =====
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+Icon?
+
+# ===== Environment & secrets =====
+.env
+.env.local
+.env.*.local
+.env.production
+
+# ===== Build outputs =====
+dist/
+dist-ssr/
+*.local
+
+# ===== Data artifacts (large datasets, not for git) =====
+data/raw/
+data/processed/
+*.csv.gz
+*.json.gz
+
+# ===== Python lockfile (optional — keep requirements-lock.txt) =====
+*.pyc

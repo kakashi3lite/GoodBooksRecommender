@@ -1,19 +1,24 @@
 /**
  * 📚 AI Book Recommendations Component
- * Chain-of-Thought: Efficiently render book recommendations with virtualization for O(windowSize) complexity
- * Memory: Track interaction history to improve recommendations over time
- * Forward-Thinking: Support for different recommendation algorithms and strategies
+ * Chain-of-Thought: Fetch personalized recommendations through Redux and render
+ * them in a responsive grid with loading / error / empty states.
+ * Memory: Track viewed recommendations to mark new items
+ * Forward-Thinking: Strategy and genre filters plug directly into the backend
  */
 
-import React, { useEffect, useState, useRef } from 'react';
-import { motion } from 'framer-motion';
-import axios from 'axios';
-import { API_ENDPOINTS } from '../../utils/api';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useAppDispatch, useAppSelector } from '../../hooks/redux';
+import {
+  addToRecentRecommendations,
+  fetchRecommendations,
+  setError,
+  setLoading
+} from '../../stores/books/booksSlice';
 import { BookCard } from '../UI/BookCard';
 import { LoadingSpinner } from '../UI/LoadingSpinner';
 import { ErrorMessage } from '../UI/ErrorMessage';
 
-// Type definitions
+// Type definitions (aligned with the books slice Book shape)
 interface Book {
   id: string;
   title: string;
@@ -34,6 +39,70 @@ interface RecommendationProps {
   genres?: string[];
 }
 
+// Curated demo books shown when the backend is unreachable, so discovery
+// always remains useful (graceful degradation, same as the Dashboard).
+const FALLBACK_BOOKS: Book[] = [
+  {
+    id: 'demo-1',
+    title: 'The Midnight Library',
+    authors: 'Matt Haig',
+    cover_url: '',
+    rating: 4.3,
+    genres: ['Fiction'],
+    published_year: 2020,
+    description: 'Between life and death there is a library, and within that library, the shelves go on forever.'
+  },
+  {
+    id: 'demo-2',
+    title: 'Project Hail Mary',
+    authors: 'Andy Weir',
+    cover_url: '',
+    rating: 4.7,
+    genres: ['Sci-Fi'],
+    published_year: 2021,
+    description: 'A lone astronaut must save the earth from disaster in this near-perfect sci-fi thriller.'
+  },
+  {
+    id: 'demo-3',
+    title: 'Tomorrow, and Tomorrow, and Tomorrow',
+    authors: 'Gabrielle Zevin',
+    cover_url: '',
+    rating: 4.5,
+    genres: ['Fiction'],
+    published_year: 2022,
+    description: 'A decade-spanning story about friendship, creativity, and the worlds we build together.'
+  },
+  {
+    id: 'demo-4',
+    title: 'The House in the Cerulean Sea',
+    authors: 'T.J. Klune',
+    cover_url: '',
+    rating: 4.6,
+    genres: ['Fantasy'],
+    published_year: 2020,
+    description: 'A caseworker journeys to a remote island orphanage for magical children.'
+  },
+  {
+    id: 'demo-5',
+    title: 'Piranesi',
+    authors: 'Susanna Clarke',
+    cover_url: '',
+    rating: 4.4,
+    genres: ['Fantasy'],
+    published_year: 2020,
+    description: 'A man lives in an endless house of halls and statues, and the mystery of its world unfolds.'
+  },
+  {
+    id: 'demo-6',
+    title: 'A Psalm for the Wild-Built',
+    authors: 'Becky Chambers',
+    cover_url: '',
+    rating: 4.4,
+    genres: ['Sci-Fi'],
+    published_year: 2021,
+    description: 'A tea monk and a robot explore what it means to be alive in a gentle, hopeful novella.'
+  }
+];
 // Main component
 export const AIBookRecommendations: React.FC<RecommendationProps> = ({
   userId,
@@ -41,186 +110,145 @@ export const AIBookRecommendations: React.FC<RecommendationProps> = ({
   strategy = 'hybrid',
   genres = []
 }) => {
-  // Redux state
   const dispatch = useAppDispatch();
-  const theme = useAppSelector(state => state.dashboard.theme);
-  const performanceMode = useAppSelector(state => state.dashboard.performanceMode);
-  
-  // Local state for recommendations
-  const [recommendations, setRecommendations] = useState<Book[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setErrorState] = useState<string | null>(null);
-  
-  // Memory: Track which recommendations the user has seen
-  const [viewedRecommendations, setViewedRecommendations] = useState<Set<string>>(new Set());
-  
-  /**
-   * Chain-of-Thought: Use a Web Worker for data preprocessing
-   * This moves heavy computation off the main thread
-   * Time Complexity: O(n) for processing, but non-blocking
-   */
-  const workerRef = React.useRef<Worker | null>(null);
+  const theme = useAppSelector((state) => state.dashboard.theme);
+  const performanceMode = useAppSelector((state) => state.dashboard.performanceMode);
 
-  useEffect(() => {
-    // Create Web Worker for background processing
-    if (typeof window !== 'undefined' && window.Worker) {
-      workerRef.current = new Worker(new URL('@utils/recommendation.worker.ts', import.meta.url));
-      
-      workerRef.current.onmessage = (event) => {
-        if (event.data.type === 'PROCESSED_RECOMMENDATIONS') {
-          setRecommendations(event.data.recommendations);
-          setIsLoading(false);
-        }
-      };
-      
-      return () => {
-        workerRef.current?.terminate();
-      };
-    }
-  }, []);
-  
+  // Read recommendations from the Redux store (source of truth)
+  const storeRecommendations = useAppSelector((state) => state.books.recommendations);
+  const storeLoading = useAppSelector((state) => state.books.loading);
+  const storeError = useAppSelector((state) => state.books.error);
+
+  // Local mirror so the grid re-renders cheaply and we can track viewed items
+  const [viewedRecommendations, setViewedRecommendations] = useState<Set<string>>(new Set());
+  // When the backend is unreachable we show curated demo picks instead of a raw error
+  const [showFallback, setShowFallback] = useState(false);
+
   /**
-   * Chain-of-Thought: Fetch recommendations with real data
-   * Time Complexity: Network I/O is O(1), but response processing is O(n)
+   * Chain-of-Thought: Fetch recommendations through the Redux thunk on mount.
+   * The thunk handles caching, delta updates, and error normalization.
    */
   useEffect(() => {
-    const fetchRecommendations = async () => {
-      try {
-        setIsLoading(true);
-        dispatch(setLoading(true));
-        
-        // Construct query parameters
-        const params = {
-          user_id: userId,
-          limit,
-          strategy,
-          genres: genres.join(',')
-        };
-        
-        // Fetch from API
-        const response = await axios.get(API_ENDPOINTS.books.recommend(), { params });
-        
-        // If we have a worker, send data for processing
-        if (workerRef.current) {
-          workerRef.current.postMessage({
-            type: 'PROCESS_RECOMMENDATIONS',
-            data: response.data
-          });
-        } else {
-          // If no worker support, process on main thread
-          setRecommendations(response.data);
-          setIsLoading(false);
-        }
-        
-        dispatch(setLoading(false));
-      } catch (err) {
-        console.error('Failed to fetch recommendations:', err);
-        setErrorState(err instanceof Error ? err.message : 'Failed to load recommendations');
-        dispatch(setError('Failed to load recommendations'));
-        setIsLoading(false);
-        dispatch(setLoading(false));
-      }
-    };
-    
-    fetchRecommendations();
-  }, [dispatch, userId, limit, strategy, genres]);
-  
+    dispatch(setLoading(true));
+    dispatch(
+      fetchRecommendations({
+        userId,
+        limit,
+        strategy,
+        genres
+      })
+    );
+  }, [dispatch, userId, limit, strategy, genres.join(',')]);
+
   /**
    * Chain-of-Thought: Track book interactions to improve recommendations
    * Memory: Store interactions in Redux for persistence across sessions
    */
   const handleBookClick = (book: Book) => {
-    // Add to recently viewed in Redux
     dispatch(addToRecentRecommendations(book));
-    
-    // Mark as viewed in local state
-    setViewedRecommendations(prev => new Set([...prev, book.id]));
+    setViewedRecommendations((prev) => new Set([...prev, book.id]));
   };
-  
+
   /**
-   * Chain-of-Thought: Compute grid dimensions for virtualized list
-   * This optimizes rendering for O(windowSize) complexity instead of O(n)
+   * Chain-of-Thought: Responsive column count for the book grid.
+   * Time Complexity: O(1) computation per render.
    */
-  const gridConfig = useMemo(() => {
-    // Default values for desktop
-    let columnCount = 4;
-    
-    // Adjust for different screen sizes
-    if (typeof window !== 'undefined') {
-      const width = window.innerWidth;
-      if (width < 640) columnCount = 2;
-      else if (width < 1024) columnCount = 3;
-    }
-    
-    return {
-      columnCount,
-      columnWidth: 250,
-      rowHeight: 380,
-    };
+  const columnCount = useMemo(() => {
+    if (typeof window === 'undefined') return 4;
+    const width = window.innerWidth;
+    if (width < 640) return 2;
+    if (width < 1024) return 3;
+    return 4;
   }, []);
-  
-  // Error state
-  if (error) {
-    return <ErrorMessage message={error} onRetry={() => setErrorState(null)} />;
+
+  // Error state (prefer store error, fall back to local)
+  const displayError = storeError ?? null;
+  if (displayError && !showFallback) {
+    // Graceful degradation: offer curated demo picks instead of a dead end.
+    return (
+      <div className="recommendations-fallback">
+        <ErrorMessage
+          message="Could not reach the recommendation engine."
+          details="You can retry, or browse curated picks while the service is offline."
+          onRetry={() => {
+            dispatch(setError(null));
+            dispatch(fetchRecommendations({ userId, limit, strategy, genres }));
+          }}
+          onDismiss={() => setShowFallback(true)}
+        />
+      </div>
+    );
   }
-  
-  // Loading state
-  if (isLoading) {
+
+  // Loading state (skip when already showing fallback picks)
+  if (!showFallback && (storeLoading || (storeRecommendations.length === 0 && !storeError))) {
     return <LoadingSpinner message="Finding your perfect reads..." />;
   }
-  
-  /**
-   * Chain-of-Thought: Use virtualization for efficient rendering
-   * Time Complexity: O(windowSize) rendering instead of O(n)
-   */
-  return (
-    <div className="ai-book-recommendations">
-      <h2 className="recommendations-title">AI-Powered Book Recommendations</h2>
-      
-      <div className="recommendations-container" style={{ height: '800px', width: '100%' }}>
-        <AutoSizer>
-          {({ height, width }) => {
-            const rowCount = Math.ceil(recommendations.length / gridConfig.columnCount);
-            
-            return (
-              <FixedSizeGrid
-                columnCount={gridConfig.columnCount}
-                columnWidth={width / gridConfig.columnCount}
-                height={height}
-                rowCount={rowCount}
-                rowHeight={gridConfig.rowHeight}
-                width={width}
-                itemData={{
-                  recommendations,
-                  columnCount: gridConfig.columnCount,
-                  handleBookClick
-                }}
-              >
-                {({ columnIndex, rowIndex, style, data }) => {
-                  const index = rowIndex * data.columnCount + columnIndex;
-                  const book = data.recommendations[index];
-                  
-                  if (!book) return null;
-                  
-                  return (
-                    <div style={style} className="book-grid-cell">
-                      <BookCard
-                        book={book}
-                        isNew={!viewedRecommendations.has(book.id)}
-                        onClick={() => data.handleBookClick(book)}
-                      />
-                    </div>
-                  );
-                }}
-              </FixedSizeGrid>
-            );
-          }}
-        </AutoSizer>
+
+  // Empty state (only when not in fallback mode)
+  if (storeRecommendations.length === 0 && !showFallback) {
+    return (
+      <div className="ai-book-recommendations">
+        <h2 className="recommendations-title">AI-Powered Book Recommendations</h2>
+        <p className="recommendation-empty">
+          No recommendations yet. Adjust your filters or add books to your shelf to get
+          personalized picks.
+        </p>
       </div>
-      
+    );
+  }
+
+  /**
+   * Chain-of-Thought: Responsive CSS grid — avoids an uninstalled virtualization
+   * dependency while keeping DOM size manageable for typical result sets.
+   */
+  const booksToRender = showFallback && storeRecommendations.length === 0
+    ? FALLBACK_BOOKS
+    : (storeRecommendations as unknown as Book[]);
+
+  return (
+    <div className={`ai-book-recommendations theme-${theme} performance-${performanceMode}`}>
+      <h2 className="recommendations-title">AI-Powered Book Recommendations</h2>
+
+      {showFallback && storeRecommendations.length === 0 && (
+        <p className="recommendation-fallback-note">
+          Showing curated picks while the recommendation service is offline.{' '}
+          <button
+            className="text-blue-600 dark:text-blue-400 underline"
+            onClick={() => {
+              setShowFallback(false);
+              dispatch(fetchRecommendations({ userId, limit, strategy, genres }));
+            }}
+          >
+            Retry
+          </button>
+        </p>
+      )}
+
+      <div
+        className="recommendations-grid"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))`,
+          gap: '1.5rem',
+          padding: '1rem 0'
+        }}
+      >
+        {booksToRender.map((book) => (
+          <div key={book.id} className="book-grid-cell">
+            <BookCard
+              book={book}
+              isNew={!viewedRecommendations.has(book.id)}
+              onClick={() => handleBookClick(book)}
+            />
+          </div>
+        ))}
+      </div>
+
       <div className="recommendations-footer">
         <p className="recommendation-explanation">
-          These recommendations are powered by our advanced AI system that analyzes reading patterns, book characteristics, and community reviews.
+          These recommendations are powered by our hybrid AI engine, which analyzes reading
+          patterns, book characteristics, and community reviews.
         </p>
       </div>
     </div>

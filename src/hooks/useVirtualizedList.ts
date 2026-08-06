@@ -145,15 +145,14 @@ export const useVirtualizedList = (
    * Chain-of-Thought: Create styles for container and items
    * Time Complexity: O(1) per item
    */
-  const totalSize = itemCount * itemSize;
   
   // Container props for attaching scroll handler
   const containerProps = {
     style: {
       ...(direction === 'vertical'
-        ? { height: '100%', overflowY: 'auto' }
-        : { width: '100%', overflowX: 'auto' }),
-    },
+        ? { height: '100%', overflowY: 'auto' as const }
+        : { width: '100%', overflowX: 'auto' as const }),
+    } as React.CSSProperties,
     onScroll: handleScroll
   };
   
@@ -163,11 +162,11 @@ export const useVirtualizedList = (
    */
   const itemProps = (index: number) => ({
     style: {
-      position: 'absolute',
+      position: 'absolute' as const,
       ...(direction === 'vertical'
         ? { top: `${index * itemSize}px`, left: 0, width: '100%', height: `${itemSize}px` }
         : { left: `${index * itemSize}px`, top: 0, width: `${itemSize}px`, height: '100%' }),
-    },
+    } as React.CSSProperties,
     key: index
   });
   

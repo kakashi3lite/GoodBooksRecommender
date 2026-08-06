@@ -13,12 +13,14 @@ interface PerformanceMetrics {
 }
 
 const App: React.FC = () => {
-  const [metrics, setMetrics] = useState<PerformanceMetrics>({
+  // Chain-of-Thought: Static demo metrics — SimpleApp is a standalone fallback,
+  // so derived values avoid unused setter warnings.
+  const metrics: PerformanceMetrics = {
     responseTime: 0.53,
     throughput: 9.6,
     cacheHitRate: 98.5,
     activeUsers: 42
-  })
+  }
 
   const [theme, setTheme] = useState<'light' | 'dark'>('dark')
   const [isLoading, setIsLoading] = useState(true)
