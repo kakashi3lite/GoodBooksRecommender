@@ -39,7 +39,8 @@ const Discover: React.FC = () => {
 
     /**
      * Chain-of-Thought: debounced live search — 350ms after the user pauses,
-     * query the edge API and render a real result grid.
+     * query the edge API (catalog hits + Google Books + Open Library) and
+     * render a real result grid. Finds ANY book, not just the curated list.
      */
     useEffect(() => {
         if (!query.trim()) {
@@ -52,7 +53,7 @@ const Discover: React.FC = () => {
         debounceRef.current = window.setTimeout(async () => {
             try {
                 const res = await fetch(
-                    `${API_ENDPOINTS.books.search()}?q=${encodeURIComponent(query.trim())}`
+                    `${API_ENDPOINTS.books.webSearch()}?q=${encodeURIComponent(query.trim())}&limit=20`
                 )
                 const data = (await res.json()) as { data?: SearchResult[] }
                 setResults(data.data ?? [])

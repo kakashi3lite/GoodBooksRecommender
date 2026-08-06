@@ -19,20 +19,31 @@ describe('readingSlice', () => {
         actions = mod
     })
 
-    it('startReading adds a 0% entry', () => {
-        const state = reducer(undefined, actions.startReading('b-01'))
+    it('startReading adds a 0% entry (with snapshot support for web books)', () => {
+        const state = reducer(undefined, actions.startReading({ bookId: 'b-01' }))
         expect(state.currentlyReading).toHaveLength(1)
         expect(state.currentlyReading[0]).toMatchObject({ bookId: 'b-01', progressPct: 0, finishedAt: null })
+
+        // Snapshot path — a web book (non-catalog id) persists on the shelf.
+        const withSnapshot = reducer(
+            state,
+            actions.startReading({
+                bookId: 'isbn:1234567890',
+                book: { title: 'Web Book', authors: 'Author', cover_url: 'https://x/cover.jpg' }
+            })
+        )
+        expect(withSnapshot.currentlyReading).toHaveLength(2)
+        expect(withSnapshot.currentlyReading[1].book).toMatchObject({ title: 'Web Book' })
     })
 
     it('startReading does not duplicate an existing book', () => {
-        let state = reducer(undefined, actions.startReading('b-01'))
-        state = reducer(state, actions.startReading('b-01'))
+        let state = reducer(undefined, actions.startReading({ bookId: 'b-01' }))
+        state = reducer(state, actions.startReading({ bookId: 'b-01' }))
         expect(state.currentlyReading).toHaveLength(1)
     })
 
     it('logReadingSession advances progress and records a daily session', () => {
-        let state = reducer(undefined, actions.startReading('b-02'))
+        let state = reducer(undefined, actions.startReading({ bookId: 'b-02' }))
         state = reducer(state, actions.logReadingSession({ bookId: 'b-02', pages: 60 }))
         expect(state.readingLog).toHaveLength(1)
         expect(state.readingLog[0].pages).toBe(60)
@@ -41,7 +52,7 @@ describe('readingSlice', () => {
     })
 
     it('finishReading marks the book complete and counts toward booksFinished', () => {
-        let state = reducer(undefined, actions.startReading('b-03'))
+        let state = reducer(undefined, actions.startReading({ bookId: 'b-03' }))
         state = reducer(state, actions.finishReading('b-03'))
         expect(state.currentlyReading[0].finishedAt).not.toBeNull()
         expect(state.currentlyReading[0].progressPct).toBe(100)
@@ -72,7 +83,7 @@ describe('readingSlice', () => {
     })
 
     it('persists to localStorage so a reload keeps the shelf', () => {
-        let state = reducer(undefined, actions.startReading('b-04'))
+        let state = reducer(undefined, actions.startReading({ bookId: 'b-04' }))
         state = reducer(state, actions.logReadingSession({ bookId: 'b-04', pages: 30 }))
         const raw = localStorage.getItem('goodbooks_reading')
         expect(raw).toBeTruthy()

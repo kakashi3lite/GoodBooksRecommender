@@ -11,8 +11,20 @@
 
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
+export interface ReadingBookSnapshot {
+    title: string
+    authors: string
+    cover_url: string
+    genres?: string[]
+    published_year?: number
+    page_count?: number
+    description?: string
+}
+
 export interface ReadingEntry {
     bookId: string
+    /** Snapshot taken at add-time so web-sourced books render on the shelf too. */
+    book?: ReadingBookSnapshot
     /** 0..100 reading progress */
     progressPct: number
     startedAt: number
@@ -118,13 +130,15 @@ const readingSlice = createSlice({
     name: 'reading',
     initialState,
     reducers: {
-        /** Add a book to the active shelf at 0%. */
-        startReading: (state, action: PayloadAction<string>) => {
-            const bookId = action.payload
+        /** Add a book to the active shelf at 0%. Snapshot the book at add-time
+         * so catalog AND web-sourced books both resolve on the shelf later. */
+        startReading: (state, action: PayloadAction<{ bookId: string; book?: ReadingBookSnapshot }>) => {
+            const { bookId, book } = action.payload
             if (state.currentlyReading.some((e) => e.bookId === bookId)) return
             const now = Date.now()
             state.currentlyReading.push({
                 bookId,
+                book,
                 progressPct: 0,
                 startedAt: now,
                 updatedAt: now,

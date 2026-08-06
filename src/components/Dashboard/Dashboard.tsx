@@ -191,6 +191,7 @@ const Dashboard: React.FC = () => {
         id: rec.book.id,
         title: rec.book.title,
         author: rec.book.authors,
+        cover_url: rec.book.cover_url,
         rating: rec.book.rating,
         progress: 0,
         genre: rec.book.genres[0] ?? 'Fiction',
@@ -344,14 +345,14 @@ const Dashboard: React.FC = () => {
             </div>
             <div className="flex gap-2 flex-shrink-0">
               <button
-                onClick={() => dispatch(startReading(dailyPick.id))}
-                className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors"
+                onClick={() => dispatch(startReading({ bookId: dailyPick.id, book: dailyPick }))}
+                className="px-3 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors"
               >
                 Start Reading
               </button>
               <button
                 onClick={() => dispatch(toggleFavorite(dailyPick.id))}
-                className="px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 text-sm rounded-lg transition-colors"
+                className="px-3 py-2.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 text-sm rounded-lg transition-colors"
               >
                 + Wishlist
               </button>
@@ -537,7 +538,18 @@ const Dashboard: React.FC = () => {
                               if (progressFor(book.id) > 0) {
                                 dispatch(logReadingSession({ bookId: book.id, pages: 20 }))
                               } else {
-                                dispatch(startReading(book.id))
+                                dispatch(
+                                  startReading({
+                                    bookId: book.id,
+                                    book: {
+                                      title: book.title,
+                                      authors: book.author,
+                                      cover_url: book.cover_url ?? '',
+                                      genres: book.genre ? [book.genre] : undefined,
+                                      description: book.description
+                                    }
+                                  })
+                                )
                               }
                             }}
                             className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs py-2 px-3 rounded-lg transition-colors"

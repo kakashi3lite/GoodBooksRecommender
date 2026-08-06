@@ -118,7 +118,20 @@ const BookDetail: React.FC = () => {
 
     const handleStartReading = () => {
         if (!book) return
-        dispatch(startReading(book.id))
+        dispatch(
+            startReading({
+                bookId: book.id,
+                book: {
+                    title: book.title,
+                    authors: book.authors,
+                    cover_url: book.cover_url,
+                    genres: book.genres,
+                    published_year: book.published_year,
+                    page_count: book.page_count,
+                    description: book.description
+                }
+            })
+        )
         toast.success(`Added "${book.title}" to your reading shelf 📖`)
     }
 

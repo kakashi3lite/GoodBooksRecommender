@@ -288,6 +288,152 @@ export const resolveByIsbn = async (isbn: string): Promise<Book | null> => {
     }
 }
 
+// ─── Web search: find ANY book, not just the curated catalog ────────────────
+
+/**
+ * Search the open web (Google Books primary + Open Library secondary) for any
+ * book a reader has in mind. Returns up to `limit` normalized books — each
+ * with a real description and cover so the "add a book" search bar is useful
+ * immediately. Merged + de-duplicated by title, catalog-style shape.
+ */
+export const searchWebBooks = async (query: string, limit = 20): Promise<Book[]> => {
+    const q = query.trim()
+    if (!q) return []
+    const merged: Book[] = []
+    const seen = new Set<string>()
+
+    const pushUnique = (b: Book | null): void => {
+        if (!b) return
+        const key = b.title.toLowerCase()
+        if (!seen.has(key)) {
+            seen.add(key)
+            merged.push(b)
+        }
+    }
+
+    // 1) Google Books — richest: description + cover + ISBN + rating + pages.
+    try {
+        const data = (await fetchJson(
+            `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=${Math.min(limit, 20)}&langRestrict=en`
+        )) as { items?: GoogleVolume[] }
+        for (const item of data.items ?? []) pushUnique(normalizeGoogleVolume(item, merged.length))
+    } catch {
+        // continue with Open Library
+    }
+
+    // 2) Top up with Open Library search when Google returned fewer.
+    if (merged.length < limit) {
+        try {
+            const data = (await fetchJson(
+                `https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=${Math.min(limit, 20)}&fields=key,title,author_name,cover_i,first_publish_year,subject,ratings_average,ratings_count,isbn`
+            )) as { docs?: OpenLibraryWork[] }
+            for (const doc of data.docs ?? []) pushUnique(normalizeOpenLibraryWork(doc, merged.length))
+        } catch {
+            // nothing more to add
+        }
+    }
+
+    // 3) Enrich the top Open Library-only hits with real descriptions.
+    const enriched = await enrichWithDescriptions(merged)
+    return enriched.slice(0, limit)
+}
+
+// ─── Book insights: real facts for the completion experience ────────────────
+
+export interface BookInsights {
+    id: string
+    title: string
+    authors: string
+    cover_url: string
+    rating: number
+    ratingsCount: number
+    genres: string[]
+    published_year: number
+    page_count: number
+    description: string
+    /** 2–4 curated facts about this exact book (from its real metadata). */
+    facts: string[]
+    /** Reader-expectation line derived from the book's actual genres. */
+    expectation: string
+}
+
+const GENRE_EXPECTATION: Array<[string, string]> = [
+    ['Science Fiction', 'a thought experiment that stays with you long after the last page'],
+    ['Fantasy', 'a richly built world you will not want to leave'],
+    ['Mystery', 'a puzzle that keeps you guessing until the final chapter'],
+    ['Thriller', 'a breakneck pace that makes the pages turn themselves'],
+    ['Romance', 'a warm, emotional payoff that makes the wait worth it'],
+    ['Self-Help', 'practical takeaways you can start using this week'],
+    ['Biography', 'a real life told with unexpected intimacy'],
+    ['Horror', 'an uneasy atmosphere that lingers after lights out'],
+    ['Historical Fiction', 'a vivid trip into a past era with modern stakes'],
+    ['Nonfiction', 'a clear-eyed look at a subject that matters'],
+    ['Literary Fiction', 'prose to savor, with a quiet emotional undercurrent'],
+    ['Fiction', 'a story built to move you'],
+    ['Adventure', 'a propulsive journey with stakes that keep climbing']
+]
+
+const expectationFor = (genres: string[]): string => {
+    for (const [genre, expectation] of GENRE_EXPECTATION) {
+        if (genres.some((g) => g.toLowerCase() === genre.toLowerCase())) return expectation
+    }
+    return 'a story worth finishing — and reflecting on'
+}
+
+/**
+ * Assemble 2–4 real facts about a book plus a reader-expectation line.
+ * Facts are derived from the book's actual fetched metadata (synopsis,
+ * themes, publication, page count, reader rating) — never fabricated.
+ */
+export const getBookInsights = async (book: Book): Promise<BookInsights> => {
+    const facts: string[] = []
+
+    // Fact 1 — a one-line synopsis from the real description.
+    if (book.description && book.description.length > 20) {
+        const firstSentence = book.description.split(/\.\s/)[0].slice(0, 140)
+        facts.push(`It opens: "${firstSentence}${firstSentence.endsWith('.') ? '' : '.'}"`)
+    }
+
+    // Fact 2 — themes / genres.
+    if (book.genres && book.genres.length > 0) {
+        const themes = book.genres.slice(0, 3)
+        facts.push(`Themes: ${themes.join(', ')}${book.moods && book.moods.length > 0 ? ` · a ${book.moods[0]} read` : ''}`)
+    }
+
+    // Fact 3 — publication + physical book.
+    const year = book.published_year || new Date().getFullYear()
+    const pages = book.page_count
+    facts.push(
+        pages && pages > 0
+            ? `Published ${year} · ${pages.toLocaleString()} pages`
+            : `Published ${year}`
+    )
+
+    // Fact 4 — reader reception (only when real ratings exist).
+    if (book.ratingsCount && book.ratingsCount > 0) {
+        facts.push(
+            `Rated ${book.rating.toFixed(1)}/5 by ${book.ratingsCount.toLocaleString()} readers`
+        )
+    } else if (book.rating >= 4) {
+        facts.push(`Consistently rated ${book.rating.toFixed(1)}/5 by readers`)
+    }
+
+    return {
+        id: book.id,
+        title: book.title,
+        authors: book.authors,
+        cover_url: book.cover_url,
+        rating: book.rating,
+        ratingsCount: book.ratingsCount,
+        genres: book.genres,
+        published_year: book.published_year,
+        page_count: book.page_count,
+        description: book.description,
+        facts: facts.slice(0, 4),
+        expectation: expectationFor(book.genres ?? [])
+    }
+}
+
 // ─── Combined facade + tiny TTL cache ───────────────────────────────────────
 
 const CACHE_TTL_MS = 10 * 60 * 1000 // 10 minutes

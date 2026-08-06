@@ -25,13 +25,14 @@ import {
   Zap,
   type LucideIcon
 } from 'lucide-react'
-import React from 'react'
+import React, { useState } from 'react'
 import toast from 'react-hot-toast'
-import { NavLink, useNavigate } from 'react-router-dom'
+import { NavLink } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../../hooks/redux'
 import { toggleAssistant } from '../../stores/ai/aiSlice'
 import { setTheme, toggleSidebar } from '../../stores/dashboard/dashboardSlice'
 import { logout } from '../../stores/user/userSlice'
+import AddBookModal from '../UI/AddBookModal'
 
 // Navigation Items with Enhanced Icons and Descriptions
 const navigationItems = [
@@ -181,7 +182,7 @@ interface NavigationSidebarProps {
 
 const NavigationSidebar: React.FC<NavigationSidebarProps> = ({ className = '' }) => {
   const dispatch = useAppDispatch()
-  const navigate = useNavigate()
+  const [addBookOpen, setAddBookOpen] = useState(false)
   // Memory: Sidebar collapse state lives in Redux so it persists across routes
   const isExpanded = useAppSelector((state) => state.dashboard.sidebarCollapsed) === false
   const theme = useAppSelector((state) => state.dashboard.theme)
@@ -408,7 +409,7 @@ const NavigationSidebar: React.FC<NavigationSidebarProps> = ({ className = '' })
           >
             <div className="space-y-2">
               <button
-                onClick={() => navigate('/discover')}
+                onClick={() => setAddBookOpen(true)}
                 className="w-full flex items-center justify-center space-x-2 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg"
               >
                 <BookmarkPlus className="w-4 h-4" />
@@ -416,7 +417,7 @@ const NavigationSidebar: React.FC<NavigationSidebarProps> = ({ className = '' })
               </button>
               <button
                 onClick={() => dispatch(toggleAssistant())}
-                className="w-full flex items-center justify-center space-x-2 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                className="w-full flex items-center justify-center space-x-2 py-2.5 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
               >
                 <Zap className="w-4 h-4" />
                 <span className="text-sm">Quick Recommendation</span>
@@ -431,7 +432,7 @@ const NavigationSidebar: React.FC<NavigationSidebarProps> = ({ className = '' })
             <button
               key={action.id}
               onClick={() => handleUserAction(action.id)}
-              className="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-colors"
+              className="w-full flex items-center space-x-3 px-3 py-3 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-colors"
             >
               <action.icon className="w-4 h-4" />
               <AnimatePresence mode="wait">
@@ -456,6 +457,9 @@ const NavigationSidebar: React.FC<NavigationSidebarProps> = ({ className = '' })
           ))}
         </div>
       </div>
+
+      {/* Add Book — web search modal */}
+      <AddBookModal open={addBookOpen} onClose={() => setAddBookOpen(false)} />
     </motion.aside>
   )
 }

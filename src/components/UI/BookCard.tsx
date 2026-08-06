@@ -144,7 +144,7 @@ export const BookCard: React.FC<BookCardProps> = ({
         type="button"
         onClick={handleShare}
         aria-label={`Share ${book.title}`}
-        className="absolute top-2 right-2 z-10 p-2 rounded-full bg-white/85 dark:bg-gray-800/85 backdrop-blur text-gray-500 dark:text-gray-300 shadow-md hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+        className="absolute top-2 right-2 z-10 p-2.5 rounded-full bg-white/85 dark:bg-gray-800/85 backdrop-blur text-gray-500 dark:text-gray-300 shadow-md hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
       >
         <Share2 className="w-4 h-4" />
       </button>

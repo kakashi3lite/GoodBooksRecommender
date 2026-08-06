@@ -297,3 +297,49 @@ browser error boundary can latch onto a transient 404 — hard-reload after the
 deploy settles. Verify the fresh deployment URL via curl before testing the
 main domain.
 
+## 12. Add-a-Book, Real Logging & Completion Ceremony (2026-08-07)
+
+### Backend (all in `functions/api/`)
+| Endpoint | What it does |
+|---|---|
+| `GET /api/books/web-search?q=&limit=20` | Finds ANY book: catalog hits first, then Google Books (rich descriptions) topped up with Open Library search. Every result has a real description + cover. |
+| `GET /api/books/insights?isbn=\|id=\|key=` | 2–4 REAL facts about a book (synopsis, themes, published+pages, reader rating) + a genre-derived "what to expect" line. Nothing fabricated. |
+
+### Frontend
+- **Add Book modal** (`src/components/UI/AddBookModal.tsx`, opened from the
+  sidebar "Add Book"): debounced web search → results with covers + blurbs →
+  "Read" (adds to shelf with a **book snapshot**) or "Save" (wishlist).
+- **Book snapshots**: `ReadingEntry` now stores a `book` snapshot at add-time
+  (`src/stores/reading/readingSlice.ts`), so web-sourced books render on the
+  shelf even though they're not in the catalog. `startReading` now takes
+  `{ bookId, book? }`.
+- **Real page logging** (`/reading`): no more fake "+20". A session editor
+  takes the ACTUAL pages (presets 10/25/50/100 + custom stepper input). Progress
+  = logged pages / 300 (roadmap: use the book's real page_count).
+- **Completion ceremony** (`src/components/UI/BookCompletionModal.tsx`):
+  finishing a book opens a modal with personalized motivation (reading persona,
+  pace vs. usual, streak, goal progress — all derived from the real reading
+  log) + the book's real facts from `/insights` + the genre expectation.
+
+### Kindle sync — roadmap (needs external credentials)
+A true Kindle sync requires Amazon's APIs, which are not open to third parties
+(the consumer Kindle API is private; Goodreads was deprecated by Amazon). The
+realistic path:
+1. **Manual import**: user pastes their Amazon "Your Books" list / a Kindle
+   notes export → parse into the shelf. No credentials needed — ship first.
+2. **OPDS/Calibre-style import**: accept an `.opf`/CSV export from Calibre
+   (users with a local Kindle library).
+3. **OAuth (if Amazon ever opens an API)**: store tokens as Cloudflare
+   secrets, sync highlights/books via a scheduled Worker.
+Recommended first step: the manual paste/CSV import — it delivers the value
+with zero external dependency.
+
+## 13. UX/UI Fit Check (2026-08-07)
+- **Touch targets**: audited every button on a 390px viewport. Fixed sidebar
+  user actions + Quick Recommendation (36→48px), BookCard share button
+  (32→36px), Dashboard Start Reading/Wishlist (38→42px), expand-toggle taller.
+  Post-fix audit: **zero buttons under 40px**.
+- Verified layouts at 390 / 834 / 1280 px: no horizontal overflow anywhere,
+  mobile drawer + desktop sidebar both correct, dark mode glass header intact.
+
+

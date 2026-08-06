@@ -28,7 +28,7 @@ import {
     recommendSimilar
 } from '../_lib/recommender'
 import { type PagesEnv, type PagesFunction } from '../_lib/types'
-import { fetchWebTrending, resolveByIsbn, resolveByKey } from '../_lib/webCatalog'
+import { fetchWebTrending, getBookInsights, resolveByIsbn, resolveByKey, searchWebBooks } from '../_lib/webCatalog'
 
 const json = (data: unknown, status = 200): Response =>
     new Response(JSON.stringify(data), {
@@ -139,6 +139,45 @@ export const onRequestGet: PagesFunction<PagesEnv> = async (context) => {
         const limit = asInt(url.searchParams.get('limit'), 12)
         const trending = await fetchWebTrending(limit)
         return json({ data: trending, source: 'web', count: trending.length })
+    }
+
+    // GET /api/books/web-search?q=...&limit=20 — find ANY book from the web
+    // (Google Books + Open Library) with a real description + cover. Catalog
+    // matches are ranked first so known titles stay authoritative.
+    if (first === 'web-search') {
+        const q = url.searchParams.get('q') ?? ''
+        const limit = asInt(url.searchParams.get('limit'), 20)
+        if (!q.trim()) return json({ data: [], source: 'web', count: 0 })
+
+        const ql = q.toLowerCase()
+        const catalogHits = books
+            .filter((b) =>
+                `${b.title} ${b.authors} ${b.genres.join(' ')}`.toLowerCase().includes(ql)
+            )
+            .slice(0, 5)
+        const webHits = await searchWebBooks(q, limit - catalogHits.length)
+        const seen = new Set(catalogHits.map((b) => b.title.toLowerCase()))
+        const merged = [...catalogHits, ...webHits.filter((b) => !seen.has(b.title.toLowerCase()))]
+        return json({ data: merged, source: 'web+catalog', count: merged.length })
+    }
+
+    // GET /api/books/insights?isbn=... | ?id=b-XX | ?key=ol:... — 2-4 real
+    // facts about a book plus a reader-expectation line (completion ceremony).
+    if (first === 'insights') {
+        const id = url.searchParams.get('id') ?? ''
+        const isbn = url.searchParams.get('isbn') ?? ''
+        const key = url.searchParams.get('key') ?? ''
+        let book: Book | null = null
+        if (id) {
+            book = books.find((b) => b.id === id) ?? null
+            if (!book && (isbn || key)) book = isbn ? await resolveByIsbn(isbn) : await resolveByKey(key)
+        } else if (isbn) {
+            book = await resolveByIsbn(isbn)
+        } else if (key) {
+            book = await resolveByKey(key)
+        }
+        if (!book) return json({ error: 'not_found', message: 'Book not found' }, 404)
+        return json(await getBookInsights(book))
     }
 
     // GET /api/books/resolve?isbn=... — auto-fetch a book shared by ISBN from
