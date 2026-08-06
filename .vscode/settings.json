@@ -21,7 +21,7 @@
   "ai.chainOfThought.enabled": true,
   "ai.memory.persistent": true,
   "ai.animations.enabled": true,
-  "workbench.colorTheme": "Default Dark+",
+  "workbench.colorTheme": "Dark+",
   "editor.minimap.enabled": true,
   "editor.wordWrap": "on",
   "terminal.integrated.fontSize": 14,
