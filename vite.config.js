@@ -43,7 +43,9 @@ export default defineConfig({
   // Build configuration for production
   build: {
     outDir: 'dist',
-    sourcemap: true,
+    // Chain-of-Thought: no sourcemaps in production — smaller payload, less
+    // attack surface. Dev debugging unaffected (sourcemaps are dev-only).
+    sourcemap: false,
     minify: 'esbuild',
     target: 'esnext',
     rollupOptions: {

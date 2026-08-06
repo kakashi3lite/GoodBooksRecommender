@@ -58,6 +58,26 @@ shelf appears instantly. That's it.
 | `npm run lint` | ESLint (0 errors) |
 | `npm run build` | Production build → `dist/` |
 | `npm run format` | Prettier formatting |
+| `npm run deploy` | Build + deploy to Cloudflare Pages |
+
+## 🌍 Deployment (Cloudflare Pages)
+
+The app is configured for **Cloudflare Pages** — global CDN, automatic HTTPS, native SPA
+routing (`_redirects`), and security headers (`_headers`).
+
+**Option A — One command (local)**:
+```bash
+npx wrangler login          # one-time browser auth
+npm run deploy              # builds + deploys to Cloudflare Pages
+```
+
+**Option B — Automatic (GitHub Actions)**:
+The repo ships `.github/workflows/cloudflare-pages.yml`. Add two repo secrets
+(`Settings → Secrets → Actions`) and every push to `main` deploys automatically:
+- `CLOUDFLARE_API_TOKEN` — API token with `Cloudflare Pages — Edit` permission
+- `CLOUDFLARE_ACCOUNT_ID` — your Cloudflare account ID
+
+The pipeline runs `type-check → lint → test → build → deploy`, so only verified builds ship.
 
 ## 🧭 Features
 

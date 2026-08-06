@@ -1,0 +1,11 @@
+# Cloudflare Pages configuration
+# Deploy: `npm run deploy` (or via GitHub Actions — see .github/workflows/cloudflare-pages.yml)
+
+name = "goodbooks-recommender"
+compatibility_date = "2025-01-01"
+
+# The Vite build output directory (public/ contents are merged into dist/)
+pages_build_output_dir = "./dist"
+
+# Production branch — pushes to this branch auto-deploy via CI
+[env.production]

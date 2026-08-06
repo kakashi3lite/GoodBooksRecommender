@@ -1,0 +1,3 @@
+# Cloudflare Pages — SPA fallback routing
+# All unmatched paths serve index.html so client-side routes work on deep links.
+/*    /index.html   200
