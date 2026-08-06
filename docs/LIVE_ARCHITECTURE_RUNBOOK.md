@@ -472,8 +472,48 @@ An automated sweep hit every endpoint with valid + edge-case inputs. Result:
 is **MiniMax** — `MINIMAX_API_KEY` (secret), `AI_BASE_URL` =
 `https://api.minimax.io/v1`, `AI_MODEL` = `MiniMax-M2`. Chat falls back to the
 local hybrid engine (real picks, `model: goodbooks-hybrid`) whenever the LLM
-is unreachable. A bounded retry (2 retries with backoff) is in place so
-transient 429/5xx don't drop the reply.
+is unreachable. A bounded retry (4 attempts, backoff + Retry-After) is in
+place so transient 429/5xx don't drop the reply.
+
+## 19. AI Reading Companion v2 — context-aware MiniMax (2026-08-07)
+
+Two LLM surfaces, both powered by MiniMax-M2, both grounded in the reader's
+REAL data (the reading log lives client-side in `goodbooks_reading`; the client
+sends a real profile — nothing is fabricated server-side).
+
+**1. Context-aware chat** — `POST /api/ai/chat` now accepts an optional
+`context` object (see `src/utils/chatContext.ts` `buildChatContext`):
+`favoriteGenres`, `readingGoal`, `persona`, `currentBook` (title/author/
+progress%), `stats` (streak, booksFinished, pagesThisMonth, avgPagesPerSession,
+distinctDays), `recentlyFinished`. The profile is embedded in the USER message
+(⚠️ MiniMax rejects large structured SYSTEM blocks — the profile must ride in
+the user message; verified by isolating chat-vs-insight failure). Replies get
+genuinely personalized (e.g. "at your pace, ~10–12 sessions") and the local
+fallback also uses the real context hints. The frontend sends this context on
+every message.
+
+**2. AI Reading Insight** — `POST /api/ai/insight` takes the same `context`
+and returns `{ insight, model }`: a warm 2–4 sentence reflection on the
+reader's real pace/streak/goal/current book. Falls back to an honest template
+built from the SAME numbers (model `goodbooks-hybrid`) when the LLM is
+unavailable or the profile is empty. UI: "AI Reading Insight" card on
+`/analytics` ("Reflect on my reading" / "Regenerate").
+
+**Frontend changes**: chat abort timeout raised 4s → 30s (MiniMax reasoning
+replies measure ~2–2.5s+; 4s killed valid replies). Chat header shows the live
+model ("Powered by MiniMax-M2"). Offline fallback suggestions now come from the
+REAL local catalog (removed hardcoded fake ids). Dead endpoints
+(`/api/ai/tooltip|analysis|predict`) removed from the client.
+
+**Live audit (all LLM surfaces, deployment 5531f21b)**:
+- Chat with context → MiniMax-M2, personalized reply + 3 real picks ✓
+- Chat without context → MiniMax-M2 ✓
+- Insight with context → MiniMax-M2 reflection ✓ (verified in-browser)
+- Insight with empty profile → honest template (model goodbooks-hybrid) ✓
+- GET /api/ai/chat → 405 · empty message → 400 · bad JSON → 400 ✓
+- Transient MiniMax 429s fall back gracefully to hybrid (real picks + context)
+  — expected under bursty load; human-paced usage engages the LLM most of the
+  time.
 
 
 

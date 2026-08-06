@@ -6,8 +6,8 @@
  */
 
 import { motion } from 'framer-motion'
-import { BarChart3, BookOpen, CalendarDays, Flame, Library } from 'lucide-react'
-import React, { useMemo } from 'react'
+import { BarChart3, BookOpen, CalendarDays, Flame, Library, RefreshCw, Sparkles } from 'lucide-react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { BOOK_CATALOG } from '../../data/bookCatalog'
 import { useAppSelector } from '../../hooks/redux'
 import {
@@ -16,11 +16,40 @@ import {
   pagesAllTime,
   pagesThisMonth
 } from '../../stores/reading/readingSlice'
+import { AIService } from '../../utils/api'
+import { buildChatContext } from '../../utils/chatContext'
 
 const AdvancedAnalytics: React.FC = () => {
   const currentlyReading = useAppSelector((state) => state.reading.currentlyReading)
   const readingLog = useAppSelector((state) => state.reading.readingLog)
   const favorites = useAppSelector((state) => state.user.favorites)
+  const preferences = useAppSelector((state) => state.user.preferences)
+
+  const [insight, setInsight] = useState<string | null>(null)
+  const [insightLoading, setInsightLoading] = useState(false)
+  const [insightError, setInsightError] = useState(false)
+
+  // Ask the AI companion to reflect on the reader's REAL stats (MiniMax LLM,
+  // with an honest template fallback server-side).
+  const reflect = useCallback(async () => {
+    if (insightLoading) return
+    setInsightLoading(true)
+    setInsightError(false)
+    try {
+      const ctx = buildChatContext({
+        favoriteGenres: preferences.favoriteGenres,
+        readingGoal: preferences.readingGoal,
+        currentlyReading,
+        readingLog
+      })
+      const res = (await AIService.getInsight(ctx)) as { insight: string }
+      setInsight(res.insight)
+    } catch {
+      setInsightError(true)
+    } finally {
+      setInsightLoading(false)
+    }
+  }, [insightLoading, preferences, currentlyReading, readingLog])
 
   const streak = computeStreak(readingLog)
   const finished = booksFinished(currentlyReading)
@@ -82,6 +111,36 @@ const AdvancedAnalytics: React.FC = () => {
         <p className="text-gray-600 dark:text-gray-400 mb-8">
           Your real reading life — built from every session you log.
         </p>
+
+        {/* AI Reading Insight — a warm reflection on the reader's real stats */}
+        <div className="rounded-2xl bg-gradient-to-r from-blue-600/5 to-purple-600/5 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200/60 dark:border-blue-800/50 p-6 mb-8">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <h2 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-purple-600" />
+              AI Reading Insight
+            </h2>
+            <button
+              onClick={reflect}
+              disabled={insightLoading}
+              className="inline-flex items-center gap-1.5 text-xs px-3 py-2 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${insightLoading ? 'animate-spin' : ''}`} />
+              {insightLoading ? 'Reflecting…' : insight ? 'Regenerate' : 'Reflect on my reading'}
+            </button>
+          </div>
+          {insightError ? (
+            <p className="text-sm text-red-500">
+              Couldn't reach the AI service right now — try again in a moment.
+            </p>
+          ) : insight ? (
+            <p className="text-gray-700 dark:text-gray-200 leading-relaxed">{insight}</p>
+          ) : (
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Let the AI companion look at your real reading stats and write a short
+              reflection on your pace, streak, and goals.
+            </p>
+          )}
+        </div>
 
         {/* Stat cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">

@@ -30,9 +30,7 @@ export const API_ENDPOINTS = {
   // AI-powered features
   ai: {
     chat: () => `${API_BASE_URL}/api/ai/chat`,
-    tooltip: () => `${API_BASE_URL}/api/ai/tooltip`,
-    analysis: () => `${API_BASE_URL}/api/ai/analysis`,
-    predict: () => `${API_BASE_URL}/api/ai/predict`
+    insight: () => `${API_BASE_URL}/api/ai/insight`
   },
 
   // User management
@@ -139,12 +137,14 @@ export const BookService = {
 }
 
 export const AIService = {
-  generateTooltip: async (bookId: string, context: string) => {
-    return apiClient.post(API_ENDPOINTS.ai.tooltip(), { bookId, context })
+  /** Chat with the reading companion, sending the reader's real profile. */
+  chatWithAI: async (message: string, context?: unknown) => {
+    return apiClient.post(API_ENDPOINTS.ai.chat(), { message, context })
   },
 
-  chatWithAI: async (message: string) => {
-    return apiClient.post(API_ENDPOINTS.ai.chat(), { message })
+  /** Ask the companion to reflect on the reader's real stats. */
+  getInsight: async (context: unknown) => {
+    return apiClient.post(API_ENDPOINTS.ai.insight(), { context })
   }
 }
 

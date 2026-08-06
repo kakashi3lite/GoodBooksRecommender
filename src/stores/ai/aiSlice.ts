@@ -6,7 +6,11 @@
  */
 
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
+import { BOOK_CATALOG, type BookMood } from '../../data/bookCatalog'
 import { AIService } from '../../utils/api'
+import { buildChatContext } from '../../utils/chatContext'
+import type { ReadingEntry, ReadingLogEntry } from '../reading/readingSlice'
+import type { UserPreferences } from '../user/userSlice'
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -33,7 +37,6 @@ export interface AISliceState {
   isStreaming: boolean
   messages: ChatMessage[]
   conversationContext: string[]
-  model: string
   error: string | null
   lastInteraction: number
 }
@@ -46,57 +49,99 @@ const initialState: AISliceState = {
   isStreaming: false,
   messages: [],
   conversationContext: [],
-  model: 'goodbooks-assistant',
   error: null,
   lastInteraction: Date.now()
 }
 
-// ─── Fallback responses (used when the backend is unreachable) ─────────────
+// ─── Fallback responses (used only when the backend is unreachable) ─────────
+// Suggestion cards always come from the REAL local catalog — never fabricated.
 
-const FALLBACK_REPLIES = [
-  {
-    keywords: ['recommend', 'suggest', 'what should i read', 'next book', 'book to read'],
-    reply:
-      "Based on your reading history, I'd suggest exploring these picks:",
-    suggestions: [
-      { id: '1', title: 'The Midnight Library', authors: 'Matt Haig', rating: 4.3 },
-      { id: '2', title: 'Project Hail Mary', authors: 'Andy Weir', rating: 4.7 },
-      { id: '3', title: 'Tomorrow, and Tomorrow, and Tomorrow', authors: 'Gabrielle Zevin', rating: 4.5 }
-    ]
-  },
-  {
-    keywords: ['mood', 'feeling', 'sad', 'happy', 'cozy', 'stressed'],
-    reply:
-      'Reading is a great way to reset your mood. I recommend something with a warm, uplifting tone — try a literary comfort read with a found-family theme.',
-    suggestions: [
-      { id: '4', title: 'The House in the Cerulean Sea', authors: 'T.J. Klune', rating: 4.6 },
-      { id: '5', title: 'A Psalm for the Wild-Built', authors: 'Becky Chambers', rating: 4.4 }
-    ]
-  },
-  {
-    keywords: ['similar', 'like', 'same as', 'more like'],
-    reply:
-      'If you loved that book, these share its DNA — similar pacing, prose style, and thematic depth:',
-    suggestions: [
-      { id: '6', title: 'The Night Circus', authors: 'Erin Morgenstern', rating: 4.2 },
-      { id: '7', title: 'Piranesi', authors: 'Susanna Clarke', rating: 4.4 },
-      { id: '8', title: 'The Starless Sea', authors: 'Erin Morgenstern', rating: 4.1 }
-    ]
-  }
-]
+const FALLBACK_REPLIES: Array<{
+  keywords: string[]
+  reply: string
+  genres: string[]
+  moods: BookMood[]
+}> = [
+    {
+      keywords: ['recommend', 'suggest', 'what should i read', 'next book', 'book to read'],
+      reply: "Based on your reading history, I'd suggest exploring these picks:",
+      genres: [],
+      moods: []
+    },
+    {
+      keywords: ['mood', 'feeling', 'sad', 'happy', 'cozy', 'stressed'],
+      reply:
+        'Reading is a great way to reset your mood. I recommend something with a warm, uplifting tone — try a literary comfort read with a found-family theme.',
+      genres: [],
+      moods: ['cozy', 'uplifting']
+    },
+    {
+      keywords: ['similar', 'like', 'same as', 'more like'],
+      reply:
+        'If you loved that book, these share its DNA — similar pacing, prose style, and thematic depth:',
+      genres: [],
+      moods: []
+    },
+    {
+      keywords: ['sci-fi', 'science fiction', 'sci fi', 'space', 'future'],
+      reply: 'Here are some strong science-fiction picks to keep the pages turning:',
+      genres: ['Science Fiction'],
+      moods: []
+    },
+    {
+      keywords: ['mystery', 'thriller', 'crime', 'suspense'],
+      reply: 'For readers who love a good puzzle, these picks deliver:',
+      genres: ['Mystery', 'Thriller'],
+      moods: []
+    },
+    {
+      keywords: ['fantasy', 'magic', 'wizard', 'epic'],
+      reply: 'These fantasy picks are perfect for getting lost in another world:',
+      genres: ['Fantasy'],
+      moods: []
+    },
+    {
+      keywords: ['romance', 'love story'],
+      reply: 'A little romance goes a long way — here are some warm picks:',
+      genres: ['Romance'],
+      moods: []
+    },
+    {
+      keywords: ['cozy'],
+      reply: 'Cozy reads, coming right up — warm, gentle, and uplifting:',
+      genres: [],
+      moods: ['cozy']
+    }
+  ]
 
 const DEFAULT_FALLBACK = {
   reply:
-    "I'm your AI reading companion. Ask me to recommend a book, match your mood, or find something similar to a favorite. Try: \"Recommend a cozy fantasy\" or \"Something like my last thriller.\"",
-  suggestions: undefined as ChatMessage['bookSuggestions']
+    "I'm your AI reading companion. Ask me to recommend a book, match your mood, or find something similar to a favorite. Try: \"Recommend a cozy fantasy\" or \"Something like my last thriller.\""
 }
 
+/** Top-3 REAL catalog books scored by genre/mood match for the query. */
 function buildFallbackReply(message: string): ChatMessage['bookSuggestions'] {
   const lower = message.toLowerCase()
   const match = FALLBACK_REPLIES.find(({ keywords }) =>
     keywords.some((keyword) => lower.includes(keyword))
   )
-  return match ? match.suggestions : DEFAULT_FALLBACK.suggestions
+  return BOOK_CATALOG.map((book) => {
+    let score = book.rating * 0.1
+    if (match) {
+      if (match.genres.some((g) => book.genres.includes(g))) score += 3
+      if (match.moods.some((m) => book.moods.includes(m))) score += 2
+    }
+    return { book, score }
+  })
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3)
+    .map(({ book }) => ({
+      id: book.id,
+      title: book.title,
+      authors: book.authors,
+      cover_url: book.cover_url,
+      rating: book.rating
+    }))
 }
 
 function buildFallbackContent(message: string): string {
@@ -116,13 +161,27 @@ function buildFallbackContent(message: string): string {
  */
 export const sendMessage = createAsyncThunk(
   'ai/sendMessage',
-  async (message: string) => {
-    try {
-      // Try the real backend with a short timeout so failures are fast
-      const controller = new AbortController()
-      const timeout = setTimeout(() => controller.abort(), 4000)
+  async (message: string, thunkAPI) => {
+    // Defensive reads: a store without reading/user slices (tests, SSR) just
+    // yields an empty reader profile.
+    const state = thunkAPI.getState() as {
+      reading?: { currentlyReading?: ReadingEntry[]; readingLog?: ReadingLogEntry[] }
+      user?: { preferences?: UserPreferences }
+    }
+    // Send the reader's REAL profile so the LLM can personalize the reply.
+    const context = buildChatContext({
+      favoriteGenres: state.user?.preferences?.favoriteGenres,
+      readingGoal: state.user?.preferences?.readingGoal,
+      currentlyReading: state.reading?.currentlyReading ?? [],
+      readingLog: state.reading?.readingLog ?? []
+    })
 
-      const response = await AIService.chatWithAI(message)
+    try {
+      // MiniMax-M2 reasoning replies can take a few seconds — allow up to 30s.
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 30000)
+
+      const response = await AIService.chatWithAI(message, context)
       clearTimeout(timeout)
 
       const data = response as any

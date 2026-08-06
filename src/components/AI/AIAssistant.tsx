@@ -162,7 +162,7 @@ const AIAssistant: React.FC = () => {
                 <Bot className="w-5 h-5" />
                 <div>
                   <h3 className="font-semibold text-sm leading-tight">AI Reading Companion</h3>
-                  <p className="text-[11px] text-blue-100">Powered by GoodBooks AI</p>
+                  <p className="text-[11px] text-blue-100">Personalized to your reading</p>
                 </div>
               </div>
               <div className="flex items-center gap-1">

@@ -1,50 +1,57 @@
 /**
  * 🤖 /api/ai/* — conversational AI endpoint (edge)
  *
- *   POST /api/ai/chat   body: { message: string, prefs?: { favoriteGenres,
- *                        readingGoal } }
+ *   POST /api/ai/chat     body: { message: string, prefs?, context? }
+ *   POST /api/ai/insight  body: { context: { stats, persona, ... } }
  *
- * Response: { reply, bookSuggestions?: [{id,title,authors,cover_url?,rating?}],
- *             model }
- *
- * Uses the LLM when configured (OPENAI_API_KEY/AI_MODEL) and falls back to
- * the local hybrid engine otherwise — always returns real picks.
+ * `context` carries the reader's REAL profile (genres, goal, pace, streak,
+ * current book) from the client's localStorage log — used to personalize
+ * the LLM reply. Falls back to the local hybrid engine when the LLM is
+ * unavailable — always real picks and honest numbers, never fabricated.
  */
-import { handleChat } from '../_lib/ai'
+import { generateReadingInsight, handleChat, type ChatContext } from '../_lib/ai'
 import { type PagesFunction } from '../_lib/types'
 
-export const onRequestPost: PagesFunction = async (context) => {
-    const { request, env } = context
-    let body: { message?: string; prefs?: { favoriteGenres?: string[]; readingGoal?: number } } = {}
-    try {
-        body = (await request.json()) as typeof body
-    } catch {
-        return new Response(JSON.stringify({ error: 'invalid_json' }), {
-            status: 400,
-            headers: { 'Content-Type': 'application/json' }
-        })
-    }
-
-    const message = (body.message ?? '').trim()
-    if (!message) {
-        return new Response(JSON.stringify({ error: 'message_required' }), {
-            status: 400,
-            headers: { 'Content-Type': 'application/json' }
-        })
-    }
-
-    const result = await handleChat(env, message, body.prefs)
-    return new Response(JSON.stringify(result), {
-        status: 200,
+const json = (body: unknown, status = 200): Response =>
+    new Response(JSON.stringify(body), {
+        status,
         headers: { 'Content-Type': 'application/json; charset=utf-8' }
     })
+
+export const onRequestPost: PagesFunction = async (context) => {
+    const { request, env, params } = context
+    const route = Array.isArray(params.route) ? params.route[0] : params.route
+
+    let body: Record<string, unknown> = {}
+    try {
+        body = (await request.json()) as Record<string, unknown>
+    } catch {
+        return json({ error: 'invalid_json' }, 400)
+    }
+
+    const chatContext = (body.context ?? undefined) as ChatContext | undefined
+
+    if (route === 'insight') {
+        const result = await generateReadingInsight(env, chatContext)
+        return json(result)
+    }
+
+    // Default route: /api/ai/chat
+    const message = typeof body.message === 'string' ? body.message.trim() : ''
+    if (!message) return json({ error: 'message_required' }, 400)
+
+    const prefs = (body.prefs ?? undefined) as
+        | { favoriteGenres?: string[]; readingGoal?: number }
+        | undefined
+    const result = await handleChat(env, message, prefs, chatContext)
+    return json(result)
 }
 
 export const onRequestGet: PagesFunction = async () =>
-    new Response(
-        JSON.stringify({
+    json(
+        {
             error: 'method_not_allowed',
-            message: 'Use POST /api/ai/chat'
-        }),
-        { status: 405, headers: { 'Content-Type': 'application/json' } }
+            message: 'Use POST /api/ai/chat or POST /api/ai/insight'
+        },
+        405
     )
