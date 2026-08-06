@@ -15,12 +15,17 @@ pages_build_output_dir = "./dist"
 # variables, or via the Cloudflare API). See docs/DATA_LAYER.md.
 #
 #   Server-side (Pages Functions only — never shipped to the browser):
-#     SUPABASE_URL              https://<project-ref>.supabase.co
-#     SUPABASE_SERVICE_ROLE_KEY Settings → API → service_role
-#     AI_PROVIDER               openai | (any OpenAI-compatible)
-#     AI_API_KEY                optional LLM key for /api/ai/chat
-#     AI_MODEL                  e.g. gpt-4o-mini
-#     AI_BASE_URL               optional custom endpoint for AI_PROVIDER
+#     SUPABASE_URL                https://<project-ref>.supabase.co
+#     SUPABASE_ANON_KEY           publishable/anon key (public, browser-safe)
+#     SUPABASE_SERVICE_ROLE_KEY   service-role/secret key — MUST be set as a
+#                                 Cloudflare secret (secret_text), never in the
+#                                 repo or the browser bundle
+#     SUPABASE_JWKS_URL           https://<ref>.supabase.co/auth/v1/.well-known/jwks.json
+#                                 (for verifying user JWTs server-side)
+#     AI_PROVIDER                 openai | (any OpenAI-compatible)
+#     AI_API_KEY                  optional LLM key for /api/ai/chat (secret)
+#     AI_MODEL                    e.g. gpt-4o-mini
+#     AI_BASE_URL                 optional custom endpoint for AI_PROVIDER
 #
 #   Build-time (baked into the browser bundle):
 #     VITE_SUPABASE_URL         same URL (accounts + realtime)

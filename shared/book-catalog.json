@@ -3,7 +3,7 @@
     "id": "b-01",
     "title": "The Midnight Library",
     "authors": "Matt Haig",
-    "cover_url": "",
+    "cover_url": "https://covers.openlibrary.org/b/id/10313767-M.jpg",
     "rating": 4.3,
     "ratingsCount": 120000,
     "genres": [
@@ -23,7 +23,7 @@
     "id": "b-02",
     "title": "Project Hail Mary",
     "authors": "Andy Weir",
-    "cover_url": "",
+    "cover_url": "https://covers.openlibrary.org/b/id/11200092-M.jpg",
     "rating": 4.7,
     "ratingsCount": 98000,
     "genres": [
@@ -44,7 +44,7 @@
     "id": "b-03",
     "title": "Tomorrow, and Tomorrow, and Tomorrow",
     "authors": "Gabrielle Zevin",
-    "cover_url": "",
+    "cover_url": "https://covers.openlibrary.org/b/id/12859975-M.jpg",
     "rating": 4.5,
     "ratingsCount": 85000,
     "genres": [
@@ -64,7 +64,7 @@
     "id": "b-04",
     "title": "The House in the Cerulean Sea",
     "authors": "T.J. Klune",
-    "cover_url": "",
+    "cover_url": "https://covers.openlibrary.org/b/id/15199344-M.jpg",
     "rating": 4.6,
     "ratingsCount": 76000,
     "genres": [
@@ -85,7 +85,7 @@
     "id": "b-05",
     "title": "Piranesi",
     "authors": "Susanna Clarke",
-    "cover_url": "",
+    "cover_url": "https://covers.openlibrary.org/b/id/10226290-M.jpg",
     "rating": 4.4,
     "ratingsCount": 42000,
     "genres": [
@@ -106,7 +106,7 @@
     "id": "b-06",
     "title": "A Psalm for the Wild-Built",
     "authors": "Becky Chambers",
-    "cover_url": "",
+    "cover_url": "https://covers.openlibrary.org/b/id/10476616-M.jpg",
     "rating": 4.4,
     "ratingsCount": 31000,
     "genres": [
@@ -127,7 +127,7 @@
     "id": "b-07",
     "title": "The Silent Patient",
     "authors": "Alex Michaelides",
-    "cover_url": "",
+    "cover_url": "https://covers.openlibrary.org/b/id/9407338-M.jpg",
     "rating": 4.6,
     "ratingsCount": 150000,
     "genres": [
@@ -147,7 +147,7 @@
     "id": "b-08",
     "title": "Educated",
     "authors": "Tara Westover",
-    "cover_url": "",
+    "cover_url": "https://covers.openlibrary.org/b/id/8314077-M.jpg",
     "rating": 4.8,
     "ratingsCount": 200000,
     "genres": [
@@ -167,7 +167,7 @@
     "id": "b-09",
     "title": "Where the Crawdads Sing",
     "authors": "Delia Owens",
-    "cover_url": "",
+    "cover_url": "https://covers.openlibrary.org/b/id/8362947-M.jpg",
     "rating": 4.5,
     "ratingsCount": 180000,
     "genres": [
@@ -188,7 +188,7 @@
     "id": "b-10",
     "title": "The Seven Husbands of Evelyn Hugo",
     "authors": "Taylor Jenkins Reid",
-    "cover_url": "",
+    "cover_url": "https://covers.openlibrary.org/b/id/8354226-M.jpg",
     "rating": 4.8,
     "ratingsCount": 160000,
     "genres": [
@@ -209,7 +209,7 @@
     "id": "b-11",
     "title": "Dune",
     "authors": "Frank Herbert",
-    "cover_url": "",
+    "cover_url": "https://covers.openlibrary.org/b/id/6976407-M.jpg",
     "rating": 4.3,
     "ratingsCount": 250000,
     "genres": [
@@ -230,7 +230,7 @@
     "id": "b-12",
     "title": "The Name of the Wind",
     "authors": "Patrick Rothfuss",
-    "cover_url": "",
+    "cover_url": "https://covers.openlibrary.org/b/id/11480483-M.jpg",
     "rating": 4.6,
     "ratingsCount": 180000,
     "genres": [
@@ -250,7 +250,7 @@
     "id": "b-13",
     "title": "Gone Girl",
     "authors": "Gillian Flynn",
-    "cover_url": "",
+    "cover_url": "https://covers.openlibrary.org/b/id/8368314-M.jpg",
     "rating": 4.2,
     "ratingsCount": 220000,
     "genres": [
@@ -270,7 +270,7 @@
     "id": "b-14",
     "title": "The Thursday Murder Club",
     "authors": "Richard Osman",
-    "cover_url": "",
+    "cover_url": "https://covers.openlibrary.org/b/id/10201431-M.jpg",
     "rating": 4.3,
     "ratingsCount": 90000,
     "genres": [
@@ -290,7 +290,7 @@
     "id": "b-15",
     "title": "The Song of Achilles",
     "authors": "Madeline Miller",
-    "cover_url": "",
+    "cover_url": "https://covers.openlibrary.org/b/id/7098465-M.jpg",
     "rating": 4.6,
     "ratingsCount": 140000,
     "genres": [
@@ -312,7 +312,7 @@
     "id": "b-16",
     "title": "Atomic Habits",
     "authors": "James Clear",
-    "cover_url": "",
+    "cover_url": "https://covers.openlibrary.org/b/id/12539702-M.jpg",
     "rating": 4.9,
     "ratingsCount": 300000,
     "genres": [
@@ -331,7 +331,7 @@
     "id": "b-17",
     "title": "The Invisible Life of Addie LaRue",
     "authors": "V.E. Schwab",
-    "cover_url": "",
+    "cover_url": "https://covers.openlibrary.org/b/id/10092261-M.jpg",
     "rating": 4.4,
     "ratingsCount": 110000,
     "genres": [
@@ -353,7 +353,7 @@
     "id": "b-18",
     "title": "The Martian",
     "authors": "Andy Weir",
-    "cover_url": "",
+    "cover_url": "https://covers.openlibrary.org/b/id/11447888-M.jpg",
     "rating": 4.6,
     "ratingsCount": 240000,
     "genres": [
@@ -374,7 +374,7 @@
     "id": "b-19",
     "title": "Normal People",
     "authors": "Sally Rooney",
-    "cover_url": "",
+    "cover_url": "https://covers.openlibrary.org/b/id/8794265-M.jpg",
     "rating": 4,
     "ratingsCount": 130000,
     "genres": [
@@ -396,7 +396,7 @@
     "id": "b-20",
     "title": "The Southern Book Club's Guide to Slaying Vampires",
     "authors": "Grady Hendrix",
-    "cover_url": "",
+    "cover_url": "https://covers.openlibrary.org/b/id/9335125-M.jpg",
     "rating": 4.1,
     "ratingsCount": 45000,
     "genres": [
@@ -416,7 +416,7 @@
     "id": "b-21",
     "title": "Circe",
     "authors": "Madeline Miller",
-    "cover_url": "",
+    "cover_url": "https://covers.openlibrary.org/b/id/8739376-M.jpg",
     "rating": 4.5,
     "ratingsCount": 150000,
     "genres": [
@@ -437,7 +437,7 @@
     "id": "b-22",
     "title": "Sapiens",
     "authors": "Yuval Noah Harari",
-    "cover_url": "",
+    "cover_url": "https://covers.openlibrary.org/b/id/8634250-M.jpg",
     "rating": 4.4,
     "ratingsCount": 280000,
     "genres": [
@@ -455,7 +455,7 @@
     "id": "b-23",
     "title": "The Guest List",
     "authors": "Lucy Foley",
-    "cover_url": "",
+    "cover_url": "https://covers.openlibrary.org/b/id/10096112-M.jpg",
     "rating": 4.1,
     "ratingsCount": 60000,
     "genres": [
@@ -475,7 +475,7 @@
     "id": "b-24",
     "title": "Beach Read",
     "authors": "Emily Henry",
-    "cover_url": "",
+    "cover_url": "https://covers.openlibrary.org/b/id/9426296-M.jpg",
     "rating": 4.2,
     "ratingsCount": 80000,
     "genres": [

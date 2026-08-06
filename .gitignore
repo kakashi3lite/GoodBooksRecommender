@@ -197,3 +197,5 @@ data/processed/
 
 # ===== Python lockfile (optional — keep requirements-lock.txt) =====
 *.pyc
+scripts/.covers.json
+.wrangler/
