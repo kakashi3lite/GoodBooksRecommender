@@ -95,7 +95,18 @@ explains every pick: *"Because you love Science Fiction"*.
 
 ### 🤖 AI Reading Assistant
 Chat with a book companion (`⌘K` to toggle). Ask for recommendations, mood matches, or
-"something like my last thriller" — replies include rich book cards with ratings.
+"something like my last thriller" — replies include rich book cards with ratings and a
+**personalization reason** on every pick.
+
+The companion is **conversationally personalized**:
+- **Never repeats itself** — it remembers every book already suggested this conversation and
+  rotates in fresh picks, so asking the same question twice gives different titles.
+- **Learns your shelf** — it grounds picks in your real reading (favorite genres, current
+  book, recently finished, pace and streak) even if you skipped the taste quiz.
+- **Cards match the answer** — when the AI model is live, the suggested books are the ones
+  it's actually talking about (matched against the catalog, topped up from Open Library /
+  Google Books); offline, a smart local engine takes over with the same freshness rules.
+- **"Different picks"** — one tap under any suggestion list swaps in books you haven't seen.
 
 ### 🗺️ Explore
 - **Discover** — personalized picks + search entry point

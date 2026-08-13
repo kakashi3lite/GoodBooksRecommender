@@ -130,7 +130,7 @@ const AdvancedAnalytics: React.FC = () => {
           </div>
           {insightError ? (
             <p className="text-sm text-red-500">
-              Couldn't reach the AI service right now — try again in a moment.
+              Couldn&apos;t reach the AI service right now — try again in a moment.
             </p>
           ) : insight ? (
             <p className="text-gray-700 dark:text-gray-200 leading-relaxed">{insight}</p>

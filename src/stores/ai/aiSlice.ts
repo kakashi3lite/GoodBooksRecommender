@@ -28,6 +28,8 @@ export interface ChatMessage {
     authors: string
     cover_url?: string
     rating?: number
+    /** Why this book was suggested (personalization explanation) */
+    reason?: string
   }>
 }
 
@@ -127,20 +129,30 @@ function buildFallbackReply(message: string): ChatMessage['bookSuggestions'] {
   )
   return BOOK_CATALOG.map((book) => {
     let score = book.rating * 0.1
+    let reason: string | undefined
     if (match) {
-      if (match.genres.some((g) => book.genres.includes(g))) score += 3
-      if (match.moods.some((m) => book.moods.includes(m))) score += 2
+      const genreHit = match.genres.find((g) => book.genres.includes(g))
+      const moodHit = match.moods.find((m) => book.moods.includes(m))
+      if (genreHit) {
+        score += 3
+        reason = `A ${genreHit.toLowerCase()} pick for what you asked`
+      } else if (moodHit) {
+        score += 2
+        reason = `A ${moodHit.replace('-', ' ')} read that fits your vibe`
+      }
     }
-    return { book, score }
+    if (!reason) reason = 'Highly rated by readers'
+    return { book, score, reason }
   })
     .sort((a, b) => b.score - a.score)
     .slice(0, 3)
-    .map(({ book }) => ({
+    .map(({ book, reason }) => ({
       id: book.id,
       title: book.title,
       authors: book.authors,
       cover_url: book.cover_url,
-      rating: book.rating
+      rating: book.rating,
+      reason
     }))
 }
 
@@ -158,6 +170,12 @@ function buildFallbackContent(message: string): string {
  * Send a chat message to the AI backend.
  * Chain-of-Thought: Attempt real API call, gracefully fall back to local
  * heuristics when the backend is unavailable so the UX never breaks.
+ *
+ * Personalization: the payload now carries CONVERSATION MEMORY — the last few
+ * turns (`history`) and every book id already suggested this conversation
+ * (`shown`). The backend excludes `shown` from its picks, so asking the same
+ * question twice returns DIFFERENT books (this was the "same titles every
+ * time" bug).
  */
 export const sendMessage = createAsyncThunk(
   'ai/sendMessage',
@@ -165,6 +183,7 @@ export const sendMessage = createAsyncThunk(
     // Defensive reads: a store without reading/user slices (tests, SSR) just
     // yields an empty reader profile.
     const state = thunkAPI.getState() as {
+      ai?: { messages?: ChatMessage[] }
       reading?: { currentlyReading?: ReadingEntry[]; readingLog?: ReadingLogEntry[] }
       user?: { preferences?: UserPreferences }
     }
@@ -176,12 +195,25 @@ export const sendMessage = createAsyncThunk(
       readingLog: state.reading?.readingLog ?? []
     })
 
+    // Conversation memory: last 8 turns for the thread + every book id already
+    // suggested this conversation (the backend rotates around these).
+    const priorMessages = state.ai?.messages ?? []
+    const history = priorMessages.slice(-8).map((m) => ({
+      role: m.role,
+      content: m.content
+    }))
+    const shown = Array.from(
+      new Set(
+        priorMessages.flatMap((m) => m.bookSuggestions?.map((b) => b.id) ?? [])
+      )
+    )
+
     try {
       // MiniMax-M2 reasoning replies can take a few seconds — allow up to 30s.
       const controller = new AbortController()
       const timeout = setTimeout(() => controller.abort(), 30000)
 
-      const response = await AIService.chatWithAI(message, context)
+      const response = await AIService.chatWithAI(message, context, history, shown)
       clearTimeout(timeout)
 
       const data = response as any
@@ -204,6 +236,23 @@ export const sendMessage = createAsyncThunk(
         suggestions: buildFallbackReply(message)
       }
     }
+  }
+)
+
+/**
+ * Ask the companion for FRESH picks: re-sends the reader's last question. The
+ * `shown` set has grown to include every book already suggested, so the
+ * backend rotates in new titles instead of repeating them.
+ */
+export const requestFreshPicks = createAsyncThunk(
+  'ai/requestFreshPicks',
+  async (_, thunkAPI) => {
+    const state = thunkAPI.getState() as { ai?: { messages?: ChatMessage[] } }
+    const messages = state.ai?.messages ?? []
+    const lastUser = [...messages].reverse().find((m) => m.role === 'user')
+    if (!lastUser) return { replied: false }
+    await thunkAPI.dispatch(sendMessage(lastUser.content))
+    return { replied: true }
   }
 )
 

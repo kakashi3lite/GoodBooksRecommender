@@ -6,13 +6,14 @@
  */
 
 import { AnimatePresence, motion } from 'framer-motion'
-import { Bot, Send, Sparkles, X } from 'lucide-react'
+import { Bot, RefreshCw, Send, Sparkles, X } from 'lucide-react'
 import React, { useEffect, useRef, useState } from 'react'
 import { useAppDispatch, useAppSelector } from '../../hooks/redux'
 import type { ChatMessage } from '../../stores/ai/aiSlice'
 import {
   addMessage,
   clearConversation,
+  requestFreshPicks,
   sendMessage,
   toggleAssistant
 } from '../../stores/ai/aiSlice'
@@ -27,9 +28,14 @@ const QUICK_ACTIONS = [
 
 /**
  * Renders a single chat message bubble with optional book suggestion cards.
+ * Suggestions now carry a personalization `reason` ("why this book") so the
+ * reader sees the connection to their taste instead of a bare title list.
  */
 const MessageBubble: React.FC<{ message: ChatMessage }> = ({ message }) => {
   const isUser = message.role === 'user'
+  const dispatch = useAppDispatch()
+  const isStreaming = useAppSelector((state) => state.ai.isStreaming)
+  const suggestions = message.bookSuggestions
 
   return (
     <motion.div
@@ -45,12 +51,12 @@ const MessageBubble: React.FC<{ message: ChatMessage }> = ({ message }) => {
       >
         <p className="leading-relaxed whitespace-pre-wrap">{message.content}</p>
 
-        {message.bookSuggestions && message.bookSuggestions.length > 0 && (
+        {suggestions && suggestions.length > 0 && (
           <div className="mt-3 space-y-2">
-            {message.bookSuggestions.map((book) => (
+            {suggestions.map((book) => (
               <div
                 key={book.id}
-                className="flex items-center gap-3 rounded-xl bg-gray-50 dark:bg-gray-700/60 p-2.5 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+                className="flex items-start gap-3 rounded-xl bg-gray-50 dark:bg-gray-700/60 p-2.5 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
               >
                 <BookCover
                   title={book.title}
@@ -64,15 +70,30 @@ const MessageBubble: React.FC<{ message: ChatMessage }> = ({ message }) => {
                   <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                     {book.authors}
                   </p>
+                  {book.reason && (
+                    <p className="text-[11px] text-purple-600 dark:text-purple-300 mt-0.5 leading-snug">
+                      {book.reason}
+                    </p>
+                  )}
                   {book.rating !== undefined && (
                     <p className="text-xs text-yellow-500 mt-0.5">
                       ★ {book.rating.toFixed(1)}
                     </p>
                   )}
                 </div>
-                <Sparkles className="w-4 h-4 text-purple-500 flex-shrink-0" />
+                <Sparkles className="w-4 h-4 text-purple-500 flex-shrink-0 mt-0.5" />
               </div>
             ))}
+            {!isStreaming && (
+              <button
+                onClick={() => dispatch(requestFreshPicks())}
+                className="w-full flex items-center justify-center gap-1.5 text-xs py-2 rounded-lg bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-colors"
+                aria-label="Get different book picks"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                Different picks
+              </button>
+            )}
           </div>
         )}
       </div>

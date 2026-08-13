@@ -42,7 +42,8 @@ All under `functions/api/`, all `GET` unless noted. Every route returns JSON.
 | `GET /api/books/trending?limit=` | **Live web curation** — Open Library trending + Google Books newest, TTL-cached 10 min |
 | `GET /api/books/resolve?isbn=` or `?key=ol:\|gb:` | **Auto-fetch a shared book** from open-source catalogs |
 | `GET /api/news/stories/trending` | Real book news (Google News RSS) |
-| `GET /api/ai/chat` | Conversational AI (env-gated) |
+| `POST /api/ai/chat` | Conversational AI, personalized (env-gated) — see §19 |
+| `POST /api/ai/insight` | Reading reflection from real stats |
 | `GET /api/analytics/dashboard`, `/reading` | Analytics metrics |
 | `/assets/*` | Non-cacheable 404 guard for missing assets |
 
@@ -211,6 +212,9 @@ curl -sI https://books.dalecabra.com | grep -iE 'x-frame-options|x-content-type|
 curl -s "https://books.dalecabra.com/api/books/trending?limit=3"
 curl -s "https://books.dalecabra.com/api/books/resolve?isbn=9780385533225"
 curl -s "https://books.dalecabra.com/api/books/recommend?genres=sci-fi&limit=3"
+# 7. Verify chat personalization (fresh picks on repeat) — see §19
+curl -s -X POST https://books.dalecabra.com/api/ai/chat -H 'Content-Type: application/json' \
+  -d '{"message":"recommend me a book","shown":[]}' | python3 -c 'import sys,json;d=json.load(sys.stdin);print(d.get("model"),[b["id"] for b in d.get("bookSuggestions",[])])'
 ```
 
 ### Gotchas learned the hard way
@@ -514,6 +518,88 @@ REAL local catalog (removed hardcoded fake ids). Dead endpoints
 - Transient MiniMax 429s fall back gracefully to hybrid (real picks + context)
   — expected under bursty load; human-paced usage engages the LLM most of the
   time.
+
+---
+
+## 19. Conversational Personalization — the "same books every time" fix (2026-08-13)
+
+### Symptom (reported by the owner)
+> *"It shows the same titles of books each time I ask it a question."*
+
+Reproduced live: `POST /api/ai/chat` with `{"message":"recommend me a book"}`
+returned the **same 3 book cards** (`b-20`, `b-16`, `b-08`) on every request,
+even though the LLM *text* differed. Root causes:
+
+1. **Stateless picks** — the suggestion cards always came from the deterministic
+   local engine (`recommendFromQuery`). A generic query ("recommend me a book")
+   tokenizes to stopwords → near-zero cosine → the list just sorts by rating →
+   the same top-3 every time.
+2. **No conversation memory** — no record of what was already shown, no
+   exclusion, no rotation.
+3. **The LLM never influenced the cards** — it wrote the reply, but the cards
+   were a fixed ranking that ignored the answer.
+
+### The fix (3 layers, all shipped)
+
+**Layer 1 — conversation memory + exclusion (the hard guarantee).**
+- Client (`src/stores/ai/aiSlice.ts`) sends `history` (last 8 turns) and `shown`
+  (every book id already suggested this conversation) with each request.
+- Server (`functions/api/_lib/ai.ts` `excludeSetFor`) unions `shown` with the
+  reader's **current book** and **recently-finished titles** and passes the set
+  as `excludeIds` to the recommender → the engine is forced to rotate.
+- Verified by test: asking the same question 3× with a growing `shown` set
+  returns **zero overlap** across batches (`tests/aiPersonalization.test.ts`).
+
+**Layer 2 — LLM-grounded picks (cards match the answer).**
+- The system prompt now asks the model to END its reply with a JSON block:
+  `{"books":[{"title","author","reason"}]}` (3–4 real books).
+- `parseLlmBookPicks` (lenient — handles fenced JSON, prose, typos) +
+  `matchLlmBooksToCatalog` (fuzzy title/author match against the catalog) turn
+  those into suggestion cards.
+- Books the catalog lacks are **topped up from the live web catalog**
+  (`searchWebBooks`, bounded to 2 searches × 4 results) so the cards are real,
+  with real covers.
+- The local engine always fills any remaining slots (excluding `shown`) so the
+  chat renders cards even if the LLM's JSON is unusable.
+
+**Layer 3 — smarter fallback + context-derived taste.**
+- `profileFromContext`: when the reader never picked genres, affinity is
+  inferred from their real shelf (recently finished + current book genres), so
+  even a bare "recommend me a book" is grounded in what they actually read.
+- Every suggestion carries a `reason` ("why this book") surfaced in the UI.
+- UI: a **"Different picks"** button under every suggestion list re-asks the
+  last question with the grown `shown` set (new thunk `requestFreshPicks`).
+
+### Wire contract (POST /api/ai/chat)
+
+```jsonc
+{
+  "message": "recommend me a cozy book",          // required
+  "context": { /* reader profile, client-built */ },
+  "history": [{ "role": "user", "content": "…" }], // last 8 turns
+  "shown": ["b-01", "b-16"]                        // ids already suggested
+}
+```
+
+`ChatSuggestion` now includes `reason?: string`. Response model is
+`MiniMax-M2` when the LLM answered, `goodbooks-hybrid` for the local engine.
+
+### Files touched
+- `functions/api/_lib/ai.ts` — helpers + `handleChat(env, message, prefs, context, history, shown)`
+- `functions/api/ai/[[route]].ts` — accepts `history` + `shown`
+- `src/utils/api.ts` — `chatWithAI(message, context, history, shown)`
+- `src/stores/ai/aiSlice.ts` — builds memory payloads + `requestFreshPicks`
+- `src/components/AI/AIAssistant.tsx` — reasons + "Different picks"
+- `tests/aiPersonalization.test.ts` — 13 tests (parsing, exclusion, rotation)
+
+### Verify live
+```bash
+# Same question twice — the second must return DIFFERENT book ids:
+curl -s -X POST https://books.dalecabra.com/api/ai/chat -H 'Content-Type: application/json' \
+  -d '{"message":"recommend me a book","shown":[]}' | python3 -c 'import sys,json;print([b["id"] for b in json.load(sys.stdin)["bookSuggestions"]])'
+# (then repeat with "shown":[<ids from the first reply>])
+```
+
 
 
 

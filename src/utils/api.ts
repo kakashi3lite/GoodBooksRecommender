@@ -137,9 +137,27 @@ export const BookService = {
 }
 
 export const AIService = {
-  /** Chat with the reading companion, sending the reader's real profile. */
-  chatWithAI: async (message: string, context?: unknown) => {
-    return apiClient.post(API_ENDPOINTS.ai.chat(), { message, context })
+  /**
+   * Chat with the reading companion, sending the reader's real profile plus
+   * conversation memory so the backend rotates picks instead of repeating the
+   * same titles every turn.
+   * @param message    the reader's question
+   * @param context    the reader's REAL profile (genres, goal, pace, shelf)
+   * @param history    prior turns [{ role, content }] so the companion follows the thread
+   * @param shown      ids of every book already suggested this conversation (excluded server-side)
+   */
+  chatWithAI: async (
+    message: string,
+    context?: unknown,
+    history?: Array<{ role: 'user' | 'assistant'; content: string }>,
+    shown?: string[]
+  ) => {
+    return apiClient.post(API_ENDPOINTS.ai.chat(), {
+      message,
+      context,
+      history,
+      shown
+    })
   },
 
   /** Ask the companion to reflect on the reader's real stats. */
