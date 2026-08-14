@@ -521,7 +521,7 @@ REAL local catalog (removed hardcoded fake ids). Dead endpoints
 
 ---
 
-## 19. Conversational Personalization — the "same books every time" fix (2026-08-13)
+## 20. Conversational Personalization — the "same books every time" fix (2026-08-13)
 
 ### Symptom (reported by the owner)
 > *"It shows the same titles of books each time I ask it a question."*
@@ -605,3 +605,55 @@ curl -s -X POST https://books.dalecabra.com/api/ai/chat -H 'Content-Type: applic
 
 
 
+
+## 21. Covers Sitewide + Reader-Psychology Pass (2026-08-14)
+
+### Covers sitewide (root cause)
+`BookCover` renders a genre-tinted **generated cover** instantly and overlays
+the **real cover** (`cover_url`) when one exists. The audit found 6 surfaces
+that rendered `BookCover` WITHOUT `coverUrl` — so users only ever saw generated
+art there, even though real Open Library covers were in the data:
+
+- AI chat suggestion cards (`AIAssistant.tsx`)
+- Dashboard "Continue Reading" card
+- Dashboard "Today's Pick" card
+- Dashboard personalized book list
+- Currently Reading shelf cards
+- Wishlist cards
+
+**Fix**: pass `coverUrl={book.cover_url}` in all 6 (data was already present).
+Verified live (fresh deployment + browser): Dashboard 7/7 covers loaded,
+Wishlist 2/2, shelf 2/2, chat 5/5, book detail 1/1. Open Library covers return
+`302 → archive.org` (browsers follow; not a data problem).
+
+### BookCover polish (`src/components/UI/BookCover.tsx`)
+- `fetchPriority` prop (default `auto`) — passed as lowercase `fetchpriority`
+  because React 18.3.1 warns on the camelCase prop.
+- One-shot **loading shimmer** over the generated base while the real image
+  downloads (perceived performance — progress is visible).
+- Real cover **fades + gently scales in** on load (`useState`-driven, not
+  classList). State resets when `coverUrl` changes (list recycling).
+- Generated art stays as the fallback — never a broken image.
+
+### Reader-psychology refinements
+| Lever | Change |
+|---|---|
+| **Social proof** | `BookCard` now shows "· 12K ratings" beside the stars (`ratingsCount`, optional, threaded through Discover/WebTrending/AIBookRecommendations); BookDetail already showed "· 180,000 ratings". |
+| **Trust — no dead CTAs** | Wishlist "Start Reading" was a **button with no handler** — now `dispatch(startReading)` + navigate to `/reading` (verified live: clicking added the book to the shelf and navigated). |
+| **Actionability** | AI chat suggestion cards (already cursor-pointer) now open `/book/:id` on click/keyboard — discovery ends in a concrete step. |
+| **Perceived performance** | Cover shimmer + fade-in; hero covers can opt into high fetch priority. |
+
+### Files touched
+`BookCover.tsx`, `BookCard.tsx`, `AIAssistant.tsx`, `Dashboard.tsx`,
+`CurrentlyReading.tsx`, `Wishlist.tsx`, `Discover.tsx`, `WebTrending.tsx`,
+`AIBookRecommendations.tsx`, `dashboard/css/book-card.css`,
+`tests/components/Wishlist.test.tsx` (new — empty state, cover render, Start
+Reading wiring), `tests/components/AIAssistant.test.tsx` (wrap in MemoryRouter
+now that suggestion cards use `useNavigate`). 91/91 tests, tsc clean, lint 0.
+
+### Verify live
+- Open every surface and confirm `img[src*="openlibrary.org"]` has
+  `naturalWidth > 0` (browser). Lazy covers below the fold load on scroll.
+- Wishlist: save a book → real cover + "Start Reading" adds it to the shelf.
+- Chat: ask for a book → suggestion cards carry covers + reasons + ratings;
+  clicking opens the book detail.

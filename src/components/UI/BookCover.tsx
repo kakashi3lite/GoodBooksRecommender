@@ -7,6 +7,15 @@
  *            fades in over the generated base; on error it hides, revealing the
  *            generated art — so users NEVER see a broken-image icon.
  *
+ * Reader-psychology notes:
+ *   - A one-shot shimmer pulses over the generated base while the real image
+ *     downloads — a "cover is loading" signal beats a static placeholder
+ *     (perceived performance; the eye knows progress is happening).
+ *   - The real cover fades + gently scales in on load — recognition is the
+ *     reward, and the motion keeps the transition from feeling abrupt.
+ *   - `fetchPriority="high"` on hero/featured covers lowers Largest
+ *     Contentful Paint for the most visible cover on the page.
+ *
  * Performance / UX properties:
  *   - Fixed 2:3 aspect ratio → zero layout shift (no CLS)
  *   - Palette is memoized in coverArt → O(1) after first render
@@ -15,7 +24,7 @@
  *   - Deterministic → same book, same cover, every session (brand consistency)
  */
 
-import React, { useMemo } from 'react'
+import React, { useMemo, useState } from 'react'
 import {
     buildCoverBackground,
     buildDotPattern,
@@ -25,6 +34,7 @@ import {
 
 type CoverSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl'
 type CoverRadius = 'sm' | 'md' | 'lg' | 'none'
+type FetchPriority = 'high' | 'low' | 'auto'
 
 interface BookCoverProps {
     title: string
@@ -40,6 +50,8 @@ interface BookCoverProps {
     rounded?: CoverRadius
     /** Show the title/author typography (auto-hidden on xs). */
     showText?: boolean
+    /** Hint the browser about image fetch priority (hero covers → high). */
+    fetchPriority?: FetchPriority
     className?: string
 }
 
@@ -72,6 +84,7 @@ const BookCover: React.FC<BookCoverProps> = ({
     size = 'md',
     rounded = 'lg',
     showText = true,
+    fetchPriority = 'auto',
     className = ''
 }) => {
     const palette = useMemo(
@@ -79,6 +92,17 @@ const BookCover: React.FC<BookCoverProps> = ({
         [title, genres, seed]
     )
     const initials = useMemo(() => getBookInitials(title), [title])
+    // Track the real-image lifecycle so we can show a loading shimmer and a
+    // smooth fade-in, and NEVER show a broken image (error keeps generated art).
+    const [imageState, setImageState] = useState<'loading' | 'loaded' | 'error'>(
+        coverUrl ? 'loading' : 'error'
+    )
+    // Reset when the cover URL changes — a BookCover instance can be reused
+    // for a different book (list recycling), and stale 'loaded' would hide the
+    // new cover's generated base until its own image resolves.
+    React.useEffect(() => {
+        setImageState(coverUrl ? 'loading' : 'error')
+    }, [coverUrl])
 
     const background = buildCoverBackground(palette)
     const pattern = buildDotPattern(palette)
@@ -154,18 +178,31 @@ const BookCover: React.FC<BookCoverProps> = ({
 
             {/* Real image overlay — fades in over the generated base */}
             {coverUrl ? (
-                <img
-                    src={coverUrl}
-                    alt={label}
-                    loading="lazy"
-                    decoding="async"
-                    className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-300"
-                    onLoad={(e) => e.currentTarget.classList.add('opacity-100')}
-                    onError={(e) => {
-                        // Keep the generated cover — never show a broken image
-                        e.currentTarget.style.display = 'none'
-                    }}
-                />
+                <>
+                    {/* One-shot loading shimmer: signals the real cover is
+                        coming while the generated art shows through. */}
+                    {imageState === 'loading' && (
+                        <div
+                            aria-hidden="true"
+                            className="absolute inset-0 animate-pulse bg-white/10"
+                        />
+                    )}
+                    <img
+                        src={coverUrl}
+                        alt={label}
+                        loading="lazy"
+                        decoding="async"
+                        // React 18.3.1 warns on the camelCase `fetchPriority`
+                        // prop, so we pass the lowercase HTML attribute.
+                        {...({ fetchpriority: fetchPriority } as React.ImgHTMLAttributes<HTMLImageElement>)}
+                        onLoad={() => setImageState('loaded')}
+                        onError={() => setImageState('error')}
+                        className={`absolute inset-0 h-full w-full object-cover transition-all duration-300 ${imageState === 'loaded'
+                                ? 'opacity-100 scale-100'
+                                : 'opacity-0 scale-95'
+                            }`}
+                    />
+                </>
             ) : null}
         </div>
     )

@@ -28,6 +28,7 @@ interface Book {
   authors: string;
   cover_url: string;
   rating: number;
+  ratingsCount?: number;
   genres: string[];
   published_year: number;
   description: string;
@@ -78,6 +79,7 @@ export const AIBookRecommendations: React.FC<RecommendationProps> = ({
       authors: rec.book.authors,
       cover_url: rec.book.cover_url,
       rating: rec.book.rating,
+      ratingsCount: rec.book.ratingsCount,
       genres: rec.book.genres,
       published_year: rec.book.published_year,
       description: rec.book.description,

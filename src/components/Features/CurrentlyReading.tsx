@@ -173,6 +173,7 @@ const CurrentlyReading: React.FC = () => {
                                         <BookCover
                                             title={book.title}
                                             author={book.authors}
+                                            coverUrl={book.cover_url}
                                             genres={book.genres}
                                             seed={book.id}
                                             size="lg"

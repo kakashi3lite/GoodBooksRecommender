@@ -7,8 +7,10 @@
 import { motion } from 'framer-motion'
 import { Heart } from 'lucide-react'
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 import { BOOK_CATALOG } from '../../data/bookCatalog'
 import { useAppDispatch, useAppSelector } from '../../hooks/redux'
+import { startReading } from '../../stores/reading/readingSlice'
 import { toggleFavorite } from '../../stores/user/userSlice'
 import BookCover from '../UI/BookCover'
 
@@ -18,6 +20,7 @@ import BookCover from '../UI/BookCover'
  */
 const Wishlist: React.FC = () => {
     const dispatch = useAppDispatch()
+    const navigate = useNavigate()
     const favorites = useAppSelector((state) => state.user.favorites)
     const recommendations = useAppSelector((state) => state.books.recommendations)
 
@@ -68,6 +71,7 @@ const Wishlist: React.FC = () => {
                                     <BookCover
                                         title={book.title}
                                         author={book.authors}
+                                        coverUrl={book.cover_url}
                                         genres={book.genres}
                                         seed={book.id}
                                         size="lg"
@@ -91,7 +95,30 @@ const Wishlist: React.FC = () => {
                                         <Heart className="w-4 h-4 fill-current" />
                                     </button>
                                 </div>
-                                <button className="mt-5 w-full py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-sm font-medium transition-colors">
+                                {/* Commitment in action: "Start Reading" actually
+                                    moves the wishlist book onto the shelf and
+                                    takes the reader there — saved-for-later is
+                                    the first step, reading is the reward. */}
+                                <button
+                                    onClick={() => {
+                                        dispatch(
+                                            startReading({
+                                                bookId: book.id,
+                                                book: {
+                                                    title: book.title,
+                                                    authors: book.authors,
+                                                    cover_url: book.cover_url ?? '',
+                                                    genres: book.genres,
+                                                    published_year: book.published_year,
+                                                    page_count: book.page_count,
+                                                    description: book.description
+                                                }
+                                            })
+                                        )
+                                        navigate('/reading')
+                                    }}
+                                    className="mt-5 w-full py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-sm font-medium transition-colors"
+                                >
                                     Start Reading
                                 </button>
                             </div>

@@ -21,6 +21,7 @@ interface SearchResult {
     authors: string
     cover_url: string
     rating: number
+    ratingsCount?: number
     genres: string[]
     published_year: number
     description: string

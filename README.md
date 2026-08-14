@@ -108,7 +108,17 @@ The companion is **conversationally personalized**:
   Google Books); offline, a smart local engine takes over with the same freshness rules.
 - **"Different picks"** — one tap under any suggestion list swaps in books you haven't seen.
 
-### 🗺️ Explore
+### � Covers & trust (sitewide)
+- **Real book covers everywhere** — Open Library cover art loads on the Dashboard (Today's
+  Pick, Continue Reading, personalized picks), Discover, the shelf, Wishlist, book details,
+  and every AI chat card; a genre-tinted generated cover shows instantly while the real one
+  fades in, so there's never a broken image or a blank gap.
+- **Social proof** — "· 12K ratings" next to the stars on cards, and full rating volume on
+  the detail page, so readers see that others have read and loved each pick.
+- **No dead buttons** — Wishlist "Start Reading" actually starts the book and opens the
+  shelf; AI suggestion cards open the book's detail page.
+
+### �🗺️ Explore
 - **Discover** — personalized picks + search entry point
 - **Currently Reading** — your active shelf
 - **Wishlist** — books saved for later

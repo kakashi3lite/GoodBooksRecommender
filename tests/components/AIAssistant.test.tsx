@@ -6,6 +6,7 @@
 import { configureStore } from '@reduxjs/toolkit'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { Provider } from 'react-redux'
+import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import AIAssistant from '../../src/components/AI/AIAssistant'
 import aiReducer from '../../src/stores/ai/aiSlice'
@@ -32,7 +33,11 @@ const renderAssistant = () => {
         store,
         ...render(
             <Provider store={store}>
-                <AIAssistant />
+                {/* Suggestion cards navigate to /book/:id — router context
+                    is required for useNavigate in MessageBubble. */}
+                <MemoryRouter>
+                    <AIAssistant />
+                </MemoryRouter>
             </Provider>
         )
     }

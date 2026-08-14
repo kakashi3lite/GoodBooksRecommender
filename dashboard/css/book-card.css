@@ -163,6 +163,14 @@
   font-weight: var(--font-weight-medium);
 }
 
+/* Social proof: reader volume next to the stars ("· 12K ratings"). */
+.book-rating-count {
+  font-size: var(--font-size-xs);
+  color: var(--text-tertiary);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+}
+
 /* ===================================
    📊 PROGRESS INDICATORS
    =================================== */

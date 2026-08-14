@@ -422,6 +422,7 @@ const Dashboard: React.FC = () => {
               <BookCover
                 title={activeBook.title}
                 author={activeBook.authors}
+                coverUrl={activeBook.cover_url}
                 genres={activeBook.genres}
                 seed={activeBook.id}
                 size="sm"
@@ -474,6 +475,7 @@ const Dashboard: React.FC = () => {
             <BookCover
               title={dailyPick.title}
               author={dailyPick.authors}
+              coverUrl={dailyPick.cover_url}
               genres={dailyPick.genres}
               seed={dailyPick.id}
               size="sm"
@@ -626,7 +628,9 @@ const Dashboard: React.FC = () => {
                         <BookCover
                           title={book.title}
                           author={book.author}
+                          coverUrl={book.cover_url}
                           genres={book.genre ? [book.genre] : undefined}
+                          seed={book.id}
                           size="sm"
                           rounded="md"
                           showText={false}

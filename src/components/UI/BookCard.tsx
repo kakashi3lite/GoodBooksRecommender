@@ -17,6 +17,8 @@ interface Book {
   authors: string;
   cover_url: string;
   rating: number;
+  /** Number of reader ratings — social-proof signal ("12K people rated this"). */
+  ratingsCount?: number;
   genres?: string[];
   published_year?: number;
   description?: string;
@@ -31,6 +33,14 @@ interface BookCardProps {
   /** 'featured' renders a larger card with the description always visible (bento grid). */
   variant?: 'standard' | 'featured';
 }
+
+/** Compact social-proof count: 1250 → "1.3K", 34000 → "34K". */
+const formatCount = (n: number): string => {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 10_000) return `${Math.round(n / 1000)}K`;
+  if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
+  return String(n);
+};
 
 export const BookCard: React.FC<BookCardProps> = ({
   book,
@@ -70,6 +80,13 @@ export const BookCard: React.FC<BookCardProps> = ({
         {[...Array(emptyStars)].map((_, i) => (
           <span key={`empty-${i}`} className="star empty-star">☆</span>
         ))}
+        {/* Social proof: reader volume ("12K people rated this") builds trust
+            and signals that others finished and enjoyed the book too. */}
+        {typeof book.ratingsCount === 'number' && book.ratingsCount > 0 && (
+          <span className="book-rating-count" title={`${book.ratingsCount.toLocaleString()} ratings`}>
+            · {formatCount(book.ratingsCount)} ratings
+          </span>
+        )}
       </div>
     );
   };

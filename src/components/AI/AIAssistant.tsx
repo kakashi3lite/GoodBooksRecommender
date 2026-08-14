@@ -8,6 +8,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { Bot, RefreshCw, Send, Sparkles, X } from 'lucide-react'
 import React, { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../../hooks/redux'
 import type { ChatMessage } from '../../stores/ai/aiSlice'
 import {
@@ -30,12 +31,21 @@ const QUICK_ACTIONS = [
  * Renders a single chat message bubble with optional book suggestion cards.
  * Suggestions now carry a personalization `reason` ("why this book") so the
  * reader sees the connection to their taste instead of a bare title list.
+ * Every suggestion card opens the book's shareable detail page — discovery
+ * in chat always ends in a concrete next step (actionability).
  */
 const MessageBubble: React.FC<{ message: ChatMessage }> = ({ message }) => {
   const isUser = message.role === 'user'
   const dispatch = useAppDispatch()
+  const navigate = useNavigate()
   const isStreaming = useAppSelector((state) => state.ai.isStreaming)
   const suggestions = message.bookSuggestions
+
+  const openBook = (id: string) => {
+    // Catalog ids resolve instantly in BookDetail; web-sourced ids
+    // (isbn:… / ol:…) auto-fetch the full record on open.
+    navigate(`/book/${encodeURIComponent(id)}`)
+  }
 
   return (
     <motion.div
@@ -56,11 +66,21 @@ const MessageBubble: React.FC<{ message: ChatMessage }> = ({ message }) => {
             {suggestions.map((book) => (
               <div
                 key={book.id}
-                className="flex items-start gap-3 rounded-xl bg-gray-50 dark:bg-gray-700/60 p-2.5 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+                role="button"
+                tabIndex={0}
+                onClick={() => openBook(book.id)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    openBook(book.id)
+                  }
+                }}
+                className="flex items-start gap-3 rounded-xl bg-gray-50 dark:bg-gray-700/60 p-2.5 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500"
               >
                 <BookCover
                   title={book.title}
                   author={book.authors}
+                  coverUrl={book.cover_url}
                   size="xs"
                   rounded="sm"
                   showText={false}
