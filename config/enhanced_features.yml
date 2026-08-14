@@ -1,5 +1,5 @@
 ab_testing:
-  experiment_config_path: C:\Users\Swanand\CascadeProjects\GoodBooksRecommender\config\ab_experiments.yml
+  experiment_config_path: config/ab_experiments.yml
   redis_url: redis://localhost:6379
 analytics:
   batch_size: 100

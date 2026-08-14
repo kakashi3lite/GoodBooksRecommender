@@ -4,9 +4,12 @@
 (function() {
   // Only run in GitHub Copilot Chat views
   if (document.querySelector('.github-copilot-chat-view-container')) {
-    // Dynamically load our script
+    // Dynamically load our script — resolve the sibling overlay relative to
+    // THIS file (portable, no hardcoded machine paths in the repo).
     const script = document.createElement('script');
-    script.src = 'vscode-file://vscode-app/c:/Users/Swanand/CascadeProjects/GoodBooksRecommender/.vscode/scripts/copilot-feedback-overlay.js';
+    const current = document.currentScript;
+    const base = current ? new URL('.', current.src).href : '';
+    script.src = base + 'copilot-feedback-overlay.js';
     document.head.appendChild(script);
     
     // Watch for continue button appearances

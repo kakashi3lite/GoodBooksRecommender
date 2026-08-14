@@ -247,9 +247,9 @@ curl -s -X POST https://books.dalecabra.com/api/ai/chat -H 'Content-Type: applic
 3. **Recommended**: a fresh-device (real iPhone) visual pass — all server-side
    verification is done, and the mobile gate fix was verified in an emulated
    390×844 viewport, but a real device check is the final confirmation.
-4. **Secrets hygiene**: the user pasted `sb_secret_…` and `sk-proj-…` in chat
-   earlier. They exist only as Cloudflare secrets, never in the repo — consider
-   rotating them.
+4. **Secrets hygiene**: all provider keys (Supabase service-role, AI/LLM keys)
+   live only as Cloudflare Pages secrets — never in the repo, never in the
+   browser bundle. Rotate them periodically as good practice.
 5. `src/news/ai/*.py` + `src/news/master/*` are a **Python** subsystem not
    deployed to Cloudflare; leave them unless the Python backend is revived.
 

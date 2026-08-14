@@ -199,3 +199,25 @@ data/processed/
 *.pyc
 scripts/.covers.json
 .wrangler/
+
+# ===== MLflow run artifacts (machine-specific paths — never commit) =====
+mlruns/
+mlartifacts/
+mlflow.db
+
+# ===== Credentials & private keys (belt-and-braces for a public repo) =====
+*.pem
+*.key
+*.p12
+*.p8
+*.pfx
+*.jks
+secrets/
+backup/
+*.secret
+
+# ===== Local logs & scratch =====
+logs/
+*.log
+.tmp/
+*.tmp
