@@ -16,6 +16,7 @@ import {
   setLoading
 } from '../../stores/books/booksSlice';
 import { bentoPlacement } from '../../utils/bento';
+import { matchesGenre } from '../../utils/bookFilters';
 import { getPersonalizedRecommendations } from '../../utils/personalization';
 import { BookCard } from '../UI/BookCard';
 import { ErrorMessage } from '../UI/ErrorMessage';
@@ -41,6 +42,9 @@ interface RecommendationProps {
   limit?: number;
   strategy?: 'collaborative' | 'content' | 'hybrid' | 'neural';
   genres?: string[];
+  /** Client-side genre filter (alias-aware) applied on top of whatever the
+   * API returned — keeps Discover's genre chips consistent sitewide. */
+  filterGenres?: string[];
 }
 
 // Main component
@@ -48,7 +52,8 @@ export const AIBookRecommendations: React.FC<RecommendationProps> = ({
   userId,
   limit = 20,
   strategy = 'hybrid',
-  genres = []
+  genres = [],
+  filterGenres = []
 }) => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -162,10 +167,13 @@ export const AIBookRecommendations: React.FC<RecommendationProps> = ({
    * Chain-of-Thought: Responsive CSS grid — avoids an uninstalled virtualization
    * dependency while keeping DOM size manageable for typical result sets.
    */
-  const booksToRender =
+  const booksToRender = (
     personalizedPicks.length > 0
       ? personalizedPicks
-      : (storeRecommendations as unknown as Book[]);
+      : (storeRecommendations as unknown as Book[])
+  ).filter(
+    (b) => filterGenres.length === 0 || matchesGenre(b.genres, filterGenres[0])
+  );
 
   return (
     <div className={`ai-book-recommendations theme-${theme} performance-${performanceMode}`}>

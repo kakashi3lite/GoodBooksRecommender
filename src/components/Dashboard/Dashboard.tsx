@@ -12,10 +12,8 @@ import {
   Bell,
   BookmarkPlus,
   BookOpen,
-  ChevronDown,
   Clock,
   Eye,
-  Filter,
   Heart,
   Moon,
   Search,
@@ -45,6 +43,7 @@ import {
   startReading
 } from '../../stores/reading/readingSlice'
 import { toggleFavorite } from '../../stores/user/userSlice'
+import { applyBookFilters, BOOK_FILTER_TABS, genreChipsFor } from '../../utils/bookFilters'
 import { dailyPickReason, getDailyPick } from '../../utils/dailyPick'
 import { describeProfile, getPersonalizedRecommendations } from '../../utils/personalization'
 import {
@@ -107,6 +106,7 @@ const Dashboard: React.FC = () => {
   )
 
   const [activeFilter, setActiveFilter] = useState('all')
+  const [activeGenre, setActiveGenre] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [showNotifications, setShowNotifications] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -116,7 +116,6 @@ const Dashboard: React.FC = () => {
   const currentlyReading = useAppSelector((state) => state.reading.currentlyReading)
   const readingLog = useAppSelector((state) => state.reading.readingLog)
   const favorites = useAppSelector((state) => state.user.favorites)
-  const selectedGenre = 'All Genres'
   const readingGoal = userPreferences.readingGoal
   const finishedCount = booksFinished(currentlyReading)
   const streak = computeStreak(readingLog)
@@ -176,8 +175,6 @@ const Dashboard: React.FC = () => {
     const q = searchQuery.trim()
     navigate(q ? `/discover?q=${encodeURIComponent(q)}` : '/discover')
   }
-
-  const filterOptions = ['all', 'trending', 'recommended', 'new', 'favorites']
 
   // Real stats — all derived from persisted reading activity.
   const stats = [
@@ -252,18 +249,24 @@ const Dashboard: React.FC = () => {
   /**
    * Chain-of-Thought: Rank the catalog against the reader's taste profile.
    * Personalization is instant and offline — no demo fallback; every card is
-   * a real catalog book ranked for this reader.
+   * a real catalog book ranked for this reader. We expose the real fields
+   * (genres, page count, year, moods) so the filter tabs and genre chips
+   * below are backed by honest data.
    */
   const displayBooks = useMemo(() => {
-    return getPersonalizedRecommendations(userPreferences, { limit: 6 }).map(
+    return getPersonalizedRecommendations(userPreferences, { limit: 9 }).map(
       (rec) => ({
         id: rec.book.id,
         title: rec.book.title,
         author: rec.book.authors,
+        authors: rec.book.authors,
         cover_url: rec.book.cover_url,
         rating: rec.book.rating,
         progress: 0,
-        genre: rec.book.genres[0] ?? 'Fiction',
+        genres: rec.book.genres,
+        moods: rec.book.moods,
+        page_count: rec.book.page_count,
+        published_year: rec.book.published_year,
         trending: false,
         timeToRead: `${Math.max(2, Math.round(rec.book.page_count / 120))}h`,
         description: rec.book.description,
@@ -272,17 +275,41 @@ const Dashboard: React.FC = () => {
     )
   }, [userPreferences])
 
-  // Real progress lookup (persisted) + client-side search filter.
+  // Real progress lookup (persisted) + client-side search/genre/tab filter.
   const progressFor = (id: string): number =>
     currentlyReading.find((e) => e.bookId === id)?.progressPct ?? 0
 
-  const filteredBooks = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase()
-    if (!q) return displayBooks
-    return displayBooks.filter((b) =>
-      `${b.title} ${b.author} ${b.genre}`.toLowerCase().includes(q)
-    )
-  }, [displayBooks, searchQuery])
+  // The heart of this pass: filters that ACTUALLY filter. Tabs + genre chips
+  // + search all flow through the shared vocabulary (src/utils/bookFilters.ts).
+  const filteredBooks = useMemo(
+    () =>
+      applyBookFilters(displayBooks, {
+        query: searchQuery,
+        genre: activeGenre,
+        tab: activeFilter
+      }),
+    [displayBooks, searchQuery, activeGenre, activeFilter]
+  )
+
+  // Live per-tab counts (loss-aversion: the reader knows what each tab holds
+  // before committing; no tab ever looks like a dead end).
+  const tabCounts = useMemo(() => {
+    const counts: Record<string, number> = {}
+    for (const tab of BOOK_FILTER_TABS) {
+      counts[tab.id] = applyBookFilters(displayBooks, {
+        query: searchQuery,
+        genre: activeGenre,
+        tab: tab.id
+      }).length
+    }
+    return counts
+  }, [displayBooks, searchQuery, activeGenre])
+
+  // Genre chips ranked favorite-first (identity) with counts (recognition).
+  const genreChips = useMemo(
+    () => genreChipsFor(displayBooks, userPreferences.favoriteGenres ?? []),
+    [displayBooks, userPreferences.favoriteGenres]
+  )
 
   useEffect(() => {
     // Chain-of-Thought: Fetch personalized recommendations from the backend on mount.
@@ -545,37 +572,68 @@ const Dashboard: React.FC = () => {
           ))}
         </motion.div>
 
-        {/* Filters and Genre Selection */}
-        <motion.div
-          className="flex flex-wrap items-center justify-between mb-8 gap-4"
-          variants={itemVariants}
-        >
-          <div className="flex flex-wrap gap-2">
-            {filterOptions.map((filter) => (
+        {/* Filters — honest, working, reader-first.
+            Tabs carry live counts; genre chips rank the reader's favorites
+            first; the result line reassures with momentum. */}
+        <motion.div className="mb-8" variants={itemVariants}>
+          <div className="flex flex-wrap gap-2 mb-3">
+            {BOOK_FILTER_TABS.map((tab) => (
               <button
-                key={filter}
-                onClick={() => setActiveFilter(filter)}
-                className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${activeFilter === filter
+                key={tab.id}
+                onClick={() => setActiveFilter(tab.id)}
+                aria-pressed={activeFilter === tab.id}
+                className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${activeFilter === tab.id
                   ? 'bg-blue-600 text-white shadow-lg'
                   : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
                   }`}
               >
-                {filter.charAt(0).toUpperCase() + filter.slice(1)}
+                <span className="mr-1.5">{tab.emoji}</span>
+                {tab.label}
+                <span
+                  className={`ml-2 text-xs ${activeFilter === tab.id ? 'text-blue-100' : 'text-gray-400'}`}
+                >
+                  {tabCounts[tab.id] ?? 0}
+                </span>
               </button>
             ))}
           </div>
 
-          <div className="flex items-center space-x-4">
-            <div className="relative">
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => setActiveGenre('')}
+              aria-pressed={activeGenre === ''}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${activeGenre === ''
+                ? 'bg-purple-600 text-white'
+                : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                }`}
+            >
+              All genres
+            </button>
+            {genreChips.map((chip) => (
               <button
-                className="flex items-center space-x-2 px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                key={chip.genre}
+                onClick={() => setActiveGenre(activeGenre === chip.genre ? '' : chip.genre)}
+                aria-pressed={activeGenre === chip.genre}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${activeGenre === chip.genre
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                  }`}
               >
-                <Filter className="w-4 h-4" />
-                <span className="text-sm">{selectedGenre}</span>
-                <ChevronDown className="w-4 h-4" />
+                {chip.genre}
+                <span
+                  className={`ml-1.5 ${activeGenre === chip.genre ? 'text-purple-100' : 'text-gray-400'}`}
+                >
+                  {chip.count}
+                </span>
               </button>
-            </div>
+            ))}
           </div>
+
+          <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+            Showing {filteredBooks.length} of {displayBooks.length} picks
+            {activeGenre ? ` in ${activeGenre}` : ''}
+            {searchQuery.trim() ? ` matching "${searchQuery.trim()}"` : ''}
+          </p>
         </motion.div>
 
         {/* Main Content Grid */}
@@ -616,6 +674,11 @@ const Dashboard: React.FC = () => {
               </div>
 
               <div className="p-6">
+                {filteredBooks.length === 0 ? (
+                  <p className="text-sm text-gray-500 dark:text-gray-400 py-8 text-center">
+                    No books match these filters — try clearing the genre or search.
+                  </p>
+                ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                   {filteredBooks.map((book) => (
                     <motion.div
@@ -629,7 +692,7 @@ const Dashboard: React.FC = () => {
                           title={book.title}
                           author={book.author}
                           coverUrl={book.cover_url}
-                          genres={book.genre ? [book.genre] : undefined}
+                          genres={book.genres}
                           seed={book.id}
                           size="sm"
                           rounded="md"
@@ -703,7 +766,7 @@ const Dashboard: React.FC = () => {
                                       title: book.title,
                                       authors: book.author,
                                       cover_url: book.cover_url ?? '',
-                                      genres: book.genre ? [book.genre] : undefined,
+                                      genres: book.genres,
                                       description: book.description
                                     }
                                   })
@@ -741,6 +804,7 @@ const Dashboard: React.FC = () => {
                     </motion.div>
                   ))}
                 </div>
+                )}
               </div>
             </div>
           </motion.div>

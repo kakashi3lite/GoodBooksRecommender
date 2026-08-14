@@ -198,8 +198,8 @@ const BookCover: React.FC<BookCoverProps> = ({
                         onLoad={() => setImageState('loaded')}
                         onError={() => setImageState('error')}
                         className={`absolute inset-0 h-full w-full object-cover transition-all duration-300 ${imageState === 'loaded'
-                                ? 'opacity-100 scale-100'
-                                : 'opacity-0 scale-95'
+                            ? 'opacity-100 scale-100'
+                            : 'opacity-0 scale-95'
                             }`}
                     />
                 </>

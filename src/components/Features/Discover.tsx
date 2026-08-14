@@ -10,7 +10,9 @@ import { motion } from 'framer-motion'
 import { Search, Sparkles, X } from 'lucide-react'
 import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useAppSelector } from '../../hooks/redux'
 import { API_ENDPOINTS } from '../../utils/api'
+import { catalogGenreChips, matchesGenre } from '../../utils/bookFilters'
 import AIBookRecommendations from '../AI/AIBookRecommendations'
 import { BookCard } from '../UI/BookCard'
 import WebTrending from './WebTrending'
@@ -37,8 +39,18 @@ const Discover: React.FC = () => {
     const [results, setResults] = useState<SearchResult[]>([])
     const [searching, setSearching] = useState(false)
     const [searched, setSearched] = useState(false)
+    const [activeGenre, setActiveGenre] = useState('')
     const debounceRef = useRef<number | undefined>(undefined)
     const navigate = useNavigate()
+    const favoriteGenres = useAppSelector((state) => state.user.preferences?.favoriteGenres ?? [])
+
+    // Reader-first genre chips: favorite genres ranked first, with live counts
+    // from the catalog (recognition + identity + loss-aversion reassurance).
+    const genreChips = catalogGenreChips(favoriteGenres)
+    const genreFilter = activeGenre ? [activeGenre] : []
+
+    // Applied to every section so the filter behaves identically sitewide.
+    const visibleResults = results.filter((b) => matchesGenre(b.genres, activeGenre))
 
     /**
      * Chain-of-Thought: keep the box in sync when arriving with ?q= (e.g. the
@@ -120,17 +132,50 @@ const Discover: React.FC = () => {
                     )}
                 </div>
 
+                {/* Genre filter — favorite-first chips with counts. Applies to
+                    search results, AI picks, and trending (sitewide consistency). */}
+                {genreChips.length > 0 && (
+                    <div className="mb-8 flex flex-wrap items-center gap-2" aria-label="Filter by genre">
+                        <button
+                            onClick={() => setActiveGenre('')}
+                            aria-pressed={activeGenre === ''}
+                            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${activeGenre === ''
+                                ? 'bg-purple-600 text-white'
+                                : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                                }`}
+                        >
+                            All genres
+                        </button>
+                        {genreChips.map((chip) => (
+                            <button
+                                key={chip.genre}
+                                onClick={() => setActiveGenre(activeGenre === chip.genre ? '' : chip.genre)}
+                                aria-pressed={activeGenre === chip.genre}
+                                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${activeGenre === chip.genre
+                                    ? 'bg-purple-600 text-white'
+                                    : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                                    }`}
+                            >
+                                {chip.genre}
+                                <span className={`ml-1.5 ${activeGenre === chip.genre ? 'text-purple-100' : 'text-gray-400'}`}>
+                                    {chip.count}
+                                </span>
+                            </button>
+                        ))}
+                    </div>
+                )}
+
                 {/* Search results */}
                 {searched && (
                     <section className="mb-12" aria-label="Search results">
                         <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
                             {searching
                                 ? 'Searching…'
-                                : results.length > 0
-                                    ? `${results.length} result${results.length === 1 ? '' : 's'} for "${query}"`
-                                    : `No matches for "${query}"`}
+                                : visibleResults.length > 0
+                                    ? `${visibleResults.length} result${visibleResults.length === 1 ? '' : 's'} for "${query}"${activeGenre ? ` in ${activeGenre}` : ''}`
+                                    : `No matches for "${query}"${activeGenre ? ` in ${activeGenre}` : ''}`}
                         </h2>
-                        {!searching && results.length > 0 && (
+                        {!searching && visibleResults.length > 0 && (
                             <div
                                 className="grid gap-5"
                                 style={{
@@ -139,7 +184,7 @@ const Discover: React.FC = () => {
                                     gap: '1.25rem'
                                 }}
                             >
-                                {results.map((book) => (
+                                {visibleResults.map((book) => (
                                     <BookCard
                                         key={book.id}
                                         book={book}
@@ -148,7 +193,7 @@ const Discover: React.FC = () => {
                                 ))}
                             </div>
                         )}
-                        {!searching && results.length === 0 && (
+                        {!searching && visibleResults.length === 0 && (
                             <p className="text-gray-500 dark:text-gray-400 text-sm">
                                 Try a different title, author, or genre — or check the live trending feed below.
                             </p>
@@ -157,10 +202,10 @@ const Discover: React.FC = () => {
                 )}
 
                 {/* AI Recommendations + live web trending */}
-                {(!searched || results.length === 0) && (
+                {(!searched || visibleResults.length === 0) && (
                     <>
-                        <AIBookRecommendations limit={12} strategy="hybrid" />
-                        <WebTrending limit={12} />
+                        <AIBookRecommendations limit={12} strategy="hybrid" filterGenres={genreFilter} />
+                        <WebTrending limit={12} filterGenres={genreFilter} />
                     </>
                 )}
             </div>

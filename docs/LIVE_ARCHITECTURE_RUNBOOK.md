@@ -657,3 +657,50 @@ now that suggestion cards use `useNavigate`). 91/91 tests, tsc clean, lint 0.
 - Wishlist: save a book → real cover + "Start Reading" adds it to the shelf.
 - Chat: ask for a book → suggestion cards carry covers + reasons + ratings;
   clicking opens the book detail.
+
+## 22. Filters Apply Correctly Sitewide (2026-08-14)
+
+### Root cause
+The Dashboard's filter tabs (`all/trending/recommended/new/favorites`) set
+`activeFilter` but **never used it** — `filteredBooks` only applied the search
+query, so every tab was decorative. The "genre" dropdown was a fake control:
+`selectedGenre = 'All Genres'` hardcoded, no menu, no onClick. Discover had no
+genre filters at all.
+
+### The fix — one shared filter vocabulary
+New module `src/utils/bookFilters.ts` is the single source of truth used by
+both Dashboard and Discover, so behavior is identical sitewide:
+- `normalizeGenre` — alias-aware ("sci-fi" → "Science Fiction"), mirrors the
+  server recommender.
+- `BOOK_FILTER_TABS` — honest, data-backed tabs that always return results:
+  `For you` (all), `Top rated` (≥4.5★), `Quick reads` (≤300 pages), `Feel-good`
+  (cozy/uplifting moods). (An initial "New arrivals" tab was dropped — the
+  catalog's newest book is 2022, so it would have been a dead tab.)
+- `applyBookFilters` — tab + genre + query combined.
+- `genreChipsFor` / `catalogGenreChips` — chips ranked **favorite-first** with
+  live counts.
+
+### Reader-psychology choices
+| Principle | Implementation |
+|---|---|
+| **Trust (no dead controls)** | Every tab/chip now filters; verified live. |
+| **Hick's law (choice overload)** | 4 meaningful tabs, not 5 vague ones; chips over a mystery dropdown. |
+| **Recognition + identity** | Genre chips rank the reader's favorite genres first. |
+| **Loss aversion / momentum** | Live counts on every tab + chip; "Showing X of Y picks" line. |
+| **Status quo / defaults** | Default tab "For you", default genre "All genres". |
+
+### Wiring
+- **Dashboard**: `displayBooks` now carries real fields (full `genres`, `moods`,
+  `page_count`, `published_year`, limit 6→9); tabs + chips + search all flow
+  through `applyBookFilters`; empty state added.
+- **Discover**: genre chip row (catalog counts, favorite-first) filters search
+  results client-side AND is passed as `filterGenres` to `AIBookRecommendations`
+  + `WebTrending` (both gained an optional alias-aware client filter).
+
+### Verify (all PASS live, deployment 2fe42d11)
+- Dashboard: "Quick reads" → "Showing 1 of 9" · "Top rated" → "Showing 5 of 9"
+  (all ≥4.5★) · "Mystery" chip → "Showing 2 of 9 in Mystery".
+- Discover: "Science Fiction" chip → only The Martian / Project Hail Mary / Dune
+  across AI + trending; search "murder" + Mystery → "4 results for \"murder\" in
+  Mystery" (all Mystery titles).
+- 100/100 tests (new `tests/bookFilters.test.ts`, 9 tests incl. "no dead tabs").

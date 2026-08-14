@@ -93,6 +93,18 @@ A taste-ranking engine scores the curated catalog against your genres and readin
 genre match (45%), mood match (20%), rating (15%), popularity (10%), recency (10%) — and
 explains every pick: *"Because you love Science Fiction"*.
 
+### 🎛️ Filters that actually filter (sitewide)
+One shared filter vocabulary (`src/utils/bookFilters.ts`) powers every surface, so the same
+tabs, genres, and search behave identically on the Dashboard and Discover:
+- **Honest tabs** — *For you · Top rated · Quick reads · Feel-good*, each with a live count
+  (no dead or empty tabs).
+- **Genre chips** — your favorite genres ranked first, with counts ("Fantasy · 5");
+  click to filter, click again to clear.
+- **Live feedback** — "Showing 5 of 9 picks" so you always know what you'll get before
+  committing (no fear of missing out).
+- Genre aliases normalize everywhere (`sci-fi` → *Science Fiction*), matching the
+  recommendation engine.
+
 ### 🤖 AI Reading Assistant
 Chat with a book companion (`⌘K` to toggle). Ask for recommendations, mood matches, or
 "something like my last thriller" — replies include rich book cards with ratings and a

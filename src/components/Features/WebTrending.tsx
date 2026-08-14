@@ -12,6 +12,7 @@ import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { API_ENDPOINTS } from '../../utils/api'
 import { bentoPlacement } from '../../utils/bento'
+import { matchesGenre } from '../../utils/bookFilters'
 import { BookCard } from '../UI/BookCard'
 
 interface TrendingBook {
@@ -26,7 +27,10 @@ interface TrendingBook {
     description: string
 }
 
-const WebTrending: React.FC<{ limit?: number }> = ({ limit = 12 }) => {
+const WebTrending: React.FC<{ limit?: number; filterGenres?: string[] }> = ({
+  limit = 12,
+  filterGenres = []
+}) => {
     const navigate = useNavigate()
     const [books, setBooks] = useState<TrendingBook[]>([])
     const [loading, setLoading] = useState(true)
@@ -85,7 +89,11 @@ const WebTrending: React.FC<{ limit?: number }> = ({ limit = 12 }) => {
 
             {!loading && !error && books.length > 0 && (
                 <div className="bento-grid">
-                    {books.map((book, index) => {
+                    {books
+              .filter(
+                (b) => filterGenres.length === 0 || matchesGenre(b.genres, filterGenres[0])
+              )
+              .map((book, index) => {
                         const placement = bentoPlacement(index)
                         return (
                             <div key={book.id} className={`bento-item ${placement.className}`}>
