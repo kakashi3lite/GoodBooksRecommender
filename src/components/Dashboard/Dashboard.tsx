@@ -679,131 +679,131 @@ const Dashboard: React.FC = () => {
                     No books match these filters — try clearing the genre or search.
                   </p>
                 ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {filteredBooks.map((book) => (
-                    <motion.div
-                      key={book.id}
-                      className="group bg-gray-50 dark:bg-gray-700 rounded-xl p-4 hover:shadow-lg transition-all duration-200"
-                      variants={cardHoverVariants}
-                      whileHover="hover"
-                    >
-                      <div className="flex items-start space-x-3 mb-3">
-                        <BookCover
-                          title={book.title}
-                          author={book.author}
-                          coverUrl={book.cover_url}
-                          genres={book.genres}
-                          seed={book.id}
-                          size="sm"
-                          rounded="md"
-                          showText={false}
-                        />
-                        <div className="flex-1 min-w-0">
-                          {book.trending && (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 mb-1">
-                              🔥 Trending
-                            </span>
-                          )}
-                          <h3 className="font-semibold text-gray-900 dark:text-white text-sm leading-tight group-hover:text-blue-600 transition-colors">
-                            {book.title}
-                          </h3>
-                          <p className="text-gray-600 dark:text-gray-400 text-xs">{book.author}</p>
-                        </div>
-                      </div>
-
-                      <p className="text-gray-600 dark:text-gray-400 text-xs mb-3 line-clamp-2">
-                        {book.description}
-                      </p>
-
-                      {(book as any).reason && (
-                        <p className="text-[11px] text-purple-700 dark:text-purple-300 flex items-center gap-1 mb-3">
-                          <Sparkles className="w-3 h-3 flex-shrink-0" />
-                          {(book as any).reason}
-                        </p>
-                      )}
-
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="flex items-center text-yellow-600">
-                            <Star className="w-3 h-3 mr-1 fill-current" />
-                            {book.rating}
-                          </span>
-                          <span className="text-gray-500 flex items-center">
-                            <Clock className="w-3 h-3 mr-1" />
-                            {book.timeToRead}
-                          </span>
-                        </div>
-
-                        {progressFor(book.id) > 0 && (
-                          <div className="space-y-1">
-                            <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400">
-                              <span>Progress</span>
-                              <span>{progressFor(book.id)}%</span>
-                            </div>
-                            <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-1.5">
-                              <div
-                                className="bg-blue-600 h-1.5 rounded-full transition-all duration-300"
-                                style={{ width: `${progressFor(book.id)}%` }}
-                              ></div>
-                            </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {filteredBooks.map((book) => (
+                      <motion.div
+                        key={book.id}
+                        className="group bg-gray-50 dark:bg-gray-700 rounded-xl p-4 hover:shadow-lg transition-all duration-200"
+                        variants={cardHoverVariants}
+                        whileHover="hover"
+                      >
+                        <div className="flex items-start space-x-3 mb-3">
+                          <BookCover
+                            title={book.title}
+                            author={book.author}
+                            coverUrl={book.cover_url}
+                            genres={book.genres}
+                            seed={book.id}
+                            size="sm"
+                            rounded="md"
+                            showText={false}
+                          />
+                          <div className="flex-1 min-w-0">
+                            {book.trending && (
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 mb-1">
+                                🔥 Trending
+                              </span>
+                            )}
+                            <h3 className="font-semibold text-gray-900 dark:text-white text-sm leading-tight group-hover:text-blue-600 transition-colors">
+                              {book.title}
+                            </h3>
+                            <p className="text-gray-600 dark:text-gray-400 text-xs">{book.author}</p>
                           </div>
+                        </div>
+
+                        <p className="text-gray-600 dark:text-gray-400 text-xs mb-3 line-clamp-2">
+                          {book.description}
+                        </p>
+
+                        {(book as any).reason && (
+                          <p className="text-[11px] text-purple-700 dark:text-purple-300 flex items-center gap-1 mb-3">
+                            <Sparkles className="w-3 h-3 flex-shrink-0" />
+                            {(book as any).reason}
+                          </p>
                         )}
 
-                        <div className="flex space-x-2 pt-2">
-                          <button
-                            onClick={() => {
-                              if (progressFor(book.id) > 0) {
-                                // Honest quick log: the reader's own average session.
-                                dispatch(
-                                  logReadingSession({ bookId: book.id, pages: pace.avgPagesPerSession })
-                                )
-                                toast.success(`Logged ${pace.avgPagesPerSession} pages — keep it going! 📚`)
-                              } else {
-                                dispatch(
-                                  startReading({
-                                    bookId: book.id,
-                                    book: {
-                                      title: book.title,
-                                      authors: book.author,
-                                      cover_url: book.cover_url ?? '',
-                                      genres: book.genres,
-                                      description: book.description
-                                    }
-                                  })
-                                )
-                              }
-                            }}
-                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs py-3 px-3 rounded-lg transition-colors"
-                          >
-                            {progressFor(book.id) > 0
-                              ? `Log ${pace.avgPagesPerSession} pg`
-                              : 'Start Reading'}
-                          </button>
-                          <button
-                            onClick={() => dispatch(toggleFavorite(book.id))}
-                            className={`p-3 transition-colors ${favorites.includes(book.id) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
-                            aria-label="Toggle wishlist"
-                          >
-                            <Heart className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => {
-                              const url = `${window.location.origin}/book/${encodeURIComponent(book.id)}`
-                              navigator.clipboard
-                                .writeText(url)
-                                .then(() => toast.success('Link copied — share it with a reader 📎'))
-                                .catch(() => toast.error('Could not copy the link'))
-                            }}
-                            className="p-3 text-gray-400 hover:text-blue-500 transition-colors"
-                            aria-label="Share book"
-                          >
-                            <Share className="w-4 h-4" />
-                          </button>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="flex items-center text-yellow-600">
+                              <Star className="w-3 h-3 mr-1 fill-current" />
+                              {book.rating}
+                            </span>
+                            <span className="text-gray-500 flex items-center">
+                              <Clock className="w-3 h-3 mr-1" />
+                              {book.timeToRead}
+                            </span>
+                          </div>
+
+                          {progressFor(book.id) > 0 && (
+                            <div className="space-y-1">
+                              <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400">
+                                <span>Progress</span>
+                                <span>{progressFor(book.id)}%</span>
+                              </div>
+                              <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-1.5">
+                                <div
+                                  className="bg-blue-600 h-1.5 rounded-full transition-all duration-300"
+                                  style={{ width: `${progressFor(book.id)}%` }}
+                                ></div>
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="flex space-x-2 pt-2">
+                            <button
+                              onClick={() => {
+                                if (progressFor(book.id) > 0) {
+                                  // Honest quick log: the reader's own average session.
+                                  dispatch(
+                                    logReadingSession({ bookId: book.id, pages: pace.avgPagesPerSession })
+                                  )
+                                  toast.success(`Logged ${pace.avgPagesPerSession} pages — keep it going! 📚`)
+                                } else {
+                                  dispatch(
+                                    startReading({
+                                      bookId: book.id,
+                                      book: {
+                                        title: book.title,
+                                        authors: book.author,
+                                        cover_url: book.cover_url ?? '',
+                                        genres: book.genres,
+                                        description: book.description
+                                      }
+                                    })
+                                  )
+                                }
+                              }}
+                              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs py-3 px-3 rounded-lg transition-colors"
+                            >
+                              {progressFor(book.id) > 0
+                                ? `Log ${pace.avgPagesPerSession} pg`
+                                : 'Start Reading'}
+                            </button>
+                            <button
+                              onClick={() => dispatch(toggleFavorite(book.id))}
+                              className={`p-3 transition-colors ${favorites.includes(book.id) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
+                              aria-label="Toggle wishlist"
+                            >
+                              <Heart className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                const url = `${window.location.origin}/book/${encodeURIComponent(book.id)}`
+                                navigator.clipboard
+                                  .writeText(url)
+                                  .then(() => toast.success('Link copied — share it with a reader 📎'))
+                                  .catch(() => toast.error('Could not copy the link'))
+                              }}
+                              className="p-3 text-gray-400 hover:text-blue-500 transition-colors"
+                              aria-label="Share book"
+                            >
+                              <Share className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
+                      </motion.div>
+                    ))}
+                  </div>
                 )}
               </div>
             </div>

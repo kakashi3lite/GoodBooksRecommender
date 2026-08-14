@@ -9,12 +9,12 @@ import { describe, expect, it } from 'vitest'
 import { BOOK_CATALOG } from '../src/data/bookCatalog'
 import {
     applyBookFilters,
+    BOOK_FILTER_TABS,
     catalogGenreChips,
     genreChipsFor,
     matchesGenre,
     matchesQuery,
-    normalizeGenre,
-    BOOK_FILTER_TABS
+    normalizeGenre
 } from '../src/utils/bookFilters'
 
 const dune = BOOK_CATALOG.find((b) => b.title === 'Dune')!

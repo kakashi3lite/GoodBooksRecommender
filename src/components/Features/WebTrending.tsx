@@ -28,8 +28,8 @@ interface TrendingBook {
 }
 
 const WebTrending: React.FC<{ limit?: number; filterGenres?: string[] }> = ({
-  limit = 12,
-  filterGenres = []
+    limit = 12,
+    filterGenres = []
 }) => {
     const navigate = useNavigate()
     const [books, setBooks] = useState<TrendingBook[]>([])
@@ -90,21 +90,21 @@ const WebTrending: React.FC<{ limit?: number; filterGenres?: string[] }> = ({
             {!loading && !error && books.length > 0 && (
                 <div className="bento-grid">
                     {books
-              .filter(
-                (b) => filterGenres.length === 0 || matchesGenre(b.genres, filterGenres[0])
-              )
-              .map((book, index) => {
-                        const placement = bentoPlacement(index)
-                        return (
-                            <div key={book.id} className={`bento-item ${placement.className}`}>
-                                <BookCard
-                                    book={book}
-                                    variant={placement.featured ? 'featured' : 'standard'}
-                                    onClick={() => navigate(`/book/${encodeURIComponent(book.id)}`)}
-                                />
-                            </div>
+                        .filter(
+                            (b) => filterGenres.length === 0 || matchesGenre(b.genres, filterGenres[0])
                         )
-                    })}
+                        .map((book, index) => {
+                            const placement = bentoPlacement(index)
+                            return (
+                                <div key={book.id} className={`bento-item ${placement.className}`}>
+                                    <BookCard
+                                        book={book}
+                                        variant={placement.featured ? 'featured' : 'standard'}
+                                        onClick={() => navigate(`/book/${encodeURIComponent(book.id)}`)}
+                                    />
+                                </div>
+                            )
+                        })}
                 </div>
             )}
         </section>
