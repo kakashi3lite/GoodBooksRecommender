@@ -56,6 +56,12 @@ updates:
         update-types: [version-update:semver-major]
       - dependency-name: eslint-plugin-react
         update-types: [version-update:semver-major]
+      # `@eslint/js` ships in lockstep with the `eslint` major (it peers on
+      # `eslint ^10` next) and Dependabot cannot bump both in one PR, so a lone
+      # `@eslint/js` major fails `npm ci` with ERESOLVE. It moves when ESLint
+      # moves, never before.
+      - dependency-name: "@eslint/js"
+        update-types: [version-update:semver-major]
       # Same story: plugin-react 6 requires vite ^8, and @vitest/ui must match
       # the vitest major exactly (5.1.0 needs vitest 5.1.0). Both belong to the
       # Vite 5 -> 8 / Vitest 0.34 -> 5 migration, which is a planned pass.
