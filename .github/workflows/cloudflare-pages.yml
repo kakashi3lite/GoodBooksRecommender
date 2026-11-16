@@ -83,40 +83,51 @@ jobs:
 
       # A green "Deploying..." line is not proof the site works. Verify the
       # freshly published deployment actually serves the app shell and a live
-      # API response, retrying briefly while the edge propagates.
+      # API response.
+      #
+      # Retries are essential here: static assets propagate in milliseconds but
+      # the Functions bundle can 404 for a few seconds afterwards. Retrying only
+      # the root request (as an earlier version did) made the API assertion
+      # flaky — it fired once, one second post-deploy, and failed the pipeline
+      # on a deployment that was in fact healthy.
       - name: Smoke test deployment
         env:
           DEPLOYMENT_URL: ${{ steps.deploy.outputs.deployment-url }}
           PRODUCTION_URL: https://books.dalecabra.com
         run: |
           set -euo pipefail
-          target="${DEPLOYMENT_URL:-$PRODUCTION_URL}"
-          echo "Smoke testing $target"
-          code=000
-          for attempt in 1 2 3 4 5 6; do
-            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 15 "$target/") || code=000
-            [ "$code" = "200" ] && break
-            echo "attempt $attempt: HTTP $code — retrying in 5s"
-            sleep 5
-          done
-          if [ "$code" != "200" ]; then
-            echo "::error::Deployment did not serve HTTP 200 (last: $code)"
-            exit 1
-          fi
 
-          # App shell must be the real index, not a fallback error page.
+          # Poll a URL until it answers 200 (up to ~45s), then print it once.
+          wait_200() {
+            local url="$1" label="$2" code=000
+            for attempt in $(seq 1 9); do
+              code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 15 "$url") || code=000
+              if [ "$code" = "200" ]; then
+                echo "ok   $label ($url)"
+                return 0
+              fi
+              echo "wait $label attempt $attempt: HTTP $code"
+              sleep 5
+            done
+            echo "::error::$label never became healthy (last: $code) — $url"
+            return 1
+          }
+
+          target="${DEPLOYMENT_URL:-$PRODUCTION_URL}"
+          echo "Deployment URL: ${DEPLOYMENT_URL:-<none reported>}"
+
+          # 1. The new deployment must serve the app shell.
+          wait_200 "$target/" "deployment shell"
           curl -fsS --max-time 15 "$target/" | grep -q 'id="root"' \
             || { echo "::error::App shell missing #root"; exit 1; }
 
-          # Edge API must answer with JSON.
-          api_code=$(curl -s -o /tmp/books.json -w '%{http_code}' --max-time 20 "$target/api/books") || api_code=000
-          if [ "$api_code" != "200" ]; then
-            echo "::error::/api/books returned $api_code"
-            exit 1
-          fi
-          head -c 160 /tmp/books.json; echo
+          # 2. Its edge API must answer with JSON (Functions propagate later).
+          wait_200 "$target/api/books" "deployment api"
+          curl -fsS --max-time 20 "$target/api/books" -o /tmp/books.json
+          grep -q '"data"' /tmp/books.json \
+            || { echo "::error::/api/books did not return JSON data"; exit 1; }
+          head -c 140 /tmp/books.json; echo
 
-          # The custom domain must point at a live build too.
-          curl -fsS -o /dev/null --max-time 15 "$PRODUCTION_URL/" \
-            || { echo "::error::Custom domain not serving"; exit 1; }
-          echo "Smoke test passed." 
+          # 3. The canonical custom domain must serve the promoted build.
+          wait_200 "$PRODUCTION_URL/" "custom domain"
+          echo "Smoke test passed."

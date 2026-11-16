@@ -45,6 +45,20 @@ updates:
         update-types: [version-update:semver-major]
       - dependency-name: vite
         update-types: [version-update:semver-major]
+      # Dependabot proposed eslint-plugin-react-refresh 0.5.7, whose peer range
+      # is eslint ^9 || ^10 while this project runs eslint 8 + typescript-eslint
+      # 6 — `npm ci` failed hard on the PR (the new `CI / verify` gate caught
+      # it). The ESLint 9 migration is a planned pass, so these stay pinned
+      # until it happens instead of reopening a broken PR every week.
+      - dependency-name: eslint-plugin-react-refresh
+      - dependency-name: eslint
+        update-types: [version-update:semver-major]
+      - dependency-name: "@typescript-eslint/eslint-plugin"
+        update-types: [version-update:semver-major]
+      - dependency-name: "@typescript-eslint/parser"
+        update-types: [version-update:semver-major]
+      - dependency-name: eslint-plugin-react
+        update-types: [version-update:semver-major]
 
   - package-ecosystem: github-actions
     directory: /
