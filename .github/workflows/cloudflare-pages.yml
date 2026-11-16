@@ -85,11 +85,12 @@ jobs:
       # freshly published deployment actually serves the app shell and a live
       # API response.
       #
-      # Retries are essential here: static assets propagate in milliseconds but
-      # the Functions bundle can 404 for a few seconds afterwards. Retrying only
-      # the root request (as an earlier version did) made the API assertion
-      # flaky — it fired once, one second post-deploy, and failed the pipeline
-      # on a deployment that was in fact healthy.
+      # Chain-of-Thought (learned the hard way): each check must make ONE
+      # request and assert status AND body from that same response. Pages
+      # Functions come up per-edge — a retry can succeed on one PoP while the
+      # next request lands on another PoP that still 404s the route. Two
+      # sequential curls therefore raced, and a healthy deployment failed
+      # twice. One request, one verdict, retried until both hold.
       - name: Smoke test deployment
         env:
           DEPLOYMENT_URL: ${{ steps.deploy.outputs.deployment-url }}
@@ -97,37 +98,33 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Poll a URL until it answers 200 (up to ~45s), then print it once.
-          wait_200() {
-            local url="$1" label="$2" code=000
+          # usage: assert_serves <url> <label> <pattern> <body-file>
+          assert_serves() {
+            local url="$1" label="$2" pattern="$3" body="$4" code=000
             for attempt in $(seq 1 9); do
-              code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 15 "$url") || code=000
-              if [ "$code" = "200" ]; then
-                echo "ok   $label ($url)"
+              code=$(curl -sS -o "$body" -w '%{http_code}' --max-time 20 "$url") || code=000
+              if [ "$code" = "200" ] && grep -q -- "$pattern" "$body" 2>/dev/null; then
+                echo "ok   $label — HTTP 200, body matched /$pattern/"
                 return 0
               fi
-              echo "wait $label attempt $attempt: HTTP $code"
+              echo "wait $label — attempt $attempt: HTTP $code"
               sleep 5
             done
-            echo "::error::$label never became healthy (last: $code) — $url"
+            echo "::error::$label failed (last HTTP $code) — $url"
             return 1
           }
 
           target="${DEPLOYMENT_URL:-$PRODUCTION_URL}"
           echo "Deployment URL: ${DEPLOYMENT_URL:-<none reported>}"
 
-          # 1. The new deployment must serve the app shell.
-          wait_200 "$target/" "deployment shell"
-          curl -fsS --max-time 15 "$target/" | grep -q 'id="root"' \
-            || { echo "::error::App shell missing #root"; exit 1; }
+          # 1. The new deployment serves the real app shell (not a fallback page).
+          assert_serves "$target/" "deployment shell" 'id="root"' /tmp/shell.html
 
-          # 2. Its edge API must answer with JSON (Functions propagate later).
-          wait_200 "$target/api/books" "deployment api"
-          curl -fsS --max-time 20 "$target/api/books" -o /tmp/books.json
-          grep -q '"data"' /tmp/books.json \
-            || { echo "::error::/api/books did not return JSON data"; exit 1; }
+          # 2. Its edge API answers with real JSON.
+          assert_serves "$target/api/books" "deployment api" '"data":' /tmp/books.json
           head -c 140 /tmp/books.json; echo
 
-          # 3. The canonical custom domain must serve the promoted build.
-          wait_200 "$PRODUCTION_URL/" "custom domain"
+          # 3. The canonical custom domain serves the promoted build.
+          assert_serves "$PRODUCTION_URL/" "custom domain" 'id="root"' /tmp/prod.html
+
           echo "Smoke test passed."
