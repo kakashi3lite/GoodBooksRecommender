@@ -5,6 +5,30 @@ All notable changes to the GoodBooks Recommender Dashboard will be documented in
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.0] - 2026-11-17
+
+### 🚀 CI/CD
+- **Pull-request gate** (`.github/workflows/ci.yml`) — install → type-check → lint → test
+  → build → purge, with per-ref concurrency and a 15-minute timeout. Nothing ran on pull
+  requests before, so a broken branch could merge and only fail *after* reaching `main`.
+  Adds build-output assertions that guard the two regressions that had shipped: a missing
+  app shell and `index.html` linking bundled-away `/dashboard/css` assets.
+- **`main` is protected** — the `verify` check is required, force-pushes and deletions are
+  blocked, and conversation resolution is required (admins keep an escape hatch).
+- **Post-deploy smoke test** — waits for HTTP 200, asserts the app shell has `#root`,
+  asserts `/api/books` returns JSON, and confirms the custom domain serves a live build.
+  All assertions share one retry helper (~45s): static assets propagate in milliseconds
+  while the Functions bundle can 404 for a few seconds, which made the first version flaky.
+- **Supply-chain pins** — actions pinned to commit SHAs; `Dependabot` refreshes them weekly.
+- **Deploy timeout** (20 min) so a hung step cannot occupy a runner for the 6-hour maximum.
+- Dependabot ignores two coordinated migrations that cannot be applied partially
+  (ESLint 8 → 9/10; Vite 5 → 8 / Vitest 0.34 → 5) — see README "CI/CD".
+
+### 🔧 Fixed
+- Deploy workflow failed on **every** push after the CI consolidation: the repo's
+  `CLOUDFLARE_API_TOKEN` secret had been stale since 2026-08-06. Refreshed; deploys are
+  green and self-verifying.
+
 ## [2.3.0] - 2026-11-17
 
 ### ✨ Added

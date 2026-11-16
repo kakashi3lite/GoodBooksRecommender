@@ -59,6 +59,13 @@ updates:
         update-types: [version-update:semver-major]
       - dependency-name: eslint-plugin-react
         update-types: [version-update:semver-major]
+      # Same story: plugin-react 6 requires vite ^8, and @vitest/ui must match
+      # the vitest major exactly (5.1.0 needs vitest 5.1.0). Both belong to the
+      # Vite 5 -> 8 / Vitest 0.34 -> 5 migration, which is a planned pass.
+      - dependency-name: "@vitejs/plugin-react"
+        update-types: [version-update:semver-major]
+      - dependency-name: "@vitest/ui"
+        update-types: [version-update:semver-major]
 
   - package-ecosystem: github-actions
     directory: /
