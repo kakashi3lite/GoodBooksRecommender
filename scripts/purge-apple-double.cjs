@@ -13,7 +13,10 @@
  *   deploy. Running this as part of `npm run deploy` makes local and CI
  *   deploys behave identically.
  *
- * Scope: `dist/` and `functions/` only — the two trees wrangler uploads.
+ * Scope: `dist/` and `functions/` are what wrangler uploads, so they are
+ * non-negotiable. `src/` is included because ESLint 9 no longer skips dotfiles
+ * by default — a stray `._*` beside a component is parsed as source and fails
+ * the lint gate with a confusing "Invalid character" error.
  * Safe to run repeatedly; exits 0 when nothing matches.
  */
 
@@ -21,7 +24,7 @@ const fs = require('node:fs')
 const path = require('node:path')
 
 const ROOT = path.resolve(__dirname, '..')
-const TARGETS = ['dist', 'functions']
+const TARGETS = ['dist', 'functions', 'src', 'tests', 'public', '.github', 'dashboard', 'docs', 'scripts']
 
 const isAppleDouble = (name) => name.startsWith('._') || name === '.DS_Store'
 
@@ -41,7 +44,21 @@ const purge = (dir, removed = []) => {
   return removed
 }
 
-const removed = TARGETS.flatMap((target) => purge(path.join(ROOT, target)))
+/**
+ * Root level files (`._index.html`, `._package.json`) matter but a recursive
+ * sweep from the repo root would walk `node_modules` (~33k junk files on a
+ * macOS volume) for no benefit, so the root is scanned one level only.
+ */
+const purgeRoot = () =>
+  fs
+    .readdirSync(ROOT, { withFileTypes: true })
+    .filter((entry) => entry.isFile() && isAppleDouble(entry.name))
+    .map((entry) => {
+      fs.rmSync(path.join(ROOT, entry.name), { force: true })
+      return entry.name
+    })
+
+const removed = [...purgeRoot(), ...TARGETS.flatMap((target) => purge(path.join(ROOT, target)))]
 
 if (removed.length > 0) {
   console.log(`🧹 Removed ${removed.length} Apple Double / .DS_Store file(s)`)

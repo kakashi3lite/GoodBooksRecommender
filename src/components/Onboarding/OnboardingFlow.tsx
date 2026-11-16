@@ -23,6 +23,7 @@ import { BOOK_GENRES } from '../../data/bookCatalog'
 import { useFocusTrap } from '../../hooks/useFocusTrap'
 import { useAppDispatch } from '../../hooks/redux'
 import { completeOnboarding, register, syncAccountToServer } from '../../stores/user/userSlice'
+import { READING_PACE, moodsForPace } from '../../utils/readingPace'
 
 const GENRE_EMOJI: Record<string, string> = {
     Fiction: '📖',
@@ -45,12 +46,6 @@ const GOALS = [
     { label: 'Steady', value: 12, blurb: 'one a month' },
     { label: 'Avid', value: 24, blurb: 'two a month' },
     { label: 'Bookworm', value: 52, blurb: 'one a week' }
-]
-
-const PACE = [
-    { id: 'quick', label: 'Quick reads', blurb: 'shorter, punchy books', moods: ['fast-paced'] },
-    { id: 'mixed', label: 'A bit of both', blurb: 'varied lengths & pace', moods: [] },
-    { id: 'epic', label: 'Epic tomes', blurb: 'sink into big worlds', moods: ['epic'] }
 ]
 
 interface OnboardingFlowProps {
@@ -95,7 +90,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ initialEmail = '' }) =>
                 readingGoal: goal,
                 preferredFormats: ['ebook', 'print'],
                 // The pace question is only honest if the answer is used.
-                preferredMoods: PACE.find((option) => option.id === pace)?.moods ?? []
+                preferredMoods: moodsForPace(pace)
             })
         )
         // Best-effort: persist the account to the database when configured
@@ -353,7 +348,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ initialEmail = '' }) =>
                                         How do you like to read?
                                     </span>
                                     <div className="grid grid-cols-3 gap-2 mt-2">
-                                        {PACE.map((p) => (
+                                        {READING_PACE.map((p) => (
                                             <button
                                                 key={p.id}
                                                 onClick={() => setPace(p.id)}

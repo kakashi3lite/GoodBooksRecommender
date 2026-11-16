@@ -45,17 +45,14 @@ updates:
         update-types: [version-update:semver-major]
       - dependency-name: vite
         update-types: [version-update:semver-major]
-      # Dependabot proposed eslint-plugin-react-refresh 0.5.7, whose peer range
-      # is eslint ^9 || ^10 while this project runs eslint 8 + typescript-eslint
-      # 6 — `npm ci` failed hard on the PR (the new `CI / verify` gate caught
-      # it). The ESLint 9 migration is a planned pass, so these stay pinned
-      # until it happens instead of reopening a broken PR every week.
-      - dependency-name: eslint-plugin-react-refresh
+      # The ESLint 9 migration has landed (eslint 9.39 + typescript-eslint 8 +
+      # react-refresh 0.5), so plugin, @eslint/js and typescript-eslint bumps are
+      # allowed again — those were the PRs that used to fail `npm ci`.
+      # Remaining pin: eslint itself at 9.x and eslint-plugin-react at 7.x,
+      # because eslint-plugin-react 7.37 peers on `eslint ^9.7` and is the last
+      # published major. Bumping ESLint to 10 breaks that peer range, so it
+      # waits for a react-plugin release (tracked as a planned pass).
       - dependency-name: eslint
-        update-types: [version-update:semver-major]
-      - dependency-name: "@typescript-eslint/eslint-plugin"
-        update-types: [version-update:semver-major]
-      - dependency-name: "@typescript-eslint/parser"
         update-types: [version-update:semver-major]
       - dependency-name: eslint-plugin-react
         update-types: [version-update:semver-major]

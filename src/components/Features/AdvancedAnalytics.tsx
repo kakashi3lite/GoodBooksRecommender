@@ -13,13 +13,14 @@ import { useAppSelector } from '../../hooks/redux'
 import {
   booksFinished,
   computeStreak,
+  localDateKey,
   pagesAllTime,
   pagesThisMonth
 } from '../../stores/reading/readingSlice'
 import { AIService } from '../../utils/api'
 import { buildChatContext } from '../../utils/chatContext'
 import { pluralize } from '../../utils/readingInsights'
-import { buildGenreBreakdown } from '../../utils/readingStats'
+import { buildGenreBreakdown, pagesPerActiveDay, readingDays } from '../../utils/readingStats'
 
 const AdvancedAnalytics: React.FC = () => {
   const currentlyReading = useAppSelector((state) => state.reading.currentlyReading)
@@ -78,7 +79,9 @@ const AdvancedAnalytics: React.FC = () => {
     const days = Array.from({ length: 14 }, (_, i) => {
       const d = new Date()
       d.setDate(d.getDate() - (13 - i))
-      return d.toISOString().slice(0, 10)
+      // Local day keys: `toISOString()` is UTC, so the trend bar and the log
+      // entry disagreed for anyone east of Greenwich after 18:30 UTC.
+      return localDateKey(d)
     })
     const byDate = new Map<string, number>()
     for (const log of readingLog) byDate.set(log.date, (byDate.get(log.date) ?? 0) + log.pages)
@@ -90,7 +93,10 @@ const AdvancedAnalytics: React.FC = () => {
     }))
   }, [readingLog])
 
-  const hoursRead = Math.round(totalPages / 40)
+  // Real derivations only. "Reading time" used to be `totalPages / 40` — an
+  // invented conversion shown with the same confidence as measured data.
+  const activeDays = readingDays(readingLog)
+  const pagesPerDay = pagesPerActiveDay(readingLog)
 
   return (
     <motion.div
@@ -143,7 +149,7 @@ const AdvancedAnalytics: React.FC = () => {
             { icon: Flame, label: 'Streak', value: pluralize(streak, 'day'), color: 'text-orange-600 bg-orange-50 dark:bg-orange-900/20' },
             { icon: BookOpen, label: 'Books Finished', value: `${finished}`, color: 'text-blue-600 bg-blue-50 dark:bg-blue-900/20' },
             { icon: Library, label: 'Pages This Month', value: `${monthPages}`, color: 'text-green-600 bg-green-50 dark:bg-green-900/20' },
-            { icon: CalendarDays, label: 'Reading Time', value: `${hoursRead}h`, color: 'text-purple-600 bg-purple-50 dark:bg-purple-900/20' }
+            { icon: CalendarDays, label: 'Reading Days', value: `${activeDays}`, color: 'text-purple-600 bg-purple-50 dark:bg-purple-900/20' }
           ].map((stat) => (
             <div key={stat.label} className={`rounded-2xl p-5 ${stat.color.split(' ').slice(1).join(' ')}`}>
               <stat.icon className={`w-6 h-6 ${stat.color.split(' ')[0]}`} />
@@ -152,6 +158,11 @@ const AdvancedAnalytics: React.FC = () => {
             </div>
           ))}
         </div>
+        <p className="-mt-5 mb-8 text-xs text-gray-500 dark:text-gray-400">
+          {totalPages > 0
+            ? `${totalPages} pages across ${activeDays} reading ${activeDays === 1 ? 'day' : 'days'} — about ${pagesPerDay} pages each day you read.`
+            : 'Log a session and your real pace appears here.'}
+        </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* 14-day trend */}

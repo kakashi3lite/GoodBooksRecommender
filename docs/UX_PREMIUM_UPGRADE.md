@@ -413,3 +413,63 @@ day's page entry.
 | `tests/userPersistence.test.ts` | F3b — wishlist save/removal, preferences and goals survive reload |
 | `tests/readerExperience.test.tsx` | F5 honesty, `ProgressBar` semantics/clamping, F6 latest-wins, local-date helpers |
 | `tests/focusTrap.test.tsx` | F10 — enter, wrap, escape-pull-back, opener restore |
+
+---
+
+## 7. Follow-up pass — the answer you gave once, and the number we invented
+
+### 7.1 Reading pace was a one-way door
+
+Onboarding asks "How do you like to read?" and stored the answer as `preferredMoods`,
+which `buildProfile` uses to rank every recommendation. Nothing else could read or
+change it, and the pace list lived as a private constant inside the onboarding
+component — so Settings could not offer the question, and a reader who picked
+"Quick reads" on day one was stuck with that influence forever.
+
+- `src/utils/readingPace.ts` now owns the three options and the mood mapping
+  (`READING_PACE`, `moodsForPace`, `paceForMoods`). Onboarding and Settings both
+  read it, so the two screens cannot drift apart.
+- Settings shows the same three-way choice with `aria-pressed` state and persists
+  immediately. `paceForMoods` maps an unrecognised mood set to the neutral
+  "A bit of both" rather than claiming a preference the reader never stated.
+
+### 7.2 Analytics stopped inventing a conversion
+
+The stat grid showed **Reading Time** as `totalPages / 40` — an invented
+pages-per-hour ratio displayed with the same confidence as measured data, next to
+genuinely measured values. It is now **Reading Days** (distinct days with a real
+session), with a plain sentence underneath:
+
+> 1,204 pages across 38 reading days — about 32 pages each day you read.
+
+That uses `readingDays` / `pagesPerActiveDay`, which existed and were tested but had
+no caller. A reader with no history sees "Log a session and your real pace appears
+here" instead of a zero dressed up as a metric.
+
+### 7.3 The trend chart was a day off, east of Greenwich
+
+`Last 14 Days` built its day keys with `toISOString()` (UTC) while the log stores
+local dates. After 18:30 UTC in IST, a session logged "today" landed on yesterday's
+bar. The chart now uses `localDateKey`, the same helper the streak and log use — one
+definition of "a day" across the app.
+
+### 7.4 News: an outage that hid inside an honest `[]`
+
+The News endpoint returned `[]` in production. That was *honest* — it refused to
+invent stories — but it was also **invisible**: the source had died and the UI looked
+merely empty.
+
+Google News RSS now responds with a ~1 KB stub containing zero `<item>` elements.
+Replaced with four publisher-owned feeds fetched in parallel (The Guardian, The New
+York Times, BBC News, Literary Hub), merged, de-duplicated by headline, and sorted
+newest-first. Three properties matter:
+
+1. **Isolation** — `Promise.allSettled` per feed with an 8s abort; one dead feed
+   cannot empty the page.
+2. **Observability** — `X-News-Feeds: n/4` in the response header, and empty results
+   cached 60s instead of 15 minutes so an outage is not frozen into the edge cache.
+3. **Honesty preserved** — total failure still returns `[]`, and the page still says
+   so. No fabricated headlines, ever.
+
+`functions/api/_lib/rss.ts` holds the parsing and merging as pure functions (7 tests),
+verified against the live feeds before deploy: 98 items parsed, 10 merged newest-first.

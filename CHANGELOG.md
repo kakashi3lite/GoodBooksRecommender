@@ -5,6 +5,50 @@ All notable changes to the GoodBooks Recommender Dashboard will be documented in
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.0] - 2026-11-17
+
+### 📰 Book News actually has news
+- **Root cause of the empty News page:** the feed list pointed at Google News RSS, which now
+  answers with a ~1 KB stub containing **zero `<item>` elements**. The endpoint was honest
+  (it returned `[]`) but nothing revealed the source had died.
+- Now reads four publisher-owned feeds **in parallel** — The Guardian, The New York Times,
+  BBC News, Literary Hub — merges, de-duplicates syndicated headlines, and sorts **newest
+  first** instead of trusting each feed's order.
+- One dead feed can no longer empty the page: feeds are isolated with `Promise.allSettled`
+  and an 8s timeout, and the response reports `X-News-Feeds: n/4` so the next outage is
+  visible. Empty results are cached for 60s (not 15 min) so a transient failure doesn't stick.
+- Parsing/merging moved to `functions/api/_lib/rss.ts` — pure functions, covered by 7 tests.
+  Verified against the live feeds before deploy: 98 items parsed, 10 merged newest-first.
+
+### 🎚️ Reading pace is revisitable
+- Onboarding's pace answer (`preferredMoods`) was **unreachable after onboarding** — a reader
+  who picked "Quick reads" once had that preference ranking every recommendation forever.
+  Settings now offers the same three-way choice, highlights the current answer, and persists.
+- `src/utils/readingPace.ts` is the single source of truth (`READING_PACE`, `moodsForPace`,
+  `paceForMoods`); onboarding reads it instead of owning a private copy.
+
+### 📊 Analytics reports measured numbers only
+- Replaced the invented "Reading Time" card (`totalPages / 40`) with **Reading Days** and a
+  real "N pages across M reading days — about P pages each day you read" line, using the
+  previously dead `readingDays` / `pagesPerActiveDay` helpers.
+- Fixed the 14-day trend chart using UTC dates (`toISOString()`), which filed evening reading
+  east of Greenwich under the wrong bar. It now uses `localDateKey`.
+
+### 🔧 ESLint 9 (flat config)
+- `eslint 9.39` + `typescript-eslint` 8 + `eslint-plugin-react` 7.37 + `react-hooks` 7.1 +
+  `react-refresh` 0.5 + `react-security` 4.2. `.eslintrc.json` → `eslint.config.js`.
+- **Same standards:** 0 errors and the same 68 warnings before and after; the migration
+  changed the toolchain, not the rules.
+- Unblocks the Dependabot PRs that used to fail `npm ci`; `eslint` itself stays on 9.x while
+  `eslint-plugin-react` is pinned at 7.x (its peer range tops out at `eslint ^9.7`).
+- Flat config does not skip dotfiles: macOS `._*` sidecars are now ignored in config, and
+  `scripts/purge-apple-double.cjs` covers `src/ tests/ public/ .github/ dashboard/ scripts/`
+  plus a shallow root pass — 33k stray files were removed from `node_modules` during the audit.
+
+### 📚 Docs
+- README: News sources, the ESLint 9 migration notes, and the **Codacy owner-action steps**
+  (`ACTION_REQUIRED` is an authorisation prompt, not a code failure).
+
 ## [2.5.1] - 2026-11-17
 
 ### 🔒 Production verification fixes
