@@ -42,15 +42,66 @@ export const FEEDS: NewsFeed[] = [
     { url: 'https://lithub.com/feed/', name: 'Literary Hub' }
 ]
 
-export const decodeXml = (s: string): string =>
+/**
+ * Named HTML entities publishers actually use.
+ *
+ * Chain-of-Thought: decoding only the six XML entities left `&nbsp;`, `&rsquo;`,
+ * `&mdash;` and friends visible in the reader's summaries — WordPress-style feeds
+ * (Literary Hub, most publisher blogs) emit the full HTML set. Unknown entities are
+ * left untouched rather than deleted, so a rare one degrades to visible text
+ * instead of silently eating words.
+ */
+const NAMED_ENTITIES: Record<string, string> = {
+    amp: '&',
+    lt: '<',
+    gt: '>',
+    quot: '"',
+    apos: "'",
+    nbsp: ' ',
+    mdash: '\u2014',
+    ndash: '\u2013',
+    lsquo: '\u2018',
+    rsquo: '\u2019',
+    ldquo: '\u201c',
+    rdquo: '\u201d',
+    hellip: '\u2026',
+    middot: '\u00b7',
+    bull: '\u2022',
+    laquo: '\u00ab',
+    raquo: '\u00bb',
+    times: '\u00d7',
+    copy: '\u00a9',
+    reg: '\u00ae',
+    trade: '\u2122',
+    euro: '\u20ac',
+    pound: '\u00a3',
+    deg: '\u00b0',
+    eacute: '\u00e9',
+    egrave: '\u00e8',
+    agrave: '\u00e0',
+    ccedil: '\u00e7',
+    uuml: '\u00fc',
+    ouml: '\u00f6',
+    auml: '\u00e4',
+    szlig: '\u00df'
+}
+
+const decodeOnce = (s: string): string =>
     s
         .replace(/<!\[CDATA\[|\]\]>/g, '')
-        .replace(/&amp;/g, '&')
-        .replace(/&lt;/g, '<')
-        .replace(/&gt;/g, '>')
-        .replace(/&quot;/g, '"')
-        .replace(/&#39;/g, "'")
-        .replace(/&apos;/g, "'")
+        .replace(/&#x([0-9a-fA-F]+);/g, (_, hex: string) => String.fromCodePoint(parseInt(hex, 16)))
+        .replace(/&#(\d+);/g, (_, dec: string) => String.fromCodePoint(Number(dec)))
+        .replace(/&([a-zA-Z]+);/g, (entity, name: string) => NAMED_ENTITIES[name.toLowerCase()] ?? entity)
+
+/**
+ * Decode XML/HTML entities: CDATA wrappers, named set, decimal and hex references.
+ *
+ * Feeds routinely double-encode (`&amp;nbsp;`, `&amp;#8217;`). One pass turns
+ * those into a literal `&nbsp;` because `&amp;` is consumed before the scanner
+ * reaches the rest, so the pass runs twice. Running it twice is safe — decoding
+ * an already-decoded string is a no-op.
+ */
+export const decodeXml = (s: string): string => decodeOnce(decodeOnce(s))
 
 export const stripHtml = (s: string): string => s.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
 
