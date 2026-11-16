@@ -225,10 +225,17 @@ warnings, 0 errors, before and after). Two consequences worth knowing:
 - `eslint` stays on 9.x and `eslint-plugin-react` on 7.x: 7.37 is the last published major and
   peers on `eslint ^9.7`, so ESLint 10 waits for a react-plugin release.
 
-**Deferred migration (deliberately not automated).** Dependabot ignores majors for
-**Vite 5 → 8 / Vitest 0.34 → 5** with `@vitejs/plugin-react` 6 and `@vitest/ui` 5 — a partial
-bump cannot install. It is a planned pass, not weekly maintenance. Everything else updates
-automatically.
+**Deferred migrations (deliberately not automated), each with the failure that proves it:**
+
+| Track | Why a solo bump cannot land |
+|---|---|
+| Vite 5 → 8 / Vitest 0.34 → 5 (`@vitejs/plugin-react` 6, `@vitest/ui` 5) | partial bump cannot install |
+| Redux Toolkit 2 with `react-redux` 9 | react-redux 9 peers `redux ^5`; redux comes from RTK 1.x today (ERESOLVE at `npm ci`) |
+| `framer-motion` 14 | v14 tightened `ease` from `string` to the `Easing` union — fails type-check on existing transitions |
+| `eslint` 10 / `@eslint/js` 10 / `eslint-plugin-react` 8 | plugins do not support ESLint 10 yet; `@eslint/js` ships in lockstep with the ESLint major |
+
+Everything else updates automatically — three dependency PRs landed within minutes of the
+ESLint 9 migration removing the block.
 
 **Codacy requires a one-time owner action.** The `Codacy Static Code Analysis` check reports
 `ACTION_REQUIRED` (not a code failure) until the repository is authorised:
