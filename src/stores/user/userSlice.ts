@@ -31,6 +31,14 @@ export interface UserProfile {
 export interface UserPreferences {
   favoriteGenres: string[]
   preferredFormats: string[]
+  /**
+   * Mood vocabulary captured by onboarding ("Quick reads" → fast-paced, etc.).
+   * Chain-of-Thought: onboarding used to ask for reading pace and silently
+   * discard the answer — a question with no consequence erodes trust in every
+   * other question. This is the field that makes the answer matter, and it
+   * feeds the same mood dimension the recommender already scores (20%).
+   */
+  preferredMoods: string[]
   readingGoal: number
   notifications: boolean
   privacy: 'public' | 'friends' | 'private'
@@ -64,7 +72,15 @@ interface PersistedUser {
   hasCompletedOnboarding: boolean
 }
 
-const persistUser = (state: UserSliceState): void => {
+/**
+ * Write the reader's account to localStorage.
+ * Chain-of-Thought: previously only `register`/`login`/`completeOnboarding`
+ * called this, so a wishlist save, a goal change or a settings tweak lived in
+ * memory only and silently reverted on the next load. `store.ts` now calls this
+ * whenever the user slice changes, and the reducers above may still call it for
+ * an immediate, synchronous write.
+ */
+export const persistUserState = (state: UserSliceState): void => {
   try {
     const payload: PersistedUser = {
       profile: state.profile,
@@ -113,6 +129,7 @@ const baseInitialState: UserSliceState = {
   preferences: {
     favoriteGenres: ['Fiction', 'Science Fiction', 'Mystery'],
     preferredFormats: ['ebook', 'print'],
+    preferredMoods: [],
     readingGoal: 24,
     notifications: true,
     privacy: 'friends'
@@ -247,7 +264,7 @@ const userSlice = createSlice({
       }
       state.isAuthenticated = true
       state.error = null
-      persistUser(state)
+      persistUserState(state)
     },
 
     /** Restore a previously created account. */
@@ -259,7 +276,7 @@ const userSlice = createSlice({
       }
       state.isAuthenticated = true
       state.error = null
-      persistUser(state)
+      persistUserState(state)
     },
 
     /** Sign out — returns to the onboarding/landing gate. */
@@ -289,7 +306,7 @@ const userSlice = createSlice({
       state.preferences = { ...state.preferences, ...action.payload }
       state.hasCompletedOnboarding = true
       state.error = null
-      persistUser(state)
+      persistUserState(state)
     },
 
     resetUser: () => {

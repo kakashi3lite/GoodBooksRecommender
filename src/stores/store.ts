@@ -14,6 +14,7 @@ import booksSlice from './books/booksSlice'
 import dashboardSlice from './dashboard/dashboardSlice'
 import readingSlice from './reading/readingSlice'
 import { createReadingSyncMiddleware } from './reading/readingSync'
+import { persistUserState } from './user/userSlice'
 import userSlice from './user/userSlice'
 
 // Forward-Thinking: Future feature slices
@@ -96,7 +97,22 @@ export const loadState = (): Partial<RootState> | undefined => {
   }
 }
 
-// Memory: Auto-save state on changes
+// Memory: Auto-save state on changes.
+// Chain-of-Thought: the dashboard/user snapshot is cheap but the user account is
+// the part a reader would be devastated to lose, so it is written by reference
+// change rather than on every action (typing in a search box must not rewrite
+// the account). `saveState` is likewise gated so the store no longer serialises
+// the whole dashboard on unrelated updates.
+let lastDashboard = store.getState().dashboard
+let lastUser = store.getState().user
 store.subscribe(() => {
-  saveState(store.getState())
+  const state = store.getState()
+  if (state.user !== lastUser) {
+    lastUser = state.user
+    persistUserState(state.user)
+  }
+  if (state.dashboard !== lastDashboard) {
+    lastDashboard = state.dashboard
+    saveState(state)
+  }
 })

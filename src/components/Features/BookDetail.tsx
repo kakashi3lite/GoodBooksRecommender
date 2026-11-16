@@ -132,6 +132,9 @@ const BookDetail: React.FC = () => {
                 }
             })
         )
+        // One book, one place: a started book leaves the to-read queue, so the
+        // shelf and the wishlist never disagree about what is still "for later".
+        if (inWishlist) dispatch(toggleFavorite(book.id))
         toast.success(`Added "${book.title}" to your reading shelf 📖`)
     }
 

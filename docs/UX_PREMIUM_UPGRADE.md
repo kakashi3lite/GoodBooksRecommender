@@ -336,3 +336,80 @@ the sidebar on their Mac keeps it collapsed until the next band change.
 - `.app-shell .ai-assistant-fab` / `.app-shell .main-content` / `.app-shell .navigation-sidebar`
   are shell-scoped because Tailwind utilities and `react-components.css` are
   bundled last; a bare class selector loses the cascade tie.
+
+---
+
+## 6. Reader-audit pass — flaws found by using the product like a reader
+
+The upgrade above made the app *look* premium. This pass asked a harder question:
+does it survive a reader who is tired, on a phone, and slightly careless? Every
+finding below was reproduced in a real browser (Playwright, seeded localStorage,
+1440×950 and phone viewports) **before** being fixed, and each fix ships with a
+regression test that fails against the old build.
+
+### 6.1 Integrity defects (the numbers lied)
+
+| # | What a reader saw | Root cause | Fix |
+| --- | --- | --- | --- |
+| F1 | Progress stored by the old build jumped **50% → ~2%** on the next check-in | Legacy entries had `progressPct` but no `currentPage`, so the delta was computed from page 0 | `migrateEntry` derives `currentPage` from `progressPct × page_count`, and the repair is **written back** so it survives closing the tab |
+| F2 | Checking in at page **999** on a 288-page book *saved* page 288 but *logged* **855 pages read** | `setProgress` computed the delta from the raw request, then clamped only the stored position | Clamp **before** measuring the delta; only distance actually travelled is credited |
+| F2b | Logging a session past the end recorded the full request | `logReadingSession` did not clamp | Clamped to remaining pages; finished books are ignored |
+| F9 | Finishing a book on a day you had already read added **no** "finished" credit | The dedupe matched *any* same-day entry for that book, not a finish | Dedupe on `finished` entries only — a day can hold "read 40 pages" *and* "finished the book" |
+| F3 | "Start Reading" left the book in the wishlist (and the saved count lied) | Only the shelf was updated | Wishlist → shelf is a real move; the page reads "Continue reading" for books already started |
+| F3b | **Every** wishlist save, goal change and settings tweak reverted on reload | Only `register`/`login`/`completeOnboarding` persisted the account | `store.subscribe` persists the user slice on reference change — one authoritative writer, and dashboard writes are no longer churned by unrelated actions |
+| F4 | Onboarding asked reading pace, then discarded the answer | Preferences had no `preferredMoods` | Pace maps to moods and `buildProfile` honours them |
+| F5 | Analytics invented a genre taste map for a reader with **no** data | Chart fell back to the whole catalog | Honest empty state: "No genres yet — finish or save a book and your taste map starts here" |
+| F6 | Fast typing in Discover could apply a stale response | No request sequencing | `useLatestRequest` — monotonically sequenced, aborts the loser |
+| F7 | Zero `role="progressbar"` in the app: the core metric was invisible to assistive tech | Visual-only bars | `ProgressBar` with `aria-valuenow`/`aria-valuetext` ("page 144 of 288, 50% complete") |
+| F10 | All five overlays claimed `aria-modal="true"` but Tab escaped into the hidden dashboard | No focus containment | `useFocusTrap` — enters the dialog, wraps Tab/Shift+Tab, pulls escaped focus back, restores the opener |
+
+### 6.2 Why these matter to a reader, not just to a linter
+
+- **Loss aversion** (Kahneman & Tversky): a progress bar that goes *backwards* is
+  read as data loss, and data loss is the moment a tracker gets abandoned. F1 and
+  F2 are therefore rank-1 defects, not cosmetic ones.
+- **Goal-gradient** (Kivetz et al. 2006): the end of a book is the highest-motivation
+  window, so the *aftermath* must feel rewarded. F9 removed the reward exactly at
+  the peak.
+- **Implementation intentions** (Gollwitzer): "I saved this to read" is a commitment.
+  A wishlist that keeps the book after you start it (F3) makes the queue untrustworthy,
+  and an unstable queue stops being a plan.
+- **Conditional honesty**: a fabricated chart (F5) is worse than an empty one —
+  it teaches the reader to distrust every number in the app.
+- **Zeigarnik / closure**: the finish moment deserves its own entry in history even
+  when the same day already contains page logs. Merging them erases the closure.
+
+### 6.3 Accessibility model
+
+One rule set, applied to every overlay and every progress surface:
+
+1. `role="dialog"` + `aria-modal="true"` + `aria-label` on the container.
+2. Focus moves into the dialog on open; Tab and Shift+Tab cycle inside; focus that
+   escapes (browser chrome, devtools) is pulled back on the next Tab.
+3. Exactly **one** owner of `Escape` per layer (`useFocusTrap`), closing on
+   `document` so it wins regardless of which child has focus.
+4. Closing restores focus to the element that opened it.
+5. Progress exposes `role="progressbar"`, `aria-valuemin/max/now` and a human
+   `aria-valuetext`.
+
+Visibility checks use `checkVisibility()` when available (jsdom reports every
+`offsetWidth` as 0, so a layout-based check silently disables the trap in tests).
+
+### 6.4 Verified live, end to end
+
+`10/10` Playwright checks on a clean profile: onboarding trap (10/10 Tabs stayed
+inside), pace → `preferredMoods: ["fast-paced"]`, honest analytics empty state,
+wishlist → shelf with the book removed from favorites **in storage**, legacy entry
+migrated to `currentPage: 144` of 288 *and persisted*, `role=progressbar` reading
+"page 144 of 288, 50% complete", overshoot check-in clamping to 288 while crediting
+only the 144-page delta, and a finish recorded as `2026-11-17:0F` alongside the
+day's page entry.
+
+### 6.5 Regression suite added
+
+| File | Guards |
+| --- | --- |
+| `tests/readingIntegrity.test.ts` | F1, F2, F2b, F9, corrupt-payload recovery, durable migration |
+| `tests/userPersistence.test.ts` | F3b — wishlist save/removal, preferences and goals survive reload |
+| `tests/readerExperience.test.tsx` | F5 honesty, `ProgressBar` semantics/clamping, F6 latest-wins, local-date helpers |
+| `tests/focusTrap.test.tsx` | F10 — enter, wrap, escape-pull-back, opener restore |

@@ -5,6 +5,35 @@ All notable changes to the GoodBooks Recommender Dashboard will be documented in
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.0] - 2026-11-17
+
+### 🔍 Reader-audit fixes (integrity, honesty, accessibility)
+- **Progress can no longer go backwards.** Legacy entries that stored only `progressPct`
+  are migrated to a real `currentPage`, and the repair is persisted so closing the tab
+  keeps it. Previously 50% could become ~2% on the next check-in.
+- **Pages read are now honest.** A check-in past the last page clamps *before* the delta
+  is measured — typing `999` on a 288-page book used to store page 288 but credit
+  **855 pages read**. Session logging clamps to the remaining pages and ignores finished books.
+- **Finishing a book always credits the day.** The finish entry is deduped against other
+  *finish* entries, so a day that already contains page logs keeps its `finished` marker.
+- **Wishlist → shelf is a real move.** Starting a book removes it from the wishlist and the
+  page reads "Continue reading" for books already on the shelf.
+- **Account changes survive reload.** Saving to the wishlist, changing goals or preferences
+  now persist (`store.subscribe` writes the user slice on change); previously only
+  register/login/onboarding did, so a wishlist could resurrect books already started.
+- **Onboarding's reading-pace answer is used** (`preferredMoods`) and feeds `buildProfile`.
+- **Analytics never invents a taste map.** A reader with no history sees an honest empty state
+  instead of a chart built from the whole catalog.
+- **Search is latest-wins** (`useLatestRequest`) so a slow response can't overwrite a newer one.
+- **Accessibility:** every progress surface exposes `role="progressbar"` with a spoken
+  `aria-valuetext` ("page 144 of 288, 50% complete"), and all five overlays trap focus
+  (`useFocusTrap`) instead of letting Tab escape behind `aria-modal="true"`.
+
+### 🧪 Tests
+- New `tests/userPersistence.test.ts`; extended `tests/readingIntegrity.test.ts`,
+  `tests/readerExperience.test.tsx` and `tests/focusTrap.test.tsx` — 139 tests across 24 files.
+- Verified live with a 10-check Playwright journey on a clean profile (all pass).
+
 ## [2.4.0] - 2026-11-17
 
 ### 🚀 CI/CD

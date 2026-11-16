@@ -19,6 +19,7 @@ import {
 import { AIService } from '../../utils/api'
 import { buildChatContext } from '../../utils/chatContext'
 import { pluralize } from '../../utils/readingInsights'
+import { buildGenreBreakdown } from '../../utils/readingStats'
 
 const AdvancedAnalytics: React.FC = () => {
   const currentlyReading = useAppSelector((state) => state.reading.currentlyReading)
@@ -57,27 +58,20 @@ const AdvancedAnalytics: React.FC = () => {
   const monthPages = pagesThisMonth(readingLog)
   const totalPages = pagesAllTime(readingLog)
 
-  // Genre distribution from the user's favorites + finished books (real).
-  const genreBreakdown = useMemo(() => {
-    const counts = new Map<string, number>()
-    for (const id of [
-      ...favorites,
-      ...currentlyReading.filter((e) => e.finishedAt).map((e) => e.bookId)
-    ]) {
-      const book = BOOK_CATALOG.find((b) => b.id === id)
-      if (!book) continue
-      for (const g of book.genres ?? []) counts.set(g, (counts.get(g) ?? 0) + 1)
-    }
-    // Fall back to the catalog's overall spread when the user has no data yet.
-    if (counts.size === 0) {
-      for (const book of BOOK_CATALOG) for (const g of book.genres ?? []) counts.set(g, (counts.get(g) ?? 0) + 1)
-    }
-    const max = Math.max(1, ...counts.values())
-    return Array.from(counts.entries())
-      .map(([name, count]) => ({ name, count, pct: Math.round((count / max) * 100) }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 8)
-  }, [favorites, currentlyReading])
+  /**
+   * Genre distribution from the reader's OWN books (favourites + finished).
+   * Chain-of-Thought: this used to fall back to the whole catalog's spread when
+   * there was no data, showing a brand-new reader a confident chart of tastes
+   * they had never expressed. Empty now renders an honest empty state.
+   */
+  const genreBreakdown = useMemo(
+    () =>
+      buildGenreBreakdown(
+        [...favorites, ...currentlyReading.filter((e) => e.finishedAt).map((e) => e.bookId)],
+        BOOK_CATALOG
+      ),
+    [favorites, currentlyReading]
+  )
 
   // 14-day reading trend from real sessions.
   const trend = useMemo(() => {
@@ -188,20 +182,30 @@ const AdvancedAnalytics: React.FC = () => {
           {/* Genre breakdown */}
           <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6">
             <h2 className="font-semibold text-gray-900 dark:text-white mb-4">Top Genres</h2>
-            <ul className="space-y-3">
-              {genreBreakdown.map((g) => (
-                <li key={g.name} className="flex items-center gap-3">
-                  <span className="flex-0 w-28 text-sm text-gray-700 dark:text-gray-300 truncate">{g.name}</span>
-                  <span className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+            {genreBreakdown.length === 0 ? (
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                No genres yet — finish or save a book and your taste map starts here.
+              </p>
+            ) : (
+              <ul className="space-y-3">
+                {genreBreakdown.map((g) => (
+                  <li key={g.name} className="flex items-center gap-3">
+                    <span className="flex-0 w-28 text-sm text-gray-700 dark:text-gray-300 truncate">{g.name}</span>
                     <span
-                      className="block h-full rounded-full bg-gradient-to-r from-blue-500 to-purple-600"
-                      style={{ width: `${g.pct}%` }}
-                    />
-                  </span>
-                  <span className="w-6 text-right text-xs text-gray-500">{g.count}</span>
-                </li>
-              ))}
-            </ul>
+                      className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden"
+                      role="img"
+                      aria-label={`${g.name}: ${g.count} book${g.count === 1 ? '' : 's'}`}
+                    >
+                      <span
+                        className="block h-full rounded-full bg-gradient-to-r from-blue-500 to-purple-600"
+                        style={{ width: `${g.pct}%` }}
+                      />
+                    </span>
+                    <span className="w-6 text-right text-xs text-gray-500">{g.count}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
       </div>

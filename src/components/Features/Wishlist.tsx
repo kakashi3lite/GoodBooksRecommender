@@ -23,6 +23,10 @@ const Wishlist: React.FC = () => {
     const navigate = useNavigate()
     const favorites = useAppSelector((state) => state.user.favorites)
     const recommendations = useAppSelector((state) => state.books.recommendations)
+    const currentlyReading = useAppSelector((state) => state.reading.currentlyReading)
+
+    /** Books already on the shelf — "Start Reading" must not lie about them. */
+    const readingIds = new Set(currentlyReading.map((entry) => entry.bookId))
 
     // Resolve favorite IDs against live API books, then the curated catalog —
     // so the shelf always renders, even before the API responds.
@@ -101,25 +105,32 @@ const Wishlist: React.FC = () => {
                                     the first step, reading is the reward. */}
                                 <button
                                     onClick={() => {
-                                        dispatch(
-                                            startReading({
-                                                bookId: book.id,
-                                                book: {
-                                                    title: book.title,
-                                                    authors: book.authors,
-                                                    cover_url: book.cover_url ?? '',
-                                                    genres: book.genres,
-                                                    published_year: book.published_year,
-                                                    page_count: book.page_count,
-                                                    description: book.description
-                                                }
-                                            })
-                                        )
+                                        // Chain-of-Thought: the wishlist is a to-read queue,
+                                        // not a second shelf. Starting the book removes it
+                                        // from here (it was staying in both piles and the
+                                        // saved count lied) unless it is already on the shelf.
+                                        if (!readingIds.has(book.id)) {
+                                            dispatch(
+                                                startReading({
+                                                    bookId: book.id,
+                                                    book: {
+                                                        title: book.title,
+                                                        authors: book.authors,
+                                                        cover_url: book.cover_url ?? '',
+                                                        genres: book.genres,
+                                                        published_year: book.published_year,
+                                                        page_count: book.page_count,
+                                                        description: book.description
+                                                    }
+                                                })
+                                            )
+                                            dispatch(toggleFavorite(book.id))
+                                        }
                                         navigate('/reading')
                                     }}
-                                    className="mt-5 w-full py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-sm font-medium transition-colors"
+                                    className="pressable mt-5 w-full py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-sm font-medium transition-colors"
                                 >
-                                    Start Reading
+                                    {readingIds.has(book.id) ? 'Continue reading' : 'Start Reading'}
                                 </button>
                             </div>
                         ))}

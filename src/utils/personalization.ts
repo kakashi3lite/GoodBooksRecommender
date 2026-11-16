@@ -65,6 +65,10 @@ export const buildProfile = (prefs: UserPreferences): PersonalizationProfile => 
         biography: 'thought-provoking'
     }
     const preferredMoods = new Set<BookMood>()
+    // Explicit onboarding answers win; genre-derived moods fill the rest.
+    for (const mood of prefs.preferredMoods ?? []) {
+        preferredMoods.add(mood as BookMood)
+    }
     prefs.favoriteGenres.forEach((g) => {
         const mood = moodMap[g.toLowerCase()]
         if (mood) preferredMoods.add(mood)

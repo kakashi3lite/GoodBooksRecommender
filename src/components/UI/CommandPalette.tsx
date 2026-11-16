@@ -42,6 +42,8 @@ import {
 } from 'lucide-react'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useFocusTrap } from '../../hooks/useFocusTrap'
+import { useLatestRequest } from '../../hooks/useLatestRequest'
 import { useAppDispatch, useAppSelector } from '../../hooks/redux'
 import { addMessage, openAssistant, sendMessage } from '../../stores/ai/aiSlice'
 import { setTheme } from '../../stores/dashboard/dashboardSlice'
@@ -95,8 +97,9 @@ const CommandPalette: React.FC = () => {
   const [books, setBooks] = useState<PaletteBook[]>([])
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
-  const restoreFocusRef = useRef<HTMLElement | null>(null)
   const debounceRef = useRef<number | undefined>(undefined)
+  // Latest-wins: typing "dune" then "dunes" must not end up showing "dune" results.
+  const { run: runLatest } = useLatestRequest()
 
   const { avgPagesPerSession } = useMemo(() => computePace(readingLog), [readingLog])
 
@@ -118,9 +121,11 @@ const CommandPalette: React.FC = () => {
     setQuery('')
     setActiveIndex(0)
     setBooks([])
-    // Return focus to whatever the reader was using (keyboard users are not lost).
-    restoreFocusRef.current?.focus?.()
   }, [])
+
+  // Focus stays inside the dialog while it is open and returns to the trigger
+  // when it closes (useFocusTrap owns that lifecycle; see the hook's docs).
+  const dialogRef = useFocusTrap<HTMLDivElement>(open, close)
 
   const askCompanion = useCallback(
     (message: string) => {
@@ -240,18 +245,12 @@ const CommandPalette: React.FC = () => {
         (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k'
       if (isPaletteShortcut) {
         event.preventDefault()
-        setOpen((prev) => {
-          if (!prev) restoreFocusRef.current = document.activeElement as HTMLElement | null
-          return !prev
-        })
+        setOpen((prev) => !prev)
         return
       }
       if (!open) return
 
-      if (event.key === 'Escape') {
-        event.preventDefault()
-        close()
-      } else if (event.key === 'ArrowDown') {
+      if (event.key === 'ArrowDown') {
         event.preventDefault()
         setActiveIndex((i) => (results.length === 0 ? 0 : (i + 1) % results.length))
       } else if (event.key === 'ArrowUp') {
@@ -297,17 +296,21 @@ const CommandPalette: React.FC = () => {
     }
     debounceRef.current = window.setTimeout(async () => {
       try {
-        const res = await fetch(
-          `${API_ENDPOINTS.books.webSearch()}?q=${encodeURIComponent(q)}&limit=5`
-        )
-        const data = (await res.json()) as { data?: PaletteBook[] }
-        setBooks((data.data ?? []).slice(0, 5))
+        const data = await runLatest(async (signal) => {
+          const res = await fetch(
+            `${API_ENDPOINTS.books.webSearch()}?q=${encodeURIComponent(q)}&limit=5`,
+            { signal }
+          )
+          return (await res.json()) as { data?: PaletteBook[] }
+        })
+        // `null` = superseded by a newer query; keep its results.
+        if (data) setBooks((data.data ?? []).slice(0, 5))
       } catch {
         setBooks([])
       }
     }, 300)
     return () => window.clearTimeout(debounceRef.current)
-  }, [open, query])
+  }, [open, query, runLatest])
 
   // Keep the active row visible when arrowing through a long list.
   useEffect(() => {
@@ -327,6 +330,7 @@ const CommandPalette: React.FC = () => {
             role="presentation"
           >
             <motion.div
+              ref={dialogRef}
               className="palette-panel"
               role="dialog"
               aria-modal="true"

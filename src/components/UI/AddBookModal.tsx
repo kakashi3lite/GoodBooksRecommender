@@ -8,6 +8,7 @@
  */
 
 import { BookOpen, BookmarkPlus, Loader2, Plus, Search, X } from 'lucide-react'
+import { useFocusTrap } from '../../hooks/useFocusTrap'
 import React, { useEffect, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAppDispatch, useAppSelector } from '../../hooks/redux'
@@ -80,6 +81,11 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ open, onClose }) => {
         return () => window.clearTimeout(debounceRef.current)
     }, [query, open])
 
+    // `aria-modal` is only honest when Tab cannot escape the dialog.
+    // Declared before any early return — a hook after a conditional
+    // return would break React's hook order when the modal toggles.
+    const dialogRef = useFocusTrap<HTMLDivElement>(open, onClose)
+
     if (!open) return null
 
     const addToShelf = (book: WebBook) => {
@@ -110,6 +116,7 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ open, onClose }) => {
     return (
         <div
             className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+            ref={dialogRef}
             role="dialog"
             aria-modal="true"
             aria-label="Add a book"

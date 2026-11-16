@@ -62,6 +62,7 @@ import {
 import AddBookModal from '../UI/AddBookModal'
 import BookCover from '../UI/BookCover'
 import BookGridSkeleton from '../UI/BookGridSkeleton'
+import ProgressBar from '../UI/ProgressBar'
 import SettingsModal from '../UI/SettingsModal'
 
 // Enhanced Animation Variants
@@ -546,12 +547,14 @@ const Dashboard: React.FC = () => {
                       </span>
                     )}
                   </div>
-                  <div className="mt-2 w-full max-w-xs rounded-full bg-gray-200 h-1.5 dark:bg-gray-700">
-                    <div
-                      className="h-1.5 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 transition-all duration-300"
-                      style={{ width: `${progressFor(activeEntry.bookId)}%` }}
-                    />
-                  </div>
+                  <ProgressBar
+                    className="mt-2 max-w-xs"
+                    size={1.5}
+                    tone="gradient"
+                    value={progressFor(activeEntry.bookId)}
+                    label={`${activeBook.title} progress`}
+                    valueText={`${activeBook.title}: ${progressFor(activeEntry.bookId)}% complete`}
+                  />
                 </div>
               </div>
               <div className="flex flex-shrink-0 gap-2">
@@ -851,12 +854,12 @@ const Dashboard: React.FC = () => {
                                   )}
                                 </span>
                               </div>
-                              <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-1.5">
-                                <div
-                                  className="bg-blue-600 h-1.5 rounded-full transition-all duration-300"
-                                  style={{ width: `${progressFor(book.id)}%` }}
-                                ></div>
-                              </div>
+                              <ProgressBar
+                                size={1.5}
+                                value={progressFor(book.id)}
+                                label={`${book.title} progress`}
+                                valueText={`${book.title}: ${progressFor(book.id)}% complete`}
+                              />
                             </div>
                           )}
 

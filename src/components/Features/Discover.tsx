@@ -10,6 +10,7 @@ import { motion } from 'framer-motion'
 import { Search, Sparkles, X } from 'lucide-react'
 import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useLatestRequest } from '../../hooks/useLatestRequest'
 import { useAppSelector } from '../../hooks/redux'
 import { API_ENDPOINTS } from '../../utils/api'
 import { catalogGenreChips, matchesGenre } from '../../utils/bookFilters'
@@ -41,6 +42,8 @@ const Discover: React.FC = () => {
     const [searched, setSearched] = useState(false)
     const [activeGenre, setActiveGenre] = useState('')
     const debounceRef = useRef<number | undefined>(undefined)
+    // Latest-wins: a slow answer for an older query must never replace a newer one.
+    const { run: runLatest } = useLatestRequest()
     const navigate = useNavigate()
     const favoriteGenres = useAppSelector((state) => state.user.preferences?.favoriteGenres ?? [])
 
@@ -76,20 +79,27 @@ const Discover: React.FC = () => {
         window.clearTimeout(debounceRef.current)
         debounceRef.current = window.setTimeout(async () => {
             try {
-                const res = await fetch(
-                    `${API_ENDPOINTS.books.webSearch()}?q=${encodeURIComponent(query.trim())}&limit=20`
-                )
-                const data = (await res.json()) as { data?: SearchResult[] }
-                setResults(data.data ?? [])
+                const data = await runLatest(async (signal) => {
+                    const res = await fetch(
+                        `${API_ENDPOINTS.books.webSearch()}?q=${encodeURIComponent(query.trim())}&limit=20`,
+                        { signal }
+                    )
+                    return (await res.json()) as { data?: SearchResult[] }
+                })
+                // `null` = a newer query already started; leave its state alone.
+                if (data) {
+                    setResults(data.data ?? [])
+                    setSearched(true)
+                    setSearching(false)
+                }
             } catch {
                 setResults([])
-            } finally {
-                setSearching(false)
                 setSearched(true)
+                setSearching(false)
             }
         }, 350)
         return () => window.clearTimeout(debounceRef.current)
-    }, [query])
+    }, [query, runLatest])
 
     return (
         <motion.div
