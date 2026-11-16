@@ -106,7 +106,9 @@ describe('CommandPalette', () => {
     it('closes on Escape', async () => {
         renderPalette()
         pressShortcut()
-        fireEvent.keyDown(window, { key: 'Escape' })
+        // Escape is owned by useFocusTrap, which listens on `document` — where
+        // real keydowns from inside the dialog bubble before reaching window.
+        fireEvent.keyDown(document, { key: 'Escape' })
         // AnimatePresence keeps the surface mounted for its exit animation.
         await waitFor(() =>
             expect(screen.queryByRole('dialog', { name: 'Command palette' })).not.toBeInTheDocument()

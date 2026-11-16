@@ -10,6 +10,7 @@
  */
 
 import { BookOpen, Download, Eye, Moon, Palette, Shield, Sun, User, X } from 'lucide-react'
+import { useFocusTrap } from '../../hooks/useFocusTrap'
 import React, { useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAppDispatch, useAppSelector } from '../../hooks/redux'
@@ -30,6 +31,11 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose }) => {
     const profile = useAppSelector((state) => state.user.profile)
     const readingState = useAppSelector((state) => state.reading)
     const [goalInput, setGoalInput] = useState(String(preferences.readingGoal))
+
+    // `aria-modal` is only honest when Tab cannot escape the dialog.
+    // Declared before any early return — a hook after a conditional
+    // return would break React's hook order when the modal toggles.
+    const dialogRef = useFocusTrap<HTMLDivElement>(open, onClose)
 
     if (!open) return null
 
@@ -66,6 +72,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose }) => {
     return (
         <div
             className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+            ref={dialogRef}
             role="dialog"
             aria-modal="true"
             aria-label="Settings"

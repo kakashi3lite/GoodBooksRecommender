@@ -33,6 +33,7 @@ import {
 } from '../../utils/readingInsights'
 import BookCompletionModal from '../UI/BookCompletionModal'
 import BookCover from '../UI/BookCover'
+import ProgressBar from '../UI/ProgressBar'
 
 const PAGE_PRESETS = [10, 25, 50, 100]
 
@@ -240,12 +241,19 @@ const CurrentlyReading: React.FC = () => {
                                                 } · ${pagesLeft} to go`
                                                 : 'Page count unknown — progress is estimated'}
                                     </p>
-                                    <div className="mt-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                                        <div
-                                            className={`h-2 rounded-full transition-all ${done ? 'bg-green-500' : 'bg-blue-600'}`}
-                                            style={{ width: `${pct}%` }}
-                                        />
-                                    </div>
+                                    <ProgressBar
+                                        className="mt-2"
+                                        value={pct}
+                                        tone={done ? 'success' : 'accent'}
+                                        label={`${book.title} progress`}
+                                        valueText={
+                                            done
+                                                ? `${book.title}: finished`
+                                                : pagesLeft !== null
+                                                    ? `${book.title}: page ${entry.currentPage ?? 0} of ${book.page_count}, ${pct}% complete`
+                                                    : `${book.title}: ${pct}% complete`
+                                        }
+                                    />
 
                                     {/* Real session logging — one dominant primary
                                         action, secondary options demoted below it. */}

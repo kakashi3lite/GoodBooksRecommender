@@ -46,6 +46,8 @@ export interface ReadingLogEntry {
     ts: number
     /** True for a day repaired by a streak recovery (0 pages, keeps the run alive). */
     recovered?: boolean
+    /** True when this entry records "I finished a book today" (0 pages). */
+    finished?: boolean
 }
 
 export interface Note {
@@ -78,18 +80,57 @@ const EMPTY: ReadingState = {
     graceUsedFor: null
 }
 
+/**
+ * Migrate a restored shelf entry to the current shape.
+ *
+ * Chain-of-Thought (loss aversion): progress is the one number a reader
+ * invests in. Entries written before `currentPage` existed carry only
+ * `progressPct`; treating a missing page as 0 meant the first session after
+ * the upgrade recomputed progress from zero — a reader at 50% of a 400-page
+ * book fell to ~2% after logging 10 pages. Deriving the page from the stored
+ * percentage preserves what they earned.
+ */
+const migrateEntry = (entry: ReadingEntry): ReadingEntry => {
+    const pageCount = entry.book?.page_count ?? 0
+    if (entry.currentPage === undefined && pageCount > 0 && entry.progressPct > 0) {
+        return {
+            ...entry,
+            currentPage: Math.min(pageCount, Math.round((entry.progressPct / 100) * pageCount))
+        }
+    }
+    return entry
+}
+
+const asArray = <T,>(value: unknown): T[] => (Array.isArray(value) ? (value as T[]) : [])
+
 const restore = (): ReadingState => {
     try {
         const raw = localStorage.getItem(STORAGE_KEY)
         if (!raw) return EMPTY
         const parsed = JSON.parse(raw) as Partial<ReadingState>
-        return {
-            currentlyReading: parsed.currentlyReading ?? [],
-            readingLog: parsed.readingLog ?? [],
-            notes: parsed.notes ?? [],
+        const stored = asArray<ReadingEntry>(parsed.currentlyReading)
+        // `migrateEntry` returns the same object when nothing needed fixing, so
+        // identity tells us whether a repair happened without diffing fields.
+        const repaired = { any: false }
+        const currentlyReading = stored.map((entry) => {
+            const migrated = migrateEntry(entry)
+            if (migrated !== entry) repaired.any = true
+            return migrated
+        })
+        const restored: ReadingState = {
+            // `asArray` keeps a corrupt payload (or a hand-edited one) from
+            // white-screening the app on the very first render.
+            currentlyReading,
+            readingLog: asArray<ReadingLogEntry>(parsed.readingLog),
+            notes: asArray<Note>(parsed.notes),
             streakBest: parsed.streakBest ?? 0,
             graceUsedFor: parsed.graceUsedFor ?? null
         }
+        // Migration is a repair, not a display trick: write it back so a reader
+        // who opens the app and closes it without logging anything still has the
+        // corrected page position next time.
+        if (repaired.any) persist(restored)
+        return restored
     } catch {
         return EMPTY
     }
@@ -267,18 +308,33 @@ const readingSlice = createSlice({
             state,
             action: PayloadAction<{ bookId: string; pages: number }>
         ) => {
-            const { bookId, pages } = action.payload
+            const { bookId } = action.payload
             const entry = state.currentlyReading.find((e) => e.bookId === bookId)
             const now = Date.now()
+
+            // A finished book accepts no more sessions: a stray tap on the
+            // shelf used to add pages — and "pages this month" — forever.
+            if (entry?.finishedAt) return
+
+            const pageCount = entry?.book?.page_count ?? 0
+            const readSoFar = entry?.currentPage ?? 0
+            const remaining = pageCount > 0 ? Math.max(0, pageCount - readSoFar) : Number.POSITIVE_INFINITY
+
+            // Clamp to what the book can still absorb. Logging 120 pages of a
+            // 160-page book already at page 100 recorded 120 pages against the
+            // reader's monthly total and permanently inflated their pace.
+            const pages = Math.min(Math.max(0, Math.round(action.payload.pages)), remaining)
+            if (!Number.isFinite(pages) || pages <= 0) {
+                if (entry && pageCount > 0) entry.updatedAt = now
+                return
+            }
 
             state.readingLog.push({ date: localDateKey(), pages, bookId, ts: now })
             // Keep the log bounded (last 1000 sessions).
             if (state.readingLog.length > 1000) state.readingLog = state.readingLog.slice(-1000)
 
             if (entry) {
-                const pageCount = entry.book?.page_count ?? 0
-                const next = Math.max(0, (entry.currentPage ?? 0) + pages)
-                entry.currentPage = pageCount > 0 ? Math.min(pageCount, next) : next
+                entry.currentPage = pageCount > 0 ? Math.min(pageCount, readSoFar + pages) : readSoFar + pages
                 entry.progressPct =
                     pageCount > 0
                         ? Math.min(100, Math.round((entry.currentPage / pageCount) * 100))
@@ -305,7 +361,12 @@ const readingSlice = createSlice({
             if (!entry) return
 
             const pageCount = entry.book?.page_count ?? 0
-            const target = Math.max(0, Math.round(action.payload.page))
+            const requested = Math.max(0, Math.round(action.payload.page))
+            // Clamp *before* measuring the delta. Using the raw request let a
+            // fat-fingered "999" on a 288-page book log 855 pages read while the
+            // saved page said 288 — the reader's monthly totals, goal and pace
+            // all inflated from one typo.
+            const target = pageCount > 0 ? Math.min(pageCount, requested) : requested
             const previous = entry.currentPage ?? 0
             const delta = target - previous
             const now = Date.now()
@@ -315,7 +376,7 @@ const readingSlice = createSlice({
                 if (state.readingLog.length > 1000) state.readingLog = state.readingLog.slice(-1000)
             }
 
-            entry.currentPage = pageCount > 0 ? Math.min(pageCount, target) : target
+            entry.currentPage = target
             if (pageCount > 0) {
                 entry.progressPct = Math.min(
                     100,
@@ -359,15 +420,44 @@ const readingSlice = createSlice({
             persist(state)
         },
 
-        /** Mark a book finished. */
+        /**
+         * Mark a book finished.
+         *
+         * Chain-of-Thought: finishing is the emotional peak of the habit loop —
+         * and it used to earn no streak credit at all. A reader who closed a
+         * book at 11pm without logging a page saw their run break on the
+         * biggest day of the week. We record a 0-page `finished` marker (only
+         * when nothing else is logged for that book today) so the streak
+         * counts the day while the page totals stay truthful.
+         */
         finishReading: (state, action: PayloadAction<string>) => {
             const entry = state.currentlyReading.find((e) => e.bookId === action.payload)
-            if (entry) {
-                entry.progressPct = 100
-                entry.currentPage = entry.book?.page_count ?? entry.currentPage
-                entry.finishedAt = Date.now()
-                entry.updatedAt = Date.now()
+            if (!entry || entry.finishedAt) return
+
+            const now = Date.now()
+            entry.progressPct = 100
+            entry.currentPage = entry.book?.page_count ?? entry.currentPage
+            entry.finishedAt = now
+            entry.updatedAt = now
+
+            const today = localDateKey()
+            // Dedupe on a *finish* credit, not on any activity: a reader who
+            // logged pages this morning and finished the book tonight used to
+            // lose the finish entirely (the day's streak survived, the "I
+            // finished a book" moment did not).
+            const alreadyCredited = state.readingLog.some(
+                (logEntry) => logEntry.date === today && logEntry.bookId === entry.bookId && logEntry.finished
+            )
+            if (!alreadyCredited) {
+                state.readingLog.push({
+                    date: today,
+                    pages: 0,
+                    bookId: entry.bookId,
+                    ts: now,
+                    finished: true
+                })
             }
+            state.streakBest = Math.max(state.streakBest, bestStreak(state.readingLog))
             persist(state)
         },
 

@@ -69,4 +69,18 @@ describe('Wishlist', () => {
         expect(reading.currentlyReading[0].bookId).toBe(book.id)
         expect(reading.currentlyReading[0].book?.title).toBe(book.title)
     })
+
+    /**
+     * F3 — saved-for-later becomes read-today, it does not stay in both piles.
+     * The wishlist is a to-read queue: a book you have started is no longer
+     * "for later". Leaving it there inflated the saved count and asked the
+     * reader to remove it by hand.
+     */
+    it('removes the book from the wishlist once reading starts', () => {
+        store.dispatch(toggleFavorite(book.id))
+        renderWishlist(store)
+        fireEvent.click(screen.getByRole('button', { name: /start reading/i }))
+
+        expect((store.getState() as any).user.favorites).not.toContain(book.id)
+    })
 })

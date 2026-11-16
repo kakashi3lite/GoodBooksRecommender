@@ -20,6 +20,7 @@ import {
 import React, { useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
 import { BOOK_GENRES } from '../../data/bookCatalog'
+import { useFocusTrap } from '../../hooks/useFocusTrap'
 import { useAppDispatch } from '../../hooks/redux'
 import { completeOnboarding, register, syncAccountToServer } from '../../stores/user/userSlice'
 
@@ -70,6 +71,10 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ initialEmail = '' }) =>
     const [goal, setGoal] = useState(24)
     const [pace, setPace] = useState('mixed')
 
+    // The gate covers a fully interactive dashboard; without a trap, Tab walks
+    // straight into controls the reader cannot see.
+    const dialogRef = useFocusTrap<HTMLDivElement>(true)
+
     const canContinue = useMemo(() => {
         if (step === 1) return name.trim().length > 0 && email.includes('@')
         if (step === 2) return genres.length > 0
@@ -88,7 +93,9 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ initialEmail = '' }) =>
             completeOnboarding({
                 favoriteGenres: genres,
                 readingGoal: goal,
-                preferredFormats: ['ebook', 'print']
+                preferredFormats: ['ebook', 'print'],
+                // The pace question is only honest if the answer is used.
+                preferredMoods: PACE.find((option) => option.id === pace)?.moods ?? []
             })
         )
         // Best-effort: persist the account to the database when configured
@@ -148,6 +155,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ initialEmail = '' }) =>
             <div className="pointer-events-none absolute inset-0 opacity-40 neural-background" />
 
             <motion.div
+                ref={dialogRef}
                 initial={{ opacity: 0, y: 24, scale: 0.98 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 className="relative w-full max-w-2xl rounded-3xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 shadow-2xl overflow-hidden"
