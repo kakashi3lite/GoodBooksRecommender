@@ -33,9 +33,12 @@
     <meta name="twitter:image" content="https://books.dalecabra.com/og-cover.png">
 
     <!-- Content Security Policy -->
+    <!-- `static.cloudflareinsights.com` is required: Cloudflare injects its Web
+         Analytics beacon at the edge, and without this host every page load both
+         reported a CSP violation and collected nothing. -->
     <meta http-equiv="Content-Security-Policy" content="
         default-src 'self';
-        script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net;
+        script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://static.cloudflareinsights.com;
         style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
         font-src 'self' https://fonts.gstatic.com;
         img-src 'self' data: https:;

@@ -5,6 +5,20 @@ All notable changes to the GoodBooks Recommender Dashboard will be documented in
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.1] - 2026-11-17
+
+### 🔒 Production verification fixes
+Found by loading the deployed site in a real browser rather than trusting the build:
+
+- **Cloudflare Web Analytics had been collecting nothing.** Cloudflare injects its
+  beacon at the edge, but the CSP `script-src` did not allow
+  `static.cloudflareinsights.com` — every page load reported a CSP violation and the
+  beacon never ran. The host is now allowed.
+- **HSTS added** (`max-age=31536000; includeSubDomains`) so the first request of a
+  session cannot be downgraded to plain HTTP.
+- New `tests/productionPosture.test.ts` asserts both, plus framing/MIME protections,
+  so the shipped policy cannot silently regress.
+
 ## [2.5.0] - 2026-11-17
 
 ### 🔍 Reader-audit fixes (integrity, honesty, accessibility)
