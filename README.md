@@ -199,6 +199,26 @@ Contributing conventions: Chain-of-Thought comments, JSDoc on every export,
 `type(scope): summary` commits, and run `npm test` + `npm run type-check` +
 `npm run lint` before pushing.
 
+### CI/CD
+
+| Workflow | Trigger | What it does |
+|---|---|---|
+| `CI` | every pull request | `npm ci` → type-check → lint → test → build → purge → **build-output assertions**. Required to merge. |
+| `Deploy to Cloudflare Pages` | push to `main`, manual | the same gates, then `wrangler pages deploy dist`, then a **live smoke test**: app shell `200` + `#root`, `/api/books` returns JSON `200`, custom domain serves. |
+| Dependabot | weekly (Mon 06:00 IST) | grouped npm + GitHub Actions updates, each verified by `CI / verify`. |
+
+`main` is protected: `verify` must pass, force-pushes and deletions are blocked, and
+conversation resolution is required. A broken branch can no longer reach production —
+the gate that proved this caught a real `npm ci` peer conflict within minutes of being
+switched on.
+
+**Deferred migrations (deliberately not automated).** Dependabot ignores majors for two
+coordinated upgrade tracks, because a partial bump cannot install:
+- **ESLint 8 → 9/10** with `typescript-eslint` 8 and `eslint-plugin-react-refresh` 0.5.
+- **Vite 5 → 8 / Vitest 0.34 → 5** with `@vitejs/plugin-react` 6 and `@vitest/ui` 5.
+
+Both are planned passes, not weekly maintenance. Everything else updates automatically.
+
 ---
 
 <div align="center">
