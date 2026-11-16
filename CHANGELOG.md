@@ -5,6 +5,45 @@ All notable changes to the GoodBooks Recommender Dashboard will be documented in
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2026-11-17
+
+### ✨ Added
+- **Tablet layout band (768–1023px)** — iPad Air/Pro portrait now default to a 72px
+  icon rail instead of a 280px labelled sidebar. Content width on an 820pt iPad grows
+  from 540pt to 748pt, so Today's Pick, stat captions, and the filter row no longer
+  wrap or truncate. Bands re-apply only when they change, so a manual collapse on Mac
+  is preserved.
+- **Mobile AI sheet** — the assistant panel is full-width (edge to edge) on phones with
+  `dvh`-aware height, and the FAB now clears the bottom tab bar.
+- Rail navigation exposes each destination as a native tooltip when labels are hidden.
+
+### 🔧 Fixed
+- **Every production page load made 2 failing requests**: `index.html` linked and
+  preloaded `/dashboard/css/*.css`, which is not part of the Vite build output. Styles
+  are already bundled via `src/main.tsx`.
+- **Sidebar analytics spilled over page content** on iPad and on any collapsed sidebar
+  (`CompactAnalytics` needs ~230px; the rail is 72px). Hidden when collapsed.
+- **AI assistant FAB covered the "More" tab on iPhone** (41px tap-target collision). The
+  existing safe-area rule targeted `.ai-toggle`, a class the React button never had.
+- **1-second fake startup delay** — `initializeDashboard` awaited a simulated timer before
+  rendering the app. Cold start to app shell is now 169–226ms.
+- Responsive overrides are shell-scoped (`.app-shell …`) because Tailwind utilities and
+  `react-components.css` are bundled after `mobile-nav.css`.
+
+### 🧹 Cleanup
+- Removed the no-op `[env.production]` table from `wrangler.toml` and corrected the
+  `_redirects` comment (Pages Functions do serve `/api/*`).
+- Deleted zero-byte dead files: `FuturisticDashboard.tsx`, `AIRecommendationEngine.ts`,
+  `BookDataService.ts`, `bookDataWorker.ts`, `ai-recommendations.css`,
+  `virtualized-list.css` (and its empty import in `main.tsx`).
+- `npm run deploy` and CI now run `scripts/purge-apple-double.cjs` — macOS `._*`
+  sidecars break the Functions bundle (23 were present in `dist/`).
+
+### ✅ Verified
+- 111/111 vitest · `tsc --noEmit` clean · lint 0 errors · production build passing.
+- Device matrix (iPhone SE→Pro Max, iPad mini→Pro landscape, Mac 1280→1920):
+  **zero horizontal overflow, zero elements outside the viewport, FAB/nav overlap 0**.
+
 ## [2.2.0] - 2026-11-17
 
 ### ✨ Added

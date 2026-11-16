@@ -349,6 +349,9 @@ const NavigationSidebar: React.FC<NavigationSidebarProps> = ({ className = '' })
               <NavLink
                 key={item.id}
                 to={item.path}
+                // In the collapsed rail the label is hidden, so expose it as a
+                // native tooltip — icon-only navigation needs a name on hover.
+                title={isExpanded ? undefined : item.label}
                 className={({ isActive }) =>
                   `group flex items-center space-x-3 px-3 py-3 rounded-xl transition-all duration-200 relative ${item.mobileHide ? 'mobile-hide-on-phone' : ''} ${isActive
                     ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 shadow-lg'

@@ -107,9 +107,28 @@
         cursor: pointer;
     }
 
-    /* AI assistant FAB clears the top bar + bottom nav */
-    .ai-toggle {
-        bottom: calc(env(safe-area-inset-bottom, 0px) + 5rem);
+    /*
+      AI assistant: the floating button must clear the bottom tab bar, or it
+      sits on top of the "More" tab and steals its taps. (The old `.ai-toggle`
+      rule here never applied — the React button never had that class.)
+    */
+    /*
+      `.app-shell` scoping is required: Tailwind utilities (bundled last) and
+      the component stylesheet both set `bottom` on these elements, and a bare
+      class selector loses the cascade tie. Two classes win deterministically.
+    */
+    .app-shell .ai-assistant-fab {
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 4.75rem);
+        right: 1rem;
+    }
+
+    .app-shell .ai-assistant-panel {
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 4.75rem);
+        right: 1rem;
+        left: 1rem;
+        width: auto;
+        max-width: none;
+        max-height: calc(100dvh - env(safe-area-inset-bottom, 0px) - 9rem);
     }
 
     /* Hide drawer nav links that the bottom bar already covers (declutter) */
@@ -199,4 +218,51 @@
       active nav row rendered its icon box full-width behind the label.
       The hide rule lives inside the phone media query, so nothing leaks.
     */
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Tablet rail (768px – 1023.98px) — iPad Air / Pro 11 portrait
+   Chain-of-Thought: a 280px labelled sidebar on an 820px iPad leaves 540px
+   for the actual reading UI, which truncated titles and forced stat cards to
+   wrap mid-phrase. An icon rail gives that space back to content, keeps every
+   destination one tap away, and matches how iPad-native apps behave.
+   `.layout-collapsed` is set from App.tsx when this band is entered.
+   ═══════════════════════════════════════════════════════════════════════ */
+@media (min-width: 768px) and (max-width: 1023.98px) {
+
+    .app-shell .navigation-sidebar {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+
+    /*
+      The sidebar analytics panel needs ~230px. In a 72px rail it used to
+      spill its metric cards over the page content, so it is hidden whenever
+      the sidebar is collapsed — the same data is one tap away on Dashboard
+      and Reading Analytics.
+    */
+    .app-shell.layout-collapsed .sidebar-analytics {
+        display: none !important;
+    }
+
+    /* Rail geometry: icons centred, no leftover label gutter */
+    .app-shell.layout-collapsed .navigation-sidebar nav a,
+    .app-shell.layout-collapsed .navigation-sidebar > div > button {
+        justify-content: center;
+        gap: 0;
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    /* Collapsed rail keeps its active bar readable at 72px */
+    .app-shell.layout-collapsed .navigation-sidebar nav a {
+        padding-top: 0.625rem;
+        padding-bottom: 0.625rem;
+    }
+
+    /* Content gets comfortable gutters now that the width exists */
+    .app-shell .main-content {
+        padding-left: 1.25rem;
+        padding-right: 1.25rem;
+    }
 }

@@ -88,10 +88,12 @@ export const initializeDashboard = createAsyncThunk(
       // Load performance mode based on device capabilities
       const performanceMode = detectOptimalPerformanceMode()
 
-      // Simulate AI initialization
-      await new Promise(resolve => setTimeout(resolve, 1000))
-
-      // Calculate load time
+      // Chain-of-Thought: this thunk used to `await` a simulated 1-second
+      // timer before flipping `isInitialized`. The app gate renders a loading
+      // screen until then, so every cold load on every device paid a full
+      // second of blank screen for no work at all. Everything here is
+      // synchronous and cheap (one localStorage read + a capability check),
+      // so the gate now clears as soon as the real initialization is done.
       const loadTime = performance.now() - startTime
 
       return {
@@ -223,6 +225,18 @@ const dashboardSlice = createSlice({
       state.lastInteraction = Date.now()
     },
 
+    /**
+     * Set the sidebar to an explicit state.
+     * Chain-of-Thought: responsive layout needs a *deterministic* value, not a
+     * toggle — a tablet that recalculates on every resize must never flip the
+     * sidebar by accident, and a user's choice within one breakpoint band has
+     * to survive re-renders.
+     */
+    setSidebarCollapsed: (state, action: PayloadAction<boolean>) => {
+      state.sidebarCollapsed = action.payload
+      state.lastInteraction = Date.now()
+    },
+
     // Mobile drawer control (hamburger menu < 768px)
     toggleMobileNav: (state) => {
       state.mobileNavOpen = !state.mobileNavOpen
@@ -328,6 +342,7 @@ export const {
   setBrightness,
   setLayout,
   toggleSidebar,
+  setSidebarCollapsed,
   toggleMobileNav,
   closeMobileNav,
   toggleAnimations,

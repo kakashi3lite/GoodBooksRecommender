@@ -184,6 +184,17 @@ the included GitHub Actions workflow.
 | `Esc` | Close the current overlay |
 | `Shift+P` | Performance panel |
 
+### Layout across devices
+
+| Device | Navigation | Content width |
+| --- | --- | --- |
+| iPhone (≤ 767px) | Off-canvas drawer + bottom tab bar (thumb zone) | Full width |
+| iPad portrait (768–1023px) | 72px icon rail | ~748px on an 820pt iPad |
+| iPad landscape / Mac (≥ 1024px) | Full 280px sidebar with labels | Up to 1280px |
+
+The assistant button always clears the phone tab bar, and every surface is verified
+at 375/393/430/744/820/834/1194/1280/1440/1920px with zero horizontal overflow.
+
 Contributing conventions: Chain-of-Thought comments, JSDoc on every export,
 `type(scope): summary` commits, and run `npm test` + `npm run type-check` +
 `npm run lint` before pushing.

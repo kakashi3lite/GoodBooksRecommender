@@ -11,7 +11,6 @@ import App from './App'
 import { store } from './stores/store'
 
 // Import enhanced CSS files for modern UI
-import '../dashboard/css/ai-recommendations.css'
 import '../dashboard/css/book-card.css'
 import '../dashboard/css/brightness-control.css'
 import '../dashboard/css/dashboard-analytics.css'

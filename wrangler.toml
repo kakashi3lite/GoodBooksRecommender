@@ -7,8 +7,10 @@ compatibility_date = "2025-01-01"
 # The Vite build output directory (public/ contents are merged into dist/)
 pages_build_output_dir = "./dist"
 
-# Production branch — pushes to this branch auto-deploy via CI
-[env.production]
+# NOTE: there is intentionally no [env.production] block. Cloudflare Pages
+# reads production settings (branch, env vars, project name) from the Pages
+# project itself; an empty `[env.production]` table is a no-op that only
+# suggests there is per-environment config to look for.
 
 # ═════════════════════════════════════════════════════════════════════════════
 # Runtime environment (set in the Pages dashboard → Settings → Environment

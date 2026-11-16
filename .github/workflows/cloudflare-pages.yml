@@ -43,6 +43,12 @@ jobs:
       - name: Build
         run: npm run build
 
+      # macOS Apple Double files (`._*`) are not valid JS and break the
+      # Functions bundle. CI is Linux, but this keeps the pipeline identical to
+      # a local `npm run deploy` (both run the same purge script).
+      - name: Purge Apple Double files
+        run: node scripts/purge-apple-double.cjs
+
       - name: Publish to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:

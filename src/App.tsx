@@ -14,6 +14,7 @@ import { useAppDispatch, useAppSelector } from './hooks/redux'
 import {
   closeMobileNav,
   initializeDashboard,
+  setSidebarCollapsed,
   setTheme,
   toggleMobileNav,
   togglePerformancePanel,
@@ -89,6 +90,42 @@ const AppShell: React.FC = () => {
 
     return () => clearInterval(intervalId)
   }, [dispatch, performanceMode])
+
+  // Chain-of-Thought: Three layout bands, because one breakpoint cannot serve
+  // three form factors:
+  //   phone   (< 768px)  → off-canvas drawer + bottom tab bar (thumb zone)
+  //   tablet  (768–1023) → 72px icon rail, so content gets ~750px of an 820px
+  //                        iPad instead of the 540px a 280px sidebar left it
+  //   desktop (≥ 1024px) → full 280px sidebar with labels
+  // The default is re-applied only when the band CHANGES, so a reader who
+  // collapses the sidebar on their Mac keeps it collapsed until the next
+  // resize across a band boundary — predictable, never fighting the user.
+  useEffect(() => {
+    const bandOf = (width: number): 'phone' | 'tablet' | 'desktop' =>
+      width < 768 ? 'phone' : width < 1024 ? 'tablet' : 'desktop'
+
+    let currentBand = bandOf(window.innerWidth)
+    dispatch(setSidebarCollapsed(currentBand === 'tablet'))
+
+    let frame = 0
+    const onResize = () => {
+      window.cancelAnimationFrame(frame)
+      frame = window.requestAnimationFrame(() => {
+        const next = bandOf(window.innerWidth)
+        if (next === currentBand) return
+        currentBand = next
+        dispatch(setSidebarCollapsed(next === 'tablet'))
+      })
+    }
+
+    window.addEventListener('resize', onResize)
+    window.addEventListener('orientationchange', onResize)
+    return () => {
+      window.cancelAnimationFrame(frame)
+      window.removeEventListener('resize', onResize)
+      window.removeEventListener('orientationchange', onResize)
+    }
+  }, [dispatch])
 
   // Chain-of-Thought: Sync Redux theme to the DOM so Tailwind `dark:` variants
   // and the design-system `[data-theme]` selectors both respond to the toggle.

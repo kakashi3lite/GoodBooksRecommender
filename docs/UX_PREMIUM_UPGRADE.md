@@ -286,3 +286,53 @@ npm run build     # ✓ built
 | Generated cover typography | ✅ monograms legible (D, PH, AP, TS…) |
 | Mobile 390 px | ✅ Today's Pick stacks; reason text no longer squeezed to one word per line |
 | Console | ✅ no page errors (only `500`s from the intentionally absent local FastAPI proxy) |
+
+---
+
+## 8. Apple form-factor matrix (iPhone / iPad / Mac)
+
+Verified in headless Chromium at native CSS sizes with `deviceScaleFactor: 2`,
+after seeding a real in-progress book so every surface renders its busy state.
+
+| Form factor | CSS width | Layout | Sidebar | Content | Overflow |
+| --- | --- | --- | --- | --- | --- |
+| iPhone SE | 375 × 667 | drawer + tab bar | off-canvas 300px | 375 | 0 |
+| iPhone 15 Pro | 393 × 852 | drawer + tab bar | off-canvas 300px | 393 | 0 |
+| iPhone Pro Max | 430 × 932 | drawer + tab bar | off-canvas 300px | 430 | 0 |
+| iPad mini (portrait) | 744 × 1133 | drawer + tab bar | off-canvas 300px | 744 | 0 |
+| iPad Air (portrait) | 820 × 1180 | **icon rail** | 72px | 748 | 0 |
+| iPad Pro 11 (portrait) | 834 × 1194 | **icon rail** | 72px | 762 | 0 |
+| iPad (landscape) | 1194 × 834 | full sidebar | 280px | 914 | 0 |
+| MacBook Air | 1280 × 800 | full sidebar | 280px | 1000 | 0 |
+| Mac 1440 | 1440 × 900 | full sidebar | 280px | 1160 | 0 |
+| Mac 1920 | 1920 × 1080 | full sidebar | 280px | 1640 | 0 |
+
+### Why a tablet rail exists
+A 280px labelled sidebar on an 820px iPad leaves **540px** for the reading UI. In
+practice that truncated the Today's Pick title (`A Psalm fo…`), squeezed the
+"0 books this month" stat caption onto two lines, and pushed the filter row into
+four wrapped rows. An icon rail gives that space back (**748px**) while keeping
+every destination one tap away — the same pattern iPad-native apps use.
+
+Bands are re-applied only when they change (`App.tsx`), so a reader who collapses
+the sidebar on their Mac keeps it collapsed until the next band change.
+
+### Fixes found by this matrix
+| # | Defect | Impact |
+| --- | --- | --- |
+| 1 | `index.html` linked `/dashboard/css/*.css` and preloaded it, but that path is **not in the build output** | 2 × 404 + a wasted preload on every production page load |
+| 2 | Sidebar analytics (`CompactAnalytics`, ~230px wide) rendered inside the 72px rail | Metric cards spilled over the page content on iPad and on any collapsed sidebar |
+| 3 | AI assistant FAB sat at `bottom: 1.5rem`, on top of the phone tab bar | Covered the "More" tab — a 41px tap-target collision on every iPhone |
+| 4 | The FAB-safe rule (`.ai-toggle`) targeted a class the React button never had | Dead CSS; the real overlap above was never fixed |
+| 5 | `initializeDashboard` awaited a **simulated 1-second timer** before `isInitialized` | A full second of "Initializing AI systems…" on every cold load. Now **169–226ms** |
+| 6 | `[env.production]` was an empty table in `wrangler.toml`; `_redirects` claimed `/api/*` was not served | Misleading config — Pages Functions do serve `/api/*` |
+| 7 | Zero-byte dead files (`FuturisticDashboard.tsx`, 3 services, 2 CSS files) | Redundancy in the tree and one empty CSS import in the entry point |
+
+### Deploy hardening
+- `scripts/purge-apple-double.cjs` runs in `npm run deploy` **and** in CI. macOS
+  writes `._*` sidecars (23 were present in `dist/` on this external volume) and
+  they are not valid JS — they break the Functions bundle. Local and CI deploys
+  now behave identically.
+- `.app-shell .ai-assistant-fab` / `.app-shell .main-content` / `.app-shell .navigation-sidebar`
+  are shell-scoped because Tailwind utilities and `react-components.css` are
+  bundled last; a bare class selector loses the cascade tie.

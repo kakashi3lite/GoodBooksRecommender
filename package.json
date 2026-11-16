@@ -1,6 +1,6 @@
 {
   "name": "goodbooks-recommender-dashboard",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "\ud83e\udd16 AI-First Futuristic Book Recommendation Dashboard",
   "type": "module",
   "main": "dashboard/index.html",
@@ -8,7 +8,7 @@
     "dev": "vite --host",
     "build": "vite build",
     "preview": "vite preview",
-    "deploy": "npm run build && wrangler pages deploy dist --project-name goodbooks-recommender",
+    "deploy": "npm run build && node scripts/purge-apple-double.cjs && wrangler pages deploy dist --project-name goodbooks-recommender",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",

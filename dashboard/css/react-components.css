@@ -17,7 +17,9 @@
 }
 
 .app-shell.layout-collapsed {
-  grid-template-columns: 80px 1fr;
+  /* 72px matches the sidebar's collapsed rail exactly — a mismatched grid
+     column (previously 80px) left an 8px dead gutter next to the content. */
+  grid-template-columns: 72px 1fr;
 }
 
 .app-container {
@@ -322,51 +324,6 @@
   z-index: 1000;
 }
 
-.ai-toggle {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background: var(--accent-gradient);
-  border: none;
-  color: white;
-  font-size: 1.5rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: var(--shadow-xl);
-  transition: all 0.3s var(--ease-out);
-  position: relative;
-  overflow: hidden;
-}
-
-.ai-toggle::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  transition: all 0.4s var(--ease-out);
-  transform: translate(-50%, -50%);
-}
-
-.ai-toggle:hover {
-  transform: scale(1.1);
-  box-shadow: var(--shadow-2xl);
-}
-
-.ai-toggle:hover::before {
-  width: 100%;
-  height: 100%;
-}
-
-.ai-toggle:active {
-  transform: scale(0.95);
-}
-
 /* ===== LOADING SCREEN ===== */
 .loading-screen {
   position: fixed;
@@ -668,12 +625,6 @@
   .ai-assistant {
     bottom: var(--space-md);
     right: var(--space-md);
-  }
-  
-  .ai-toggle {
-    width: 50px;
-    height: 50px;
-    font-size: 1.2rem;
   }
 }
 

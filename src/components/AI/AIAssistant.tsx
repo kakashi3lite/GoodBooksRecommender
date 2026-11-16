@@ -177,7 +177,7 @@ const AIAssistant: React.FC = () => {
       {/* Floating toggle button */}
       <motion.button
         onClick={() => dispatch(toggleAssistant())}
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 text-white shadow-2xl shadow-blue-500/30 flex items-center justify-center hover:scale-105 active:scale-95 transition-transform"
+        className="ai-assistant-fab fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 text-white shadow-2xl shadow-blue-500/30 flex items-center justify-center hover:scale-105 active:scale-95 transition-transform"
         whileHover={{ y: -3 }}
         whileTap={{ scale: 0.95 }}
         aria-label="Toggle AI Assistant"
@@ -196,7 +196,7 @@ const AIAssistant: React.FC = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 40, scale: 0.96 }}
             transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-            className="fixed bottom-24 right-6 z-50 w-[380px] max-w-[calc(100vw-3rem)] h-[520px] max-h-[70vh] rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 shadow-2xl flex flex-col overflow-hidden"
+            className="ai-assistant-panel fixed bottom-24 right-6 z-50 w-[380px] max-w-[calc(100vw-3rem)] h-[520px] max-h-[70vh] rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 shadow-2xl flex flex-col overflow-hidden"
             role="dialog"
             aria-label="AI Reading Assistant"
           >

@@ -1,10 +1,10 @@
 # Cloudflare Pages — routing rules
 # Order matters: first match wins.
 #
-# API endpoints are NOT served by this static deployment. A Pages Function
-# (functions/api/[[route]].ts) intercepts every /api/* request and returns a
-# clean 404 JSON, so frontend API clients get a proper HTTP error instead of
-# this SPA HTML and can fall back gracefully.
+# Pages Functions are matched BEFORE this file, so `/api/*` is handled by
+# `functions/api/**` (books, ai, news, analytics, reading) and never reaches
+# the SPA fallback below. Anything unknown under /api/ is caught by
+# `functions/api/[[route]].ts`, which returns JSON 404 instead of HTML.
 
 # SPA fallback routing — all unmatched client-side routes serve index.html.
 /*    /index.html   200
