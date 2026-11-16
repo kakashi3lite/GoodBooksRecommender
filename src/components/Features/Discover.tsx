@@ -95,7 +95,7 @@ const Discover: React.FC = () => {
         <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-blue-950 dark:to-indigo-950 p-4 sm:p-8"
+            className="min-h-screen page-surface p-4 sm:p-8"
         >
             <div className="max-w-7xl mx-auto">
                 {/* Hero */}
@@ -175,6 +175,32 @@ const Discover: React.FC = () => {
                                     ? `${visibleResults.length} result${visibleResults.length === 1 ? '' : 's'} for "${query}"${activeGenre ? ` in ${activeGenre}` : ''}`
                                     : `No matches for "${query}"${activeGenre ? ` in ${activeGenre}` : ''}`}
                         </h2>
+
+                        {/* Cover-shaped skeletons: the grid keeps its geometry while
+                            the live search resolves, so results don't "pop" the layout. */}
+                        {searching && (
+                            <div
+                                className="grid"
+                                role="status"
+                                aria-live="polite"
+                                aria-label="Searching for books"
+                                style={{
+                                    display: 'grid',
+                                    gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
+                                    gap: '1.25rem'
+                                }}
+                            >
+                                <span className="sr-only">Searching for books…</span>
+                                {Array.from({ length: 8 }).map((_, index) => (
+                                    <div key={index} className="space-y-2" aria-hidden="true">
+                                        <div className="skeleton skeleton-cover" />
+                                        <div className="skeleton skeleton-line-lg w-10/12" />
+                                        <div className="skeleton skeleton-line w-7/12" />
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
                         {!searching && visibleResults.length > 0 && (
                             <div
                                 className="grid gap-5"
@@ -194,9 +220,32 @@ const Discover: React.FC = () => {
                             </div>
                         )}
                         {!searching && visibleResults.length === 0 && (
-                            <p className="text-gray-500 dark:text-gray-400 text-sm">
-                                Try a different title, author, or genre — or check the live trending feed below.
-                            </p>
+                            <div className="surface-1 max-w-xl p-6">
+                                <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                                    No exact match — but the web is wide
+                                </p>
+                                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                    Try a shorter title, the author&apos;s name, or describe the
+                                    feeling you want (for example “cozy fantasy”). Live trending is
+                                    waiting below, too.
+                                </p>
+                                <div className="mt-4 flex flex-wrap gap-2">
+                                    <button
+                                        onClick={() => setQuery('')}
+                                        className="pressable rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700"
+                                    >
+                                        Clear search
+                                    </button>
+                                    {activeGenre && (
+                                        <button
+                                            onClick={() => setActiveGenre('')}
+                                            className="pressable rounded-xl border border-gray-300 bg-white px-4 py-2 text-xs font-semibold text-gray-700 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
+                                        >
+                                            Remove “{activeGenre}” filter
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
                         )}
                     </section>
                 )}

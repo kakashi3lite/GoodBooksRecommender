@@ -123,3 +123,43 @@ on conflict (id) do update set
   published_year = excluded.published_year,
   page_count = excluded.page_count,
   updated_at = now();
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- Reader data + recommendation audit  (migration 20261117090000_reader_data)
+-- Additive + idempotent — safe to re-run on an existing project.
+-- ═══════════════════════════════════════════════════════════════════════════
+
+-- Recommendation audit (already written to by functions/api/_lib/db.ts).
+create table if not exists public.recommendations_log (
+  id         bigint generated always as identity primary key,
+  user_id    text,
+  strategy   text not null,
+  book_ids   text[] not null default '{}',
+  context    text,
+  created_at timestamptz not null default now()
+);
+
+alter table public.recommendations_log enable row level security;
+create index if not exists recommendations_log_created_at_idx
+  on public.recommendations_log (created_at desc);
+create index if not exists recommendations_log_strategy_idx
+  on public.recommendations_log (strategy);
+
+-- Reading events — write-only mirror of the reader's real sessions.
+create table if not exists public.reading_events (
+  id           bigint generated always as identity primary key,
+  client_id    text not null,
+  book_id      text not null,
+  event_type   text not null check (event_type in ('started','progress','finished','wishlisted')),
+  pages        integer not null default 0,
+  page         integer,
+  progress     integer not null default 0 check (progress between 0 and 100),
+  session_date date,
+  created_at   timestamptz not null default now()
+);
+
+alter table public.reading_events enable row level security;
+create index if not exists reading_events_client_idx
+  on public.reading_events (client_id, created_at desc);
+create index if not exists reading_events_book_idx
+  on public.reading_events (book_id);

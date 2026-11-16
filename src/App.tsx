@@ -28,6 +28,7 @@ import { PerformancePanel } from './components/Analytics/PerformancePanel'
 import MobileBottomNav from './components/Navigation/MobileBottomNav'
 import NavigationSidebar from './components/Navigation/NavigationSidebar'
 import ErrorBoundary from './components/UI/ErrorBoundary'
+import CommandPalette from './components/UI/CommandPalette'
 import LoadingScreen from './components/UI/LoadingScreen'
 
 // Lazy load components for performance
@@ -91,12 +92,16 @@ const AppShell: React.FC = () => {
 
   // Chain-of-Thought: Sync Redux theme to the DOM so Tailwind `dark:` variants
   // and the design-system `[data-theme]` selectors both respond to the toggle.
+  // `data-theme` receives the RESOLVED theme ('light' | 'dark') — the design
+  // tokens only define values for those two, so writing 'auto' left them
+  // undefined and the page background transparent.
   useEffect(() => {
     const root = document.documentElement
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
     const isDark = theme === 'dark' || (theme === 'auto' && prefersDark)
     root.classList.toggle('dark', isDark)
-    root.dataset.theme = theme
+    root.dataset.theme = isDark ? 'dark' : 'light'
+    root.dataset.themePreference = theme
   }, [theme])
 
   // Handle keyboard shortcut for performance panel
@@ -223,6 +228,9 @@ const AppShell: React.FC = () => {
           <AIAssistant />
         </motion.div>
       </AnimatePresence>
+
+      {/* ⌘K command palette — actions + live book search (premium surface) */}
+      <CommandPalette />
 
       {/* Toast notifications */}
       <Toaster

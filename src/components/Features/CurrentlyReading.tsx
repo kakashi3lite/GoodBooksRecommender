@@ -14,12 +14,16 @@ import { motion } from 'framer-motion'
 import { BookOpen, Check, Clock, Minus, Plus, Sparkles, Timer, Trash2, Zap } from 'lucide-react'
 import React, { useState } from 'react'
 import toast from 'react-hot-toast'
+import { useNavigate } from 'react-router-dom'
 import { BOOK_CATALOG } from '../../data/bookCatalog'
 import { useAppDispatch, useAppSelector } from '../../hooks/redux'
 import {
     finishReading,
     logReadingSession,
+    pagesLeftOf,
+    progressOf,
     removeFromReading,
+    setProgress,
     type ReadingBookSnapshot
 } from '../../stores/reading/readingSlice'
 import {
@@ -47,6 +51,7 @@ interface ShelfBook {
 
 const CurrentlyReading: React.FC = () => {
     const dispatch = useAppDispatch()
+    const navigate = useNavigate()
     const currentlyReading = useAppSelector((state) => state.reading.currentlyReading)
     const readingLog = useAppSelector((state) => state.reading.readingLog)
     const recommendations = useAppSelector((state) => state.books.recommendations)
@@ -57,6 +62,11 @@ const CurrentlyReading: React.FC = () => {
     const [session, setSession] = useState<SessionState | null>(null)
     const [pagesInput, setPagesInput] = useState('')
     const [completionBook, setCompletionBook] = useState<ShelfBook | null>(null)
+    /**
+     * "I'm on page N" check-in. Readers hold a position, not a delta — asking
+     * for the page removes arithmetic and makes the update cost ~2 seconds.
+     */
+    const [checkIn, setCheckIn] = useState<{ bookId: string; page: string } | null>(null)
 
     /**
      * Chain-of-Thought: resolve a shelf entry to displayable book data —
@@ -118,6 +128,16 @@ const CurrentlyReading: React.FC = () => {
         )
     }
 
+    /** Commit a "where are you?" check-in — the delta is logged honestly. */
+    const commitCheckIn = () => {
+        if (!checkIn) return
+        const page = Number(checkIn.page)
+        if (!Number.isFinite(page) || page < 0) return
+        dispatch(setProgress({ bookId: checkIn.bookId, page: Math.round(page) }))
+        toast.success(`You're on page ${Math.round(page)} — progress saved 📖`)
+        setCheckIn(null)
+    }
+
     const handleFinish = (book: ShelfBook) => {
         dispatch(finishReading(book.id))
         setCompletionBook(book)
@@ -127,7 +147,7 @@ const CurrentlyReading: React.FC = () => {
         <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-blue-950 dark:to-indigo-950 p-4 sm:p-8"
+            className="min-h-screen page-surface p-4 sm:p-8"
         >
             <div className="max-w-7xl mx-auto">
                 <div className="mb-8">
@@ -142,28 +162,42 @@ const CurrentlyReading: React.FC = () => {
                 </div>
 
                 {shelf.length === 0 ? (
-                    <div className="text-center py-24">
-                        <div className="text-5xl mb-4">📖</div>
+                    <div className="surface-1 mx-auto max-w-lg p-10 text-center">
+                        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-purple-50 text-2xl dark:bg-purple-900/30">
+                            📖
+                        </div>
                         <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-                            Your shelf is empty
+                            Your shelf is ready when you are
                         </h3>
-                        <p className="text-gray-500 dark:text-gray-400 mt-2">
-                            Head to Discover, tap “Add Book” in the sidebar, or grab today&apos;s pick to
-                            start reading.
+                        <p className="mx-auto mt-2 max-w-sm text-sm text-gray-500 dark:text-gray-400">
+                            Pick one book — that&apos;s the whole commitment. Log a few pages tonight
+                            and the shelf starts keeping score for you.
                         </p>
+                        <div className="mt-6 flex flex-wrap justify-center gap-2">
+                            <button
+                                onClick={() => navigate('/discover')}
+                                className="pressable rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
+                            >
+                                Find your next book
+                            </button>
+                            <button
+                                onClick={() => navigate('/')}
+                                className="pressable rounded-xl border border-gray-300 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
+                            >
+                                See today&apos;s pick
+                            </button>
+                        </div>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                         {shelf.map(({ entry, book }) => {
                             const done = entry.finishedAt !== null
-                            const pagesRead = readingLog
-                                .filter((l) => l.bookId === book.id)
-                                .reduce((a, l) => a + l.pages, 0)
-                            const pagesLeft = book.page_count
-                                ? Math.max(0, book.page_count - pagesRead)
-                                : 0
+                            const pct = done ? 100 : progressOf(entry)
+                            const pagesLeft = pagesLeftOf(entry)
                             const hoursLeft =
-                                pagesLeft > 0 ? formatHours(estimateHoursLeft(pagesLeft, avgPagesPerSession)) : null
+                                pagesLeft && pagesLeft > 0
+                                    ? formatHours(estimateHoursLeft(pagesLeft, avgPagesPerSession))
+                                    : null
                             return (
                                 <div
                                     key={book.id}
@@ -188,7 +222,7 @@ const CurrentlyReading: React.FC = () => {
                                     <div className="mt-4 flex items-center justify-between text-sm">
                                         <span className="flex items-center text-gray-500 dark:text-gray-400">
                                             <Clock className="w-3.5 h-3.5 mr-1" />
-                                            {done ? 'Finished 🎉' : `${entry.progressPct}% complete`}
+                                            {done ? 'Finished 🎉' : `${pct}% complete`}
                                         </span>
                                         {!done && hoursLeft && (
                                             <span className="flex items-center gap-1 text-xs text-purple-600 dark:text-purple-300">
@@ -196,38 +230,108 @@ const CurrentlyReading: React.FC = () => {
                                             </span>
                                         )}
                                     </div>
+                                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 numeric">
+                                        {done
+                                            ? 'On your finished shelf'
+                                            : pagesLeft !== null
+                                                ? `${(entry.currentPage ?? 0) > 0
+                                                    ? `page ${entry.currentPage} of ${book.page_count}`
+                                                    : `${book.page_count} pages`
+                                                } · ${pagesLeft} to go`
+                                                : 'Page count unknown — progress is estimated'}
+                                    </p>
                                     <div className="mt-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                                         <div
                                             className={`h-2 rounded-full transition-all ${done ? 'bg-green-500' : 'bg-blue-600'}`}
-                                            style={{ width: `${done ? 100 : entry.progressPct}%` }}
+                                            style={{ width: `${pct}%` }}
                                         />
                                     </div>
 
-                                    {/* Real session logging */}
+                                    {/* Real session logging — one dominant primary
+                                        action, secondary options demoted below it. */}
                                     {!done && (
                                         <div className="mt-5 space-y-2">
                                             <div className="flex gap-2">
                                                 <button
                                                     onClick={() => quickLog(book.id, book.title)}
-                                                    className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors"
+                                                    className="pressable flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors"
                                                     aria-label={`Quick log ${avgPagesPerSession} pages`}
                                                 >
                                                     <Zap className="w-4 h-4" /> Log {avgPagesPerSession} pg
                                                 </button>
                                                 <button
-                                                    onClick={() => openSession(book.id)}
-                                                    className="inline-flex items-center justify-center gap-1 py-2.5 px-3 rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-sm font-medium transition-colors"
-                                                >
-                                                    Custom
-                                                </button>
-                                                <button
                                                     onClick={() => handleFinish(book)}
-                                                    className="inline-flex items-center justify-center gap-1 py-2.5 px-4 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition-colors"
+                                                    className="pressable inline-flex items-center justify-center gap-1 py-2.5 px-4 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition-colors"
                                                     aria-label="Mark finished"
                                                 >
                                                     <Check className="w-4 h-4" /> Finish
                                                 </button>
                                             </div>
+
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={() =>
+                                                        setCheckIn({
+                                                            bookId: book.id,
+                                                            page: String(entry.currentPage ?? 0)
+                                                        })
+                                                    }
+                                                    className="flex-1 inline-flex items-center justify-center gap-1 py-2 rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-medium transition-colors"
+                                                >
+                                                    I&apos;m on page…
+                                                </button>
+                                                <button
+                                                    onClick={() => openSession(book.id)}
+                                                    className="flex-1 inline-flex items-center justify-center gap-1 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs font-medium transition-colors"
+                                                >
+                                                    Custom pages…
+                                                </button>
+                                            </div>
+
+                                            {/* "Where are you?" check-in — a position, not a delta */}
+                                            {checkIn?.bookId === book.id && (
+                                                <div className="rounded-xl border border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-900/20 p-3">
+                                                    <p className="mb-2 text-xs font-semibold text-purple-700 dark:text-purple-300">
+                                                        Where are you in {book.title}?
+                                                    </p>
+                                                    <div className="flex items-center gap-2">
+                                                        <input
+                                                            type="range"
+                                                            min={0}
+                                                            max={book.page_count ?? 600}
+                                                            value={Number(checkIn.page) || 0}
+                                                            onChange={(e) =>
+                                                                setCheckIn({ bookId: book.id, page: e.target.value })
+                                                            }
+                                                            aria-label="Current page"
+                                                            className="flex-1 accent-purple-600"
+                                                        />
+                                                        <input
+                                                            type="number"
+                                                            min={0}
+                                                            max={book.page_count ?? undefined}
+                                                            value={checkIn.page}
+                                                            onChange={(e) =>
+                                                                setCheckIn({ bookId: book.id, page: e.target.value })
+                                                            }
+                                                            aria-label="Current page number"
+                                                            className="w-20 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-2 py-1.5 text-sm text-gray-900 dark:text-white"
+                                                        />
+                                                        {book.page_count ? (
+                                                            <span className="text-xs text-gray-500 dark:text-gray-400 numeric">
+                                                                / {book.page_count}
+                                                            </span>
+                                                        ) : null}
+                                                        <button
+                                                            type="button"
+                                                            onClick={commitCheckIn}
+                                                            className="rounded-lg bg-purple-600 hover:bg-purple-700 px-3 py-1.5 text-xs font-semibold text-white"
+                                                        >
+                                                            Save
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
 
                                             {/* Inline session editor */}
                                             {session?.bookId === book.id && (

@@ -143,7 +143,7 @@ const BookDetail: React.FC = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-blue-950 dark:to-indigo-950 p-8">
+            <div className="min-h-screen page-surface flex items-center justify-center p-8">
                 <div className="text-center">
                     <div className="animate-spin w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4" />
                     <p className="text-gray-600 dark:text-gray-400">Loading book…</p>
@@ -154,7 +154,7 @@ const BookDetail: React.FC = () => {
 
     if (error || !book) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-blue-950 dark:to-indigo-950 p-8">
+            <div className="min-h-screen page-surface flex items-center justify-center p-8">
                 <div className="text-center max-w-md">
                     <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
                         Book not found
@@ -172,7 +172,7 @@ const BookDetail: React.FC = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-blue-950 dark:to-indigo-950 p-4 sm:p-8">
+        <div className="min-h-screen page-surface p-4 sm:p-8">
             <div className="max-w-4xl mx-auto">
                 {/* Back */}
                 <button

@@ -1,7 +1,7 @@
 {
   "name": "goodbooks-recommender-dashboard",
-  "version": "2.0.0",
-  "description": "🤖 AI-First Futuristic Book Recommendation Dashboard",
+  "version": "2.2.0",
+  "description": "\ud83e\udd16 AI-First Futuristic Book Recommendation Dashboard",
   "type": "module",
   "main": "dashboard/index.html",
   "scripts": {
@@ -89,10 +89,10 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/goodbooks/recommender-dashboard.git"
+    "url": "https://github.com/kakashi3lite/GoodBooksRecommender.git"
   },
   "bugs": {
-    "url": "https://github.com/goodbooks/recommender-dashboard/issues"
+    "url": "https://github.com/kakashi3lite/GoodBooksRecommender/issues"
   },
-  "homepage": "https://goodbooks-recommender.vercel.app"
+  "homepage": "https://books.dalecabra.com"
 }

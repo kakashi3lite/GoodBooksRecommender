@@ -37,10 +37,14 @@ import { setTheme } from '../../stores/dashboard/dashboardSlice'
 import {
   booksFinished,
   computeStreak,
+  dismissStreakRecovery,
   logReadingSession,
   pagesAllTime,
   pagesThisMonth,
-  startReading
+  progressOf,
+  restoreStreak,
+  startReading,
+  streakAtRisk
 } from '../../stores/reading/readingSlice'
 import { toggleFavorite } from '../../stores/user/userSlice'
 import { applyBookFilters, BOOK_FILTER_TABS, genreChipsFor } from '../../utils/bookFilters'
@@ -56,6 +60,7 @@ import {
 } from '../../utils/readingInsights'
 import AddBookModal from '../UI/AddBookModal'
 import BookCover from '../UI/BookCover'
+import BookGridSkeleton from '../UI/BookGridSkeleton'
 import SettingsModal from '../UI/SettingsModal'
 
 // Enhanced Animation Variants
@@ -157,9 +162,27 @@ const Dashboard: React.FC = () => {
       )
       : null
 
+  // ── Kind habit scaffolding ────────────────────────────────────────────────
+  // A missed day shouldn't erase an identity. One honest repair per gap keeps
+  // the run (and the motivation) alive without inventing pages read.
+  const graceUsedFor = useAppSelector((state) => state.reading.graceUsedFor)
+  const risk = useMemo(() => streakAtRisk(readingLog), [readingLog])
+  const canRestoreStreak =
+    risk.missedDate !== null && risk.brokenStreak >= 3 && graceUsedFor !== risk.missedDate
+
+  // Inline micro-feedback: briefly confirm the save on the card itself, so the
+  // reader does not have to look away to a toast to know it worked.
+  const [justLoggedId, setJustLoggedId] = useState<string | null>(null)
+
+  const flashLogged = (bookId: string) => {
+    setJustLoggedId(bookId)
+    window.setTimeout(() => setJustLoggedId(null), 1200)
+  }
+
   const quickLogActive = () => {
     if (!activeEntry) return
     dispatch(logReadingSession({ bookId: activeEntry.bookId, pages: pace.avgPagesPerSession }))
+    flashLogged(activeEntry.bookId)
     toast.success(
       `Logged your usual ${pace.avgPagesPerSession} pages — ${activeBook?.title ?? 'your book'} awaits! 🔥`
     )
@@ -177,13 +200,14 @@ const Dashboard: React.FC = () => {
   }
 
   // Real stats — all derived from persisted reading activity.
+  const booksThisMonth = Math.round(monthPages / 300)
   const stats = [
     {
       icon: BookOpen,
       label: 'Books Finished',
       value: `${finishedCount}`,
       change: `${readingLog.length} sessions logged`,
-      changePercent: `${Math.round(monthPages / 300)} books this month`,
+      changePercent: `${booksThisMonth} book${booksThisMonth === 1 ? '' : 's'} this month`,
       color: 'bg-blue-500',
       trend: 'up'
     },
@@ -200,8 +224,14 @@ const Dashboard: React.FC = () => {
       icon: Star,
       label: 'Streak',
       value: `${streak} days`,
-      change: streak > 0 ? 'keep it going 🔥' : 'read today to start',
-      changePercent: streak > 0 ? 'on fire' : 'start today',
+      // When a run is paused, say so — a lone "0 days" next to a recovery
+      // banner reads like a contradiction.
+      change: canRestoreStreak
+        ? `${risk.brokenStreak}-day run paused`
+        : streak > 0
+          ? 'keep it going 🔥'
+          : 'read today to start',
+      changePercent: canRestoreStreak ? 'restore above' : streak > 0 ? 'on fire' : 'start today',
       color: 'bg-yellow-500',
       trend: 'up'
     },
@@ -276,8 +306,10 @@ const Dashboard: React.FC = () => {
   }, [userPreferences])
 
   // Real progress lookup (persisted) + client-side search/genre/tab filter.
-  const progressFor = (id: string): number =>
-    currentlyReading.find((e) => e.bookId === id)?.progressPct ?? 0
+  const progressFor = (id: string): number => {
+    const entry = currentlyReading.find((e) => e.bookId === id)
+    return entry ? progressOf(entry) : 0
+  }
 
   // The heart of this pass: filters that ACTUALLY filter. Tabs + genre chips
   // + search all flow through the shared vocabulary (src/utils/bookFilters.ts).
@@ -319,7 +351,7 @@ const Dashboard: React.FC = () => {
 
   return (
     <motion.div
-      className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-blue-900 dark:to-indigo-900"
+      className="min-h-screen page-surface"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
@@ -355,8 +387,11 @@ const Dashboard: React.FC = () => {
                     if (e.key === 'Enter') submitSearch()
                   }}
                   aria-label="Search any book"
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-10 pr-16 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
+                <kbd className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 rounded border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 px-1.5 py-0.5 font-mono text-[10px] text-gray-500 dark:text-gray-400">
+                  ⌘K
+                </kbd>
               </div>
             </div>
 
@@ -442,52 +477,92 @@ const Dashboard: React.FC = () => {
           </div>
         </motion.div>
 
+        {/* Streak recovery — a missed day is a pause, not a verdict */}
+        {canRestoreStreak && (
+          <motion.div className="mb-8" variants={itemVariants}>
+            <div className="surface-2 flex flex-wrap items-center gap-4 p-4">
+              <span className="text-2xl" aria-hidden="true">🩹</span>
+              <div className="min-w-0 flex-1">
+                <p className="type-eyebrow text-amber-600 dark:text-amber-400">Streak recovery</p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                  Your {risk.brokenStreak}-day streak is paused — one missed day doesn&apos;t have to end it.
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Restore the day once, or start fresh. Both count as showing up.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => {
+                    dispatch(restoreStreak({ missedDate: risk.missedDate as string }))
+                    toast.success('Streak restored — welcome back! 🔥')
+                  }}
+                  className="pressable px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold"
+                >
+                  Restore my streak
+                </button>
+                <button
+                  onClick={() => {
+                    dispatch(dismissStreakRecovery({ missedDate: risk.missedDate as string }))
+                    toast('Fresh start. Today counts. 🌱', { icon: '🌱' })
+                  }}
+                  className="pressable px-4 py-2.5 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 text-sm font-semibold"
+                >
+                  Start fresh
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
         {/* Continue Reading — the open loop that pulls readers back */}
         {activeEntry && activeBook && (
           <motion.div className="mb-8" variants={itemVariants}>
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-purple-200 dark:border-purple-900 p-4 flex items-center gap-4 shadow-md">
-              <BookCover
-                title={activeBook.title}
-                author={activeBook.authors}
-                coverUrl={activeBook.cover_url}
-                genres={activeBook.genres}
-                seed={activeBook.id}
-                size="sm"
-                rounded="md"
-                showText={false}
-              />
-              <div className="flex-1 min-w-0">
-                <p className="text-xs uppercase tracking-wider text-purple-600 dark:text-purple-400 font-semibold">
-                  ⏳ Pick up where you left off
-                </p>
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white truncate">
-                  {activeBook.title}
-                </h3>
-                <div className="mt-1 flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
-                  <span>{activeEntry.progressPct}% done</span>
-                  {activeHoursLeft && (
-                    <span className="inline-flex items-center gap-1 text-purple-600 dark:text-purple-300">
-                      <Clock className="w-3.5 h-3.5" /> {activeHoursLeft} left at your pace
-                    </span>
-                  )}
-                </div>
-                <div className="mt-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 max-w-xs">
-                  <div
-                    className="h-1.5 rounded-full bg-gradient-to-r from-purple-500 to-blue-500"
-                    style={{ width: `${activeEntry.progressPct}%` }}
-                  />
+            <div className="surface-2 flex flex-col gap-4 p-4 sm:flex-row sm:items-center">
+              <div className="flex min-w-0 flex-1 items-center gap-4">
+                <BookCover
+                  title={activeBook.title}
+                  author={activeBook.authors}
+                  coverUrl={activeBook.cover_url}
+                  genres={activeBook.genres}
+                  seed={activeBook.id}
+                  size="sm"
+                  rounded="md"
+                  showText={false}
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="type-eyebrow text-purple-600 dark:text-purple-400">
+                    ⏳ Pick up where you left off
+                  </p>
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white truncate">
+                    {activeBook.title}
+                  </h3>
+                  <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-600 dark:text-gray-400">
+                    <span className="numeric">{progressFor(activeEntry.bookId)}% done</span>
+                    {activeHoursLeft && (
+                      <span className="inline-flex items-center gap-1 text-purple-600 dark:text-purple-300">
+                        <Clock className="w-3.5 h-3.5" /> {activeHoursLeft} left at your pace
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-2 w-full max-w-xs rounded-full bg-gray-200 h-1.5 dark:bg-gray-700">
+                    <div
+                      className="h-1.5 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 transition-all duration-300"
+                      style={{ width: `${progressFor(activeEntry.bookId)}%` }}
+                    />
+                  </div>
                 </div>
               </div>
-              <div className="flex flex-col sm:flex-row gap-2 flex-shrink-0">
+              <div className="flex flex-shrink-0 gap-2">
                 <button
                   onClick={quickLogActive}
-                  className="px-4 py-2.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold transition-colors"
+                  className="pressable flex-1 rounded-lg bg-purple-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-purple-700 sm:flex-none"
                 >
                   ⚡ Log {pace.avgPagesPerSession} pg
                 </button>
                 <button
                   onClick={() => navigate('/reading')}
-                  className="px-4 py-2.5 rounded-lg bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 text-sm font-semibold transition-colors"
+                  className="pressable flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 sm:flex-none"
                 >
                   Open shelf
                 </button>
@@ -498,39 +573,43 @@ const Dashboard: React.FC = () => {
 
         {/* Today's Pick — a fresh daily reason to come back */}
         <motion.div className="mb-8" variants={itemVariants}>
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-blue-200 dark:border-blue-900 p-4 flex items-center gap-4">
-            <BookCover
-              title={dailyPick.title}
-              author={dailyPick.authors}
-              coverUrl={dailyPick.cover_url}
-              genres={dailyPick.genres}
-              seed={dailyPick.id}
-              size="sm"
-              rounded="md"
-              showText={false}
-            />
-            <div className="flex-1 min-w-0">
-              <p className="text-xs uppercase tracking-wider text-blue-600 dark:text-blue-400 font-semibold">
-                ✨ Today&apos;s Pick
-              </p>
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white truncate">{dailyPick.title}</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
-                {dailyPick.authors} · {dailyPick.rating}★
-              </p>
-              <p className="text-xs text-purple-700 dark:text-purple-300 mt-1">
-                {dailyPickReason(dailyPick)}
-              </p>
+          <div className="surface-2 flex flex-col gap-4 p-4 sm:flex-row sm:items-center">
+            <div className="flex min-w-0 flex-1 items-center gap-4">
+              <BookCover
+                title={dailyPick.title}
+                author={dailyPick.authors}
+                coverUrl={dailyPick.cover_url}
+                genres={dailyPick.genres}
+                seed={dailyPick.id}
+                size="sm"
+                rounded="md"
+                showText={false}
+              />
+              <div className="min-w-0 flex-1">
+                <p className="type-eyebrow text-blue-600 dark:text-blue-400">
+                  ✨ Today&apos;s Pick
+                </p>
+                <h3 className="truncate text-lg font-bold text-gray-900 dark:text-white">
+                  {dailyPick.title}
+                </h3>
+                <p className="truncate text-sm text-gray-600 dark:text-gray-400">
+                  {dailyPick.authors} · {dailyPick.rating}★
+                </p>
+                <p className="mt-1 text-xs text-purple-700 dark:text-purple-300">
+                  {dailyPickReason(dailyPick)}
+                </p>
+              </div>
             </div>
-            <div className="flex gap-2 flex-shrink-0">
+            <div className="flex flex-shrink-0 gap-2">
               <button
                 onClick={() => dispatch(startReading({ bookId: dailyPick.id, book: dailyPick }))}
-                className="px-3 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors"
+                className="pressable flex-1 rounded-lg bg-blue-600 px-3 py-2.5 text-sm text-white transition-colors hover:bg-blue-700 sm:flex-none"
               >
                 Start Reading
               </button>
               <button
                 onClick={() => dispatch(toggleFavorite(dailyPick.id))}
-                className="px-3 py-2.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 text-sm rounded-lg transition-colors"
+                className="pressable flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 sm:flex-none"
               >
                 + Wishlist
               </button>
@@ -674,10 +753,32 @@ const Dashboard: React.FC = () => {
               </div>
 
               <div className="p-6">
-                {filteredBooks.length === 0 ? (
-                  <p className="text-sm text-gray-500 dark:text-gray-400 py-8 text-center">
-                    No books match these filters — try clearing the genre or search.
-                  </p>
+                {storeLoading && filteredBooks.length === 0 ? (
+                  // Geometry-matched skeleton: the grid keeps its shape while
+                  // picks load, so nothing jumps when the data lands.
+                  <BookGridSkeleton count={6} />
+                ) : filteredBooks.length === 0 ? (
+                  <div className="py-12 text-center">
+                    <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gray-100 dark:bg-gray-700 text-xl">
+                      🔍
+                    </div>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                      Nothing matches those filters yet
+                    </p>
+                    <p className="mx-auto mt-1 max-w-sm text-xs text-gray-500 dark:text-gray-400">
+                      Your picks are still here — clear the search or genre to see them again.
+                    </p>
+                    <button
+                      onClick={() => {
+                        setSearchQuery('')
+                        setActiveGenre('')
+                        setActiveFilter('all')
+                      }}
+                      className="pressable mt-4 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
+                    >
+                      Show all picks
+                    </button>
+                  </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                     {filteredBooks.map((book) => (
@@ -735,10 +836,19 @@ const Dashboard: React.FC = () => {
                           </div>
 
                           {progressFor(book.id) > 0 && (
-                            <div className="space-y-1">
+                            <div
+                              className={`space-y-1 ${justLoggedId === book.id ? 'progress-just-updated' : ''}`}
+                            >
                               <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400">
                                 <span>Progress</span>
-                                <span>{progressFor(book.id)}%</span>
+                                <span className="numeric flex items-center gap-1">
+                                  {progressFor(book.id)}%
+                                  {justLoggedId === book.id && (
+                                    <span className="saved-pulse text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                                      saved
+                                    </span>
+                                  )}
+                                </span>
                               </div>
                               <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-1.5">
                                 <div
@@ -757,6 +867,7 @@ const Dashboard: React.FC = () => {
                                   dispatch(
                                     logReadingSession({ bookId: book.id, pages: pace.avgPagesPerSession })
                                   )
+                                  flashLogged(book.id)
                                   toast.success(`Logged ${pace.avgPagesPerSession} pages — keep it going! 📚`)
                                 } else {
                                   dispatch(
@@ -767,7 +878,8 @@ const Dashboard: React.FC = () => {
                                         authors: book.author,
                                         cover_url: book.cover_url ?? '',
                                         genres: book.genres,
-                                        description: book.description
+                                        description: book.description,
+                                        page_count: book.page_count
                                       }
                                     })
                                   )

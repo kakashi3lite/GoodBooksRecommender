@@ -7,7 +7,7 @@
  * (identity-based habit building). All inputs are the user's own data.
  */
 
-import type { ReadingLogEntry } from '../stores/reading/readingSlice'
+import { localDateKey, type ReadingLogEntry } from '../stores/reading/readingSlice'
 
 export interface PaceInfo {
     avgPagesPerSession: number
@@ -16,21 +16,19 @@ export interface PaceInfo {
     loggedToday: boolean
 }
 
-/** Today's local YYYY-MM-DD key (same format the reading slice stores). */
-export const todayKey = (): string => {
-    const d = new Date()
-    const m = `${d.getMonth() + 1}`.padStart(2, '0')
-    const day = `${d.getDate()}`.padStart(2, '0')
-    return `${d.getFullYear()}-${m}-${day}`
-}
+/** Today's local YYYY-MM-DD key — single source of truth (see readingSlice). */
+export const todayKey = (): string => localDateKey()
 
 /**
  * Real pace from the reader's own log. Falls back to a sensible 30
  * pages/session when there is no history yet (never a hardcoded "+20").
+ * Recovered streak days are excluded — they carry 0 pages and would
+ * otherwise drag the reader's average down.
  */
 export const computePace = (log: ReadingLogEntry[]): PaceInfo => {
-    const totalPages = log.reduce((a, l) => a + l.pages, 0)
-    const avgPagesPerSession = log.length > 0 ? Math.max(10, Math.round(totalPages / log.length)) : 30
+    const sessions = log.filter((l) => !l.recovered)
+    const totalPages = sessions.reduce((a, l) => a + l.pages, 0)
+    const avgPagesPerSession = sessions.length > 0 ? Math.max(10, Math.round(totalPages / sessions.length)) : 30
     const today = todayKey()
     const todayEntries = log.filter((l) => l.date === today)
     return {
@@ -82,6 +80,18 @@ export const personaEmoji = (persona: string): string => {
     }
 }
 
-/** Distinct days with a logged session (for persona + analytics). */
+/** Distinct days with a logged session (for persona + analytics).
+ * Recovered streak days are excluded — they keep a run alive, but they are
+ * not evidence the reader actually sat down with a book. */
 export const distinctReadingDays = (log: ReadingLogEntry[]): number =>
-    new Set(log.map((l) => l.date)).size
+    new Set(log.filter((l) => !l.recovered).map((l) => l.date)).size
+
+/**
+ * Pages left this week at the reader's own pace — the "can I finish this?"
+ * answer that drives the quick-read decision. Honest when data is missing.
+ */
+export const weeklyCapacity = (log: ReadingLogEntry[]): number => {
+    const pace = computePace(log)
+    const activeDays = Math.max(1, Math.min(7, distinctReadingDays(log)))
+    return pace.avgPagesPerSession * activeDays
+}

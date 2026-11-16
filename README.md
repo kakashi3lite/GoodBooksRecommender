@@ -78,22 +78,33 @@ your favorite genres with one tap, browse **Trending Now from the web**, and get
 AI picks ranked for you — with a human-readable **why** on every card.
 
 ### 📖 Your Shelf
-Start a book, log pages with one tap (using *your own* average pace), finish with a
-little celebration, and keep notes. Progress bars and "X left" estimates keep the
-goal in sight — the finish line always feels closer than it is.
+Start a book, log pages with one tap (using *your own* average pace), or just answer
+**"I'm on page 143"** — the shelf does the arithmetic. Finish with a little
+celebration and keep notes. Progress is calculated from the book's **real page
+count**, so "84 pages left" and "~2 sessions" are true, not guesses.
 
 ### ❤️ Wishlist
 One tap saves a book for later. When you're ready, **Start Reading** moves it
 straight onto your shelf — saved-for-later becomes read-today.
 
 ### 🤖 The AI Reading Companion
-Press `⌘K` and talk like a human:
+Press `⌘J` and talk like a human:
 
 > *"Something like my last thriller, but with a happier ending."*
 
 It answers with real books, real covers, and a **reason** for each pick. It learns
 your genres, your pace, your streak, and what you just finished — and it *never
 repeats itself*.
+
+### ⌘K Anything
+One shortcut for the whole app. `⌘K` opens a command palette that **does things**,
+not just searches: log today's pages, ask the companion, switch theme, jump to any
+book (live web search included).
+
+### 🩹 Streaks that forgive
+Miss a day after a real run and you get **one honest repair** — "Restore my streak" —
+or "Start fresh", which is remembered so we never nag. The repair never invents
+pages read, so your analytics stay true.
 
 ### 📊 Reading Analytics
 Streaks, pages this month, books finished, top genres — plus a warm **AI reading
@@ -113,14 +124,17 @@ GoodBooks isn't just a list of features — it's designed around the psychology 
 - **Goal-gradient effect** — every progress bar, "X% complete", and "X left" makes the finish line feel nearer, pulling you forward.
 - **Identity** — see your reading persona ("Immersive Reader", "Binge Reader"…) and let it motivate you.
 - **Variable reward** — a new Today's Pick every day and fresh AI suggestions keep discovery delightful, not repetitive.
-- **Loss aversion, reversed** — your streak and progress are *yours*; losing them feels worse than skipping feels good.
+- **Loss aversion, reversed** — your streak and progress are *yours*; losing them feels worse than skipping feels good. So a missed day gets **one honest repair**, not a shame spiral.
 - **Trust** — every filter works, every button does something, every number is real. Nothing fabricated, ever.
 
 ---
 
 ## 🔒 Your reading stays yours
 
-- Your taste profile and shelf live **on your device**.
+- Your taste profile and shelf live **on your device** — the app is local-first.
+- When a database is configured, reading *events* (a random device id, book id, pages,
+  progress) are mirrored so your progress can survive a device change. No email, no name,
+  no fingerprints, and **no public read path** — see [docs/DATA_LAYER.md](docs/DATA_LAYER.md).
 - No tracking pixels, no spam, no credit card, no dark patterns.
 - Export your whole reading library anytime — it's your data.
 - Optional sync keeps things in your control.
@@ -154,11 +168,21 @@ the included GitHub Actions workflow.
 ### Project structure
 
 - `src/components/` — React feature components (Dashboard, Discover, AI, Shelf…)
-- `src/stores/` — Redux slices (user, reading, books, ai, analytics…)
+- `src/stores/` — Redux slices (user, reading, books, ai, analytics…) + reading sync middleware
 - `src/utils/` — recommendation engine, personalization, shared book filters, chat context
-- `functions/api/` — serverless edge API (catalog, search, trending, AI chat/insight)
+- `functions/api/` — serverless edge API (catalog, search, trending, reading events, AI chat/insight)
+- `dashboard/css/materials.css` — premium material/elevation/motion layer
 - `tests/` — unit + component tests
-- `docs/` — architecture, runbook, data layer, deployment plan
+- `docs/` — architecture, runbook, data layer, **UX research & rationale** (`docs/UX_PREMIUM_UPGRADE.md`)
+
+### Keyboard shortcuts
+
+| Keys | Action |
+| --- | --- |
+| `⌘K` / `Ctrl+K` | Command palette — log progress, search books, jump anywhere |
+| `⌘J` / `Ctrl+J` | Open the AI reading companion |
+| `Esc` | Close the current overlay |
+| `Shift+P` | Performance panel |
 
 Contributing conventions: Chain-of-Thought comments, JSDoc on every export,
 `type(scope): summary` commits, and run `npm test` + `npm run type-check` +

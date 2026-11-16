@@ -5,6 +5,59 @@ All notable changes to the GoodBooks Recommender Dashboard will be documented in
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-11-17
+
+### ✨ Added
+- **⌘K command palette** — actions first: log today's pages, ask the companion, switch
+  theme, jump to any route, or search any book through the live web-search API. Full
+  keyboard + ARIA support; free-text never dead-ends (it becomes "Ask the companion").
+- **"I'm on page N" check-in** on the shelf — a position, not arithmetic. The delta from
+  the previous position is still logged as a real session.
+- **Recovery-first streaks** — one honest repair for a single missed day after a ≥3-day
+  run, plus a remembered "start fresh" that never nags. Repairs add 0 pages.
+- **Premium materials layer** (`dashboard/css/materials.css`) — one elevation ladder
+  (layered shadows + hairline), reading type ramp, skeleton shimmer, inline saved-pulse
+  micro-feedback, consistent focus rings, global `prefers-reduced-motion`.
+- **Geometry-matched skeletons** on Dashboard recommendations and Discover search.
+- **Premium empty states** for the shelf, filtered grid, and no-match search — each
+  explains the mechanic and offers the next action.
+- `docs/UX_PREMIUM_UPGRADE.md` — market research, reading-psychology evidence, and the
+  design decision log behind every change.
+
+### 🔧 Fixed
+- **Dishonest progress** — progress advanced by `pages / 300` for every book, so one
+  60-page session on a 688-page novel reported 20%. Progress is now derived from the
+  book's real page count (`currentPage / page_count`), capped at 100%, with an explicit
+  "estimated" label when the length is unknown.
+- **UTC vs local dates** — reading sessions were filed under the UTC day while "read
+  today" used the local day, so streaks disagreed with the UI near midnight in
+  non-UTC timezones. `localDateKey()` is now the single source of truth.
+- **`recommendations_log` was never created** — `functions/api/_lib/db.ts` had always
+  posted audit rows to a missing table. Added to the schema.
+- **Sidebar rows rendered in block layout on desktop** — `.mobile-hide-on-phone` carried
+  a `display: block !important` desktop override that beat `flex`, stretching the active
+  row's icon box full-width behind the label. Override removed.
+- **Generated book covers had invisible type** — `font-size: min(34%, 3.4rem)` resolves
+  against the parent font size, so monograms rendered at ~5px. Explicit per-size scale.
+- **`theme: 'auto'` left design tokens undefined** — `data-theme` now carries the resolved
+  theme (`light`/`dark`); the preference is kept in `data-theme-preference`.
+- **Eight routes used their own blue gradient** — replaced with the shared
+  `.page-surface` paper surface so the design tokens own the background.
+
+### ⚙️ Backend (Cloudflare Pages Functions)
+- **`POST /api/reading`** + `reading_events` table — best-effort, write-only mirror of
+  `started / progress / finished` events (anonymous `client_id`, local `session_date`,
+  service-role only, RLS with no public policies). Silent no-op when the DB is not
+  configured; never blocks the UI.
+- Migration: `supabase/migrations/20261117090000_reader_data.sql` (idempotent) and the
+  same section appended to `docs/supabase/schema.sql`.
+
+### 🔄 Changed
+- The AI companion shortcut moved from `⌘K` to **`⌘J`**; `⌘K` is now the app-wide
+  command surface.
+- Tests: **111 passing** (added page-accurate progress, check-in, streak recovery, and
+  command-palette coverage).
+
 ## [2.1.0] - 2026-08-07
 
 ### ✨ Added

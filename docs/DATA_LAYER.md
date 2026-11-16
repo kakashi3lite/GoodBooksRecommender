@@ -12,6 +12,7 @@ Browser (React SPA on Cloudflare Pages)
 Cloudflare Pages Functions  ─── edge compute, ~µs
    ├── /api/books/*           catalog + recommendations + search + similar
    ├── /api/ai/chat           conversational assistant
+   ├── /api/reading           durable reading events (write-only)
    └── /api/* (catch-all)     clean 404 for unknown endpoints
          │
          ├── reads live Supabase Postgres (service-role key, server-side)
@@ -77,6 +78,32 @@ Text search across title/authors/genres/description.
 ### `POST /api/ai/chat`
 `{ message, prefs? }` → `{ reply, bookSuggestions[], model }`
 
+### `POST /api/reading`
+Mirrors the reader's local reading activity into Postgres. Write-only by design
+(no public read path).
+
+```jsonc
+// request
+{
+  "client_id": "9f1c…-uuid-v4",        // anonymous device id from localStorage
+  "event_type": "progress",            // started | progress | finished | wishlisted
+  "book_id": "b-11",
+  "pages": 42,                         // session delta
+  "page": 214,                         // absolute position (check-in)
+  "progress": 31,                      // 0..100
+  "session_date": "2026-11-17"         // reader's LOCAL day
+}
+// response
+{ "stored": true }                                  // DB configured
+{ "stored": false, "reason": "not_configured" }     // graceful no-op
+{ "stored": false, "reason": "invalid" }            // 400 — bad body
+```
+
+- Called by `src/stores/reading/readingSync.ts` (middleware) — never blocks a
+  reducer, never throws, and is skipped entirely when `VITE_SUPABASE_URL` is unset.
+- `GET /api/reading` returns **405** on purpose: restoring data to a new device must
+  be an explicit, opt-in flow, never an automatic read.
+
 ## Real-Time Data (Supabase)
 
 The API reads live rows from Supabase Postgres when configured; otherwise it
@@ -104,8 +131,9 @@ OpenAI-compatible provider):
 - `AI_PROVIDER` = optional, for custom providers
 
 **Data tables** (see `docs/supabase/schema.sql`): `books`, `profiles`,
-`user_preferences`, `reading_activity` (real-time feed), `recommendations_log`
-(audit for future model evaluation).
+`user_preferences`, `reading_activity` (real-time feed), `reading_events`
+(write-only mirror of the reader's real sessions — drives `books finished`),
+`recommendations_log` (audit + evaluation data for the next recommender).
 
 ## Keeping the catalog in sync
 

@@ -123,7 +123,8 @@ const MessageBubble: React.FC<{ message: ChatMessage }> = ({ message }) => {
 
 /**
  * AI Assistant — floating chat panel.
- * Keyboard shortcut: Cmd+K (or Ctrl+K) toggles the panel.
+ * Keyboard shortcut: Cmd+J (or Ctrl+J) toggles the panel.
+ * The ⌘K command palette can also open it with a question already sent.
  */
 const AIAssistant: React.FC = () => {
   const dispatch = useAppDispatch()
@@ -141,10 +142,12 @@ const AIAssistant: React.FC = () => {
     }
   }, [messages, isOpen])
 
-  // Keyboard shortcut: Cmd+K / Ctrl+K toggles the assistant
+  // Keyboard shortcut: Cmd+J / Ctrl+J toggles the assistant.
+  // ⌘K now belongs to the command palette, which offers "Ask the companion"
+  // as one of its actions — one shortcut per intent, no collision.
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'j') {
         e.preventDefault()
         dispatch(toggleAssistant())
       }

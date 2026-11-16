@@ -13,6 +13,7 @@ import aiSlice from './ai/aiSlice'
 import booksSlice from './books/booksSlice'
 import dashboardSlice from './dashboard/dashboardSlice'
 import readingSlice from './reading/readingSlice'
+import { createReadingSyncMiddleware } from './reading/readingSync'
 import userSlice from './user/userSlice'
 
 // Forward-Thinking: Future feature slices
@@ -43,7 +44,7 @@ export const store = configureStore({
         ignoredActions: ['persist/PERSIST', 'persist/REHYDRATE'],
         ignoredPaths: ['ai.modelInstance', 'dashboard.animationRefs']
       }
-    }),
+    }).concat(createReadingSyncMiddleware()),
 
   devTools: import.meta.env.MODE !== 'production' && {
     name: 'Futuristic Dashboard',

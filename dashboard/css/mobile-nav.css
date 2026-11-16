@@ -192,7 +192,11 @@
         display: none !important;
     }
 
-    .mobile-hide-on-phone {
-        display: block !important;
-    }
+    /*
+      NOTE: `.mobile-hide-on-phone` deliberately has no desktop counterpart.
+      An earlier `display: block !important` here forced every sidebar link to
+      block layout on desktop, so `flex items-center` stopped working and the
+      active nav row rendered its icon box full-width behind the label.
+      The hide rule lives inside the phone media query, so nothing leaks.
+    */
 }

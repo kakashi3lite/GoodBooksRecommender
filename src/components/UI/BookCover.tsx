@@ -71,6 +71,30 @@ const RADIUS_CLASSES: Record<CoverRadius, string> = {
 }
 
 /**
+ * Type sizes per cover size.
+ * Chain-of-Thought: the previous values used `min(34%, 3.4rem)` — but a
+ * percentage in `font-size` resolves against the *parent font size* (~14px),
+ * not the cover's dimensions, so the monogram rendered at ~5px and the title
+ * was effectively invisible. Explicit per-size sizes keep generated covers
+ * legible at every scale.
+ */
+const MONOGRAM_SIZE: Record<CoverSize, string> = {
+    xs: '0.9rem',
+    sm: '1.5rem',
+    md: '1.95rem',
+    lg: '2.6rem',
+    xl: '3.1rem'
+}
+
+const TITLE_SIZE: Record<CoverSize, string> = {
+    xs: '0.5rem',
+    sm: '0.62rem',
+    md: '0.74rem',
+    lg: '0.88rem',
+    xl: '0.98rem'
+}
+
+/**
  * BookCover — a cover that is always beautiful: generated art by default,
  * real imagery when available, and never a broken placeholder.
  */
@@ -142,7 +166,7 @@ const BookCover: React.FC<BookCoverProps> = ({
                     style={{
                         color: palette.text,
                         opacity: 0.9,
-                        fontSize: 'min(34%, 3.4rem)'
+                        fontSize: MONOGRAM_SIZE[size]
                     }}
                 >
                     {initials}
@@ -160,7 +184,7 @@ const BookCover: React.FC<BookCoverProps> = ({
                 >
                     <p
                         className="font-serif font-semibold leading-tight"
-                        style={{ color: '#fafaf9', fontSize: 'min(13%, 0.95rem)' }}
+                        style={{ color: '#fafaf9', fontSize: TITLE_SIZE[size] }}
                         title={title}
                     >
                         {title}

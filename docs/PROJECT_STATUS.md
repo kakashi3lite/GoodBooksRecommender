@@ -1,6 +1,6 @@
 # 📊 GoodBooks Recommender — Project Status (Single Source of Truth)
 
-> **Verified as of**: 2026-08-07 (commit `925b659`, branch `main`)
+> **Verified as of**: 2026-11-17 (branch `main`) — premium UX + reading-data release
 > **Production**: https://books.dalecabra.com — React 18/Vite SPA + **Cloudflare Pages
 > Functions** (`functions/api/**`) as the live backend. The Python FastAPI service in
 > `src/api` is **legacy and NOT deployed**. Full operational detail:
@@ -12,10 +12,10 @@
 
 | Dimension | Grade | Notes |
 |---|---|---|
-| Frontend UI & state | 🟢 **Good** | All routes render, Redux + localStorage, dark/light themes, mobile nav, 71 vitest tests |
+| Frontend UI & state | 🟢 **Good** | All routes render, Redux + localStorage, dark/light themes, mobile nav, ⌘K command palette, premium materials layer, **111 vitest tests** |
 | Frontend ↔ Backend | 🟢 **Live** | All `/api/*` served by Pages Functions; live sweep **27/27** (runbook §18) |
 | AI chat + reading insight | 🟢 **Live** | Context-aware chat + "AI Reading Insight" on Analytics, personalized from the reader's **real** data (runbook §19) |
-| Data layer | 🟡 **Partial** | Supabase env vars configured; **schema not applied** → catalog fallback (`source: "catalog"`) |
+| Data layer | 🟡 **Partial** | Supabase env vars configured; **schema not applied** → catalog fallback (`source: "catalog"`). New `reading_events` + `recommendations_log` tables are ready in `supabase/migrations/` |
 | Security | 🟢 **Good** | Security headers (frame/nosniff/referrer/permissions), CSP, secrets only via Cloudflare |
 | Reproducibility | 🟢 **Good** | npm + wrangler; documented deploy; `.env.example` + `wrangler.toml` |
 | Deployment | 🟢 **Live** | Production branch auto-deploys; `npx wrangler pages deploy dist` |
@@ -33,6 +33,23 @@
 - **AI Reading Insight** card on `/analytics` (Reflect / Regenerate)
 - Responsive 390/834/1280 verified; dark/light themes; no model names in UI
 
+### Premium UX + reading data (2026-11-17)
+
+- **⌘K command palette** (`components/UI/CommandPalette.tsx`) — actions (log pages, ask the
+  companion, theme) + every route + live book search. AI companion shortcut is `⌘J`.
+- **Honest progress** — `progressOf()` derives % from the book's real `page_count`
+  (previously a fixed `/300` estimate); `pagesLeftOf()` gives exact remaining pages.
+- **"I'm on page N" check-in** — position, not arithmetic; the delta is logged as a session.
+- **Recovery-first streaks** — `streakAtRisk()` / `restoreStreak()` / `dismissStreakRecovery()`
+  with a 0-page repair (one per gap). `streakBest` tracked privately.
+- **Local-date correctness** — `localDateKey()` replaces UTC `toISOString()` date keys.
+- **`dashboard/css/materials.css`** — elevation ladder, reading type ramp, skeletons,
+  micro-feedback, global `prefers-reduced-motion`.
+- **`POST /api/reading`** + `reading_events` — best-effort write-only mirror of reading
+  activity (anonymous `client_id`, service-role only, no public read path).
+- **`recommendations_log`** — created (the audit write had always targeted a missing table).
+- Full rationale + sources: `docs/UX_PREMIUM_UPGRADE.md`.
+
 ### Backend — Cloudflare Pages Functions (`functions/api/**`)
 - `books/[[route]].ts` — catalog, search, recommend (TF-IDF + profile + MMR), trending, web-search,
   resolve, insights, `/:id`, `/:id/similar` (real Open Library / Google Books data)
@@ -44,7 +61,7 @@
 - Live endpoint sweep: **27/27 PASS** (runbook §18) + AI surface audit (runbook §19)
 
 ### Tests
-- **71/71 vitest** (16 files), `tsc --noEmit` clean, `npm run build` succeeds
+- **111/111 vitest** (20 files), `tsc --noEmit` clean, `npm run lint` 0 errors, `npm run build` succeeds
 - Live API checks via `/tmp/llm_audit.sh` and `/tmp/backend_sweep.py` (both pass)
 
 ---
@@ -52,7 +69,8 @@
 ## Open Items (priority order)
 
 1. **Apply Supabase schema** — run `docs/supabase/schema.sql` in the Supabase SQL editor, then
-   `/api/books` reports `source: "database"` instead of the catalog. No code change needed.
+   `/api/books` reports `source: "database"` instead of the catalog. This now also creates
+   `reading_events` + `recommendations_log` (see `supabase/migrations/20261117090000_reader_data.sql`).
 2. **LLM provider key (optional)** — the AI features already degrade to honest fallbacks when the
    key is missing/rate-limited. To enable the full AI: set the provider secret on the Pages project
    (`npx wrangler pages secret put …`) — see runbook §19 env contract.
@@ -79,6 +97,7 @@ None of these affect the live product.
 |---|---|---|
 | `docs/LIVE_ARCHITECTURE_RUNBOOK.md` | ✅ **canonical** | Keep current (§18 backend audit, §19 AI v2) |
 | `docs/PROJECT_STATUS.md` (this) | ✅ canonical | Keep current |
+| `docs/UX_PREMIUM_UPGRADE.md` | ✅ canonical | Research + design rationale for the UI |
 | `CHANGELOG.md` | 🟡 real history | Continue appending (needs an entry for the AI v2 release) |
 | `API_CATALOG.md` | 🟡 partial | Verify/refresh against `functions/api/**` |
 | `PROJECT_STATUS.md` (root) | 🔴 aspirational | Superseded by this file |
