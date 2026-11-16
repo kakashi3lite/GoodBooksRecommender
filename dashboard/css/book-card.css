@@ -129,6 +129,12 @@
 .book-rating {
   display: flex;
   align-items: center;
+  /* Chain-of-Thought: on a 2-column iPhone grid (~163px cards) the five stars
+     plus "· 150K ratings" exceed the card width, and `nowrap` pushed the count
+     outside the card (clipped at 375px). Wrapping the count onto its own line
+     keeps the social proof visible at every width instead of cutting it off. */
+  flex-wrap: wrap;
+  row-gap: 2px;
   gap: var(--space-2);
 }
 
