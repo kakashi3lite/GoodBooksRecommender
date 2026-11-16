@@ -31,6 +31,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `react-components.css` are bundled after `mobile-nav.css`.
 
 ### 🧹 Cleanup
+- **CI consolidated to one pipeline.** `ci-cd.yml`, `production-cicd.yml`, and
+  `quality-assurance.yml` targeted the un-deployed Python/Terraform stack and hard-failed
+  on every push (`actions/upload-artifact@v3` is deprecated). `cloudflare-pages.yml` is
+  now the single authoritative pipeline: type-check → lint → test → build → purge →
+  deploy. Git history retains the removed files.
+- **CI Node 20 → 22** — `jsdom@30` needs Node ≥ 22 (`webidl.util.markAsUncloneable`),
+  so the suite errored before running a single test on CI while passing on Node 22
+  locally. `engines.node` now states `>=22`.
 - Removed the no-op `[env.production]` table from `wrangler.toml` and corrected the
   `_redirects` comment (Pages Functions do serve `/api/*`).
 - Deleted zero-byte dead files: `FuturisticDashboard.tsx`, `AIRecommendationEngine.ts`,

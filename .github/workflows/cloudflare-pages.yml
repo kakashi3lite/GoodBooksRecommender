@@ -1,8 +1,17 @@
-# 🚀 Cloudflare Pages — automatic frontend deployment
+# 🚀 Cloudflare Pages — the single authoritative pipeline
 # Pushes to `main` build the app and deploy it to Cloudflare Pages.
 # Required repo secrets:
 #   CLOUDFLARE_API_TOKEN   (Pages:Edit permission)
 #   CLOUDFLARE_ACCOUNT_ID  (Cloudflare account id)
+#
+# Chain-of-Thought: this workflow is the ONLY pipeline for the deployed
+# product. Three legacy pipelines (ci-cd.yml, production-cicd.yml,
+# quality-assurance.yml) targeted the un-deployed Python/Terraform stack,
+# hard-failed on every push because they pinned `actions/upload-artifact@v3`,
+# and duplicated the gates below — so CI was red on every commit and its
+# signal was worthless. They were removed; git history retains them if the
+# FastAPI/Kubernetes path is ever revived.
+# Gates run here, in order: type-check → lint → test → build → deploy.
 
 name: Deploy to Cloudflare Pages
 
@@ -25,7 +34,11 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # jsdom 30 (used by Vitest) requires Node >= 22 — undici bundled in
+          # Node 20 lacks webidl.util.markAsUncloneable, which made the whole
+          # suite error out before running a single test on CI while passing
+          # locally on Node 22.
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
