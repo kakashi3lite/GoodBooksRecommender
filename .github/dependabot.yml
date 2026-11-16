@@ -1,0 +1,62 @@
+# 🤖 Dependabot — keep the supply chain fresh without surprise majors
+#
+# Chain-of-Thought:
+#   Actions in both workflows are pinned to commit SHAs (immutable, the
+#   recommended hardening). The cost of SHA pinning is that the pins rot
+#   silently — Dependabot is what turns a static pin into a maintained one.
+#
+#   Both ecosystems are grouped so a routine week produces ONE PR per ecosystem
+#   (each still running the full `CI / verify` gate) instead of a dozen.
+
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Asia/Kolkata
+    open-pull-requests-limit: 3
+    versioning-strategy: increase
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      npm-minor-and-patch:
+        applies-to: version-updates
+        update-types:
+          - minor
+          - patch
+    ignore:
+      # Major bumps of the UI stack are migrations, not maintenance — they
+      # need a planned pass (React 19, Tailwind 4, Redux Toolkit 2, Vitest 1+).
+      - dependency-name: react
+        update-types: [version-update:semver-major]
+      - dependency-name: react-dom
+        update-types: [version-update:semver-major]
+      - dependency-name: react-router-dom
+        update-types: [version-update:semver-major]
+      - dependency-name: tailwindcss
+        update-types: [version-update:semver-major]
+      - dependency-name: "@reduxjs/toolkit"
+        update-types: [version-update:semver-major]
+      - dependency-name: vitest
+        update-types: [version-update:semver-major]
+      - dependency-name: vite
+        update-types: [version-update:semver-major]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Asia/Kolkata
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: ci
+    groups:
+      actions:
+        patterns:
+          - "*"

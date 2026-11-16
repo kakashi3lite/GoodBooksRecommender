@@ -11,7 +11,12 @@
 # and duplicated the gates below — so CI was red on every commit and its
 # signal was worthless. They were removed; git history retains them if the
 # FastAPI/Kubernetes path is ever revived.
-# Gates run here, in order: type-check → lint → test → build → deploy.
+# Gates run here, in order: type-check → lint → test → build → purge → deploy
+# → live smoke test. `ci.yml` gates pull requests before they can merge, so a
+# broken branch never reaches this production deploy.
+#
+# Actions are pinned to commit SHAs (supply-chain hardening): a mutable major
+# tag can be repointed at different code after review.
 
 name: Deploy to Cloudflare Pages
 
@@ -20,6 +25,9 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# One deploy at a time, and a newer push supersedes an in-flight run: Cloudflare
+# Pages deploys are atomic, so cancelling never leaves a half-published site —
+# it just guarantees the newest commit is the one that goes live.
 concurrency:
   group: cloudflare-pages
   cancel-in-progress: true
@@ -27,12 +35,15 @@ concurrency:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.3.1
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           # jsdom 30 (used by Vitest) requires Node >= 22 — undici bundled in
           # Node 20 lacks webidl.util.markAsUncloneable, which made the whole
@@ -63,8 +74,49 @@ jobs:
         run: node scripts/purge-apple-double.cjs
 
       - name: Publish to Cloudflare Pages
-        uses: cloudflare/wrangler-action@v3
+        id: deploy
+        uses: cloudflare/wrangler-action@9acf94ace14e7dc412b076f2c5c20b8ce93c79cd # v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy dist --project-name goodbooks-recommender --branch main
+
+      # A green "Deploying..." line is not proof the site works. Verify the
+      # freshly published deployment actually serves the app shell and a live
+      # API response, retrying briefly while the edge propagates.
+      - name: Smoke test deployment
+        env:
+          DEPLOYMENT_URL: ${{ steps.deploy.outputs.deployment-url }}
+          PRODUCTION_URL: https://books.dalecabra.com
+        run: |
+          set -euo pipefail
+          target="${DEPLOYMENT_URL:-$PRODUCTION_URL}"
+          echo "Smoke testing $target"
+          code=000
+          for attempt in 1 2 3 4 5 6; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 15 "$target/") || code=000
+            [ "$code" = "200" ] && break
+            echo "attempt $attempt: HTTP $code — retrying in 5s"
+            sleep 5
+          done
+          if [ "$code" != "200" ]; then
+            echo "::error::Deployment did not serve HTTP 200 (last: $code)"
+            exit 1
+          fi
+
+          # App shell must be the real index, not a fallback error page.
+          curl -fsS --max-time 15 "$target/" | grep -q 'id="root"' \
+            || { echo "::error::App shell missing #root"; exit 1; }
+
+          # Edge API must answer with JSON.
+          api_code=$(curl -s -o /tmp/books.json -w '%{http_code}' --max-time 20 "$target/api/books") || api_code=000
+          if [ "$api_code" != "200" ]; then
+            echo "::error::/api/books returned $api_code"
+            exit 1
+          fi
+          head -c 160 /tmp/books.json; echo
+
+          # The custom domain must point at a live build too.
+          curl -fsS -o /dev/null --max-time 15 "$PRODUCTION_URL/" \
+            || { echo "::error::Custom domain not serving"; exit 1; }
+          echo "Smoke test passed." 

@@ -1,0 +1,80 @@
+# ✅ CI — pull-request gate (no deploy)
+#
+# Chain-of-Thought:
+#   Before this workflow existed, nothing ran on a pull request: a broken
+#   branch could merge into `main` and only then fail in the deploy job, which
+#   by definition means the bad commit is already on the production branch.
+#   This job is the gate that must pass BEFORE merge; `cloudflare-pages.yml`
+#   keeps its own gates so the deployed tree is always verified independently.
+#
+#   Nothing here needs secrets, so it also runs safely on forked PRs.
+#   Every action is pinned to a commit SHA (supply-chain hardening): a mutable
+#   tag could be moved to point at different code after review.
+
+name: CI
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+# A new push to the same PR cancels the previous run — results for stale
+# commits are worthless and the queue should never block fresh work.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.3.1
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          # jsdom 30 (Vitest) requires Node >= 22 — see package.json engines.
+          node-version: 22
+          cache: npm
+
+      # `npm ci` installs exactly the lockfile, so a stale lockfile fails here
+      # instead of producing a build nobody can reproduce.
+      - name: Install
+        run: npm ci
+
+      - name: Type-check
+        run: npm run type-check
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Purge Apple Double files
+        run: node scripts/purge-apple-double.cjs
+
+      # Guards the two regressions that shipped to production once: stylesheets
+      # linked from index.html that are not in the build output, and a build
+      # that silently produces no app shell.
+      - name: Verify build output
+        run: |
+          set -euo pipefail
+          test -f dist/index.html
+          test -d dist/assets
+          test -f dist/_headers
+          test -f dist/_redirects
+          if grep -q 'rel="stylesheet" href="/dashboard/css' dist/index.html; then
+            echo "::error::dist/index.html links bundled-away /dashboard/css assets"
+            exit 1
+          fi
+          echo "Build output verified."
