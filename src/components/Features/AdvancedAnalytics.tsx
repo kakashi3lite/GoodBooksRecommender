@@ -18,6 +18,7 @@ import {
 } from '../../stores/reading/readingSlice'
 import { AIService } from '../../utils/api'
 import { buildChatContext } from '../../utils/chatContext'
+import { pluralize } from '../../utils/readingInsights'
 
 const AdvancedAnalytics: React.FC = () => {
   const currentlyReading = useAppSelector((state) => state.reading.currentlyReading)
@@ -145,7 +146,7 @@ const AdvancedAnalytics: React.FC = () => {
         {/* Stat cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {[
-            { icon: Flame, label: 'Streak', value: `${streak} days`, color: 'text-orange-600 bg-orange-50 dark:bg-orange-900/20' },
+            { icon: Flame, label: 'Streak', value: pluralize(streak, 'day'), color: 'text-orange-600 bg-orange-50 dark:bg-orange-900/20' },
             { icon: BookOpen, label: 'Books Finished', value: `${finished}`, color: 'text-blue-600 bg-blue-50 dark:bg-blue-900/20' },
             { icon: Library, label: 'Pages This Month', value: `${monthPages}`, color: 'text-green-600 bg-green-50 dark:bg-green-900/20' },
             { icon: CalendarDays, label: 'Reading Time', value: `${hoursRead}h`, color: 'text-purple-600 bg-purple-50 dark:bg-purple-900/20' }

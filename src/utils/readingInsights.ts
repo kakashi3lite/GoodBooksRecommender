@@ -95,3 +95,7 @@ export const weeklyCapacity = (log: ReadingLogEntry[]): number => {
     const activeDays = Math.max(1, Math.min(7, distinctReadingDays(log)))
     return pace.avgPagesPerSession * activeDays
 }
+
+/** "1 day" / "2 days" — pluralization is part of feeling polished. */
+export const pluralize = (count: number, singular: string, plural = `${singular}s`): string =>
+    `${count} ${count === 1 ? singular : plural}`

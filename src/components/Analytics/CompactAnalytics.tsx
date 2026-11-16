@@ -93,7 +93,10 @@ export const CompactAnalytics: React.FC = () => {
                 <div className="metric-item">
                     <span className="metric-label">Reading Streak</span>
                     <span className="metric-value">
-                        {Math.max(0, Math.floor((Date.now() - performanceMetrics.lastUpdated) / 86_400_000))} days
+                        {(() => {
+                            const days = Math.max(0, Math.floor((Date.now() - performanceMetrics.lastUpdated) / 86_400_000))
+                            return days === 1 ? '1 day' : `${days} days`
+                        })()}
                     </span>
                 </div>
             </div>

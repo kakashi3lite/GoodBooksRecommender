@@ -56,7 +56,8 @@ import {
   estimateHoursLeft,
   formatHours,
   personaEmoji,
-  personaOf
+  personaOf,
+  pluralize
 } from '../../utils/readingInsights'
 import AddBookModal from '../UI/AddBookModal'
 import BookCover from '../UI/BookCover'
@@ -206,7 +207,7 @@ const Dashboard: React.FC = () => {
       icon: BookOpen,
       label: 'Books Finished',
       value: `${finishedCount}`,
-      change: `${readingLog.length} sessions logged`,
+      change: `${pluralize(readingLog.length, 'session')} logged`,
       changePercent: `${booksThisMonth} book${booksThisMonth === 1 ? '' : 's'} this month`,
       color: 'bg-blue-500',
       trend: 'up'
@@ -223,7 +224,7 @@ const Dashboard: React.FC = () => {
     {
       icon: Star,
       label: 'Streak',
-      value: `${streak} days`,
+      value: pluralize(streak, 'day'),
       // When a run is paused, say so — a lone "0 days" next to a recovery
       // banner reads like a contradiction.
       change: canRestoreStreak
@@ -240,7 +241,7 @@ const Dashboard: React.FC = () => {
       label: 'Pages This Month',
       value: `${monthPages}`,
       change: `${totalPages} pages all-time`,
-      changePercent: `${readingLog.length} sessions`,
+      changePercent: pluralize(readingLog.length, 'session'),
       color: 'bg-purple-500',
       trend: 'up'
     }
@@ -975,7 +976,7 @@ const Dashboard: React.FC = () => {
                 <div>
                   <div className="flex justify-between text-sm mb-1">
                     <span className="text-gray-600 dark:text-gray-400">Streak</span>
-                    <span className="font-medium">{streak} days</span>
+                    <span className="font-medium">{pluralize(streak, 'day')}</span>
                   </div>
                   <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
                     <div className="bg-orange-600 h-2 rounded-full" style={{ width: `${Math.min(100, (streak / 30) * 100)}%` }}></div>
