@@ -15,10 +15,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   app shell and `index.html` linking bundled-away `/dashboard/css` assets.
 - **`main` is protected** — the `verify` check is required, force-pushes and deletions are
   blocked, and conversation resolution is required (admins keep an escape hatch).
-- **Post-deploy smoke test** — waits for HTTP 200, asserts the app shell has `#root`,
-  asserts `/api/books` returns JSON, and confirms the custom domain serves a live build.
-  All assertions share one retry helper (~45s): static assets propagate in milliseconds
-  while the Functions bundle can 404 for a few seconds, which made the first version flaky.
+- **Post-deploy smoke test** — three assertions: the new deployment serves the app shell
+  (`#root`), its edge API returns real JSON (`"data":`), and the custom domain serves the
+  promo build. Each assertion is **one request** whose status *and* body are checked
+  together, retried for ~45s.
+  *Why that shape:* Pages Functions come up per-edge. The first version failed a healthy
+  deployment because only the root request retried; the second failed because a *separate*
+  body request landed on another edge still returning 404. The log now reads
+  `wait deployment api — attempt 1: HTTP 404` → `ok` — the propagation reality, handled.
 - **Supply-chain pins** — actions pinned to commit SHAs; `Dependabot` refreshes them weekly.
 - **Deploy timeout** (20 min) so a hung step cannot occupy a runner for the 6-hour maximum.
 - Dependabot ignores two coordinated migrations that cannot be applied partially
@@ -28,6 +32,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Deploy workflow failed on **every** push after the CI consolidation: the repo's
   `CLOUDFLARE_API_TOKEN` secret had been stale since 2026-08-06. Refreshed; deploys are
   green and self-verifying.
+- `npm audit --omit=dev` reports **0 vulnerabilities** after syncing to the Dependabot
+  minor/patch group.
 
 ## [2.3.0] - 2026-11-17
 
