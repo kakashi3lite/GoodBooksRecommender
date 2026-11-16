@@ -74,4 +74,32 @@ describe('news feed', () => {
     it('decodes the entity set publishers actually emit', () => {
         expect(decodeXml('a &amp; b &lt;c&gt; &quot;d&quot; &#39;e&#39;')).toBe('a & b <c> "d" \'e\'')
     })
+
+    it('decodes numeric character references that WordPress-style feeds emit', () => {
+        // Seen live on Literary Hub: "...Sittenfeld&#8217;s debut novel..."
+        expect(decodeXml('Sittenfeld&#8217;s &#8220;Prep&#8221; &#8212; a &#x2019;test')).toBe(
+            'Sittenfeld\u2019s \u201cPrep\u201d \u2014 a \u2019test'
+        )
+    })
+
+    it('decodes the named entities publishers use beyond the XML six', () => {
+        // Seen live from Literary Hub: "...close to&nbsp;it..."
+        expect(decodeXml('close to&nbsp;it&mdash;&ldquo;really&rdquo;&hellip;')).toBe(
+            'close to it\u2014\u201creally\u201d\u2026'
+        )
+    })
+
+    it('unwraps double-encoded entities, which feeds emit constantly', () => {
+        expect(decodeXml('close to&amp;nbsp;it')).toBe('close to it')
+        expect(decodeXml('Sittenfeld&amp;#8217;s')).toBe('Sittenfeld\u2019s')
+    })
+
+    it('leaves an unknown entity readable instead of deleting it', () => {
+        expect(decodeXml('AT&T and &notarealentity;')).toBe('AT&T and &notarealentity;')
+    })
+
+    it('never leaks a numeric reference into a rendered summary', () => {
+        const xml = feed(item('Story', 'Tue, 17 Nov 2026 10:00:00 GMT', '<description>A &#8216;quote&#8217;</description>'))
+        expect(mergeStories(parseRss(xml, 'Literary Hub'), 1)[0].summary).not.toMatch(/&#\d+;|&nbsp;/)
+    })
 })

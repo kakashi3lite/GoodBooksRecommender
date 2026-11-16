@@ -17,7 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - One dead feed can no longer empty the page: feeds are isolated with `Promise.allSettled`
   and an 8s timeout, and the response reports `X-News-Feeds: n/4` so the next outage is
   visible. Empty results are cached for 60s (not 15 min) so a transient failure doesn't stick.
-- Parsing/merging moved to `functions/api/_lib/rss.ts` — pure functions, covered by 7 tests.
+- Entity decoding now handles the **full HTML named set** plus decimal/hex references, run twice so
+  double-encoded feeds (`&amp;nbsp;`, `&amp;#8217;`) decode fully — publisher summaries were rendering
+  literal `&#8217;` and `&nbsp;` in the reader's face. Unknown entities stay readable rather than vanishing.
+- Parsing/merging moved to `functions/api/_lib/rss.ts` — pure functions, covered by 12 tests.
   Verified against the live feeds before deploy: 98 items parsed, 10 merged newest-first.
 
 ### 🎚️ Reading pace is revisitable
