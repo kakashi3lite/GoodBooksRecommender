@@ -111,7 +111,9 @@ Streaks, pages this month, books finished, top genres — plus a warm **AI readi
 insight** that reflects on your real progress. Your growth, visible.
 
 ### 📰 Book News
-Fresh, real book news from the web — no filler.
+Real headlines from **The Guardian, The New York Times, BBC News and Literary Hub**,
+merged and sorted newest-first. If every feed is unreachable the page says so — it
+never invents a story.
 
 ---
 
@@ -212,12 +214,30 @@ conversation resolution is required. A broken branch can no longer reach product
 the gate that proved this caught a real `npm ci` peer conflict within minutes of being
 switched on.
 
-**Deferred migrations (deliberately not automated).** Dependabot ignores majors for two
-coordinated upgrade tracks, because a partial bump cannot install:
-- **ESLint 8 → 9/10** with `typescript-eslint` 8 and `eslint-plugin-react-refresh` 0.5.
-- **Vite 5 → 8 / Vitest 0.34 → 5** with `@vitejs/plugin-react` 6 and `@vitest/ui` 5.
+**Linting runs on ESLint 9 (flat config).** `eslint.config.js` replaced `.eslintrc.json` when
+the project moved to ESLint 9.39 + `typescript-eslint` 8 + `eslint-plugin-react-refresh` 0.5.
+The rule set is unchanged — the migration moved the toolchain, not the standards (same 68
+warnings, 0 errors, before and after). Two consequences worth knowing:
 
-Both are planned passes, not weekly maintenance. Everything else updates automatically.
+- Flat config does **not** skip dotfiles, so macOS `._*` sidecars are ignored explicitly and
+  `scripts/purge-apple-double.cjs` now cleans `src/`, `tests/`, `public/`, `.github/` and
+  `dashboard/` too — otherwise a macOS checkout fails lint with "Invalid character".
+- `eslint` stays on 9.x and `eslint-plugin-react` on 7.x: 7.37 is the last published major and
+  peers on `eslint ^9.7`, so ESLint 10 waits for a react-plugin release.
+
+**Deferred migration (deliberately not automated).** Dependabot ignores majors for
+**Vite 5 → 8 / Vitest 0.34 → 5** with `@vitejs/plugin-react` 6 and `@vitest/ui` 5 — a partial
+bump cannot install. It is a planned pass, not weekly maintenance. Everything else updates
+automatically.
+
+**Codacy requires a one-time owner action.** The `Codacy Static Code Analysis` check reports
+`ACTION_REQUIRED` (not a code failure) until the repository is authorised:
+1. Sign in at [app.codacy.com](https://app.codacy.com) with the GitHub account that owns the repo.
+2. **Add repository** → `kakashi3lite/GoodBooksRecommender` → grant access.
+3. Organisation settings → **Integrations → GitHub** → enable the Codacy app for the repo so it
+   can post status checks (this is what clears `ACTION_REQUIRED`).
+4. Optional: add `CODACY_PROJECT_TOKEN` as a repo secret to upload coverage from `CI / verify`.
+Until then Codacy is advisory only — `verify` is the required gate, so merges are not blocked.
 
 ---
 

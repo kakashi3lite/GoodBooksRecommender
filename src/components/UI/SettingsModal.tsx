@@ -16,6 +16,7 @@ import toast from 'react-hot-toast'
 import { useAppDispatch, useAppSelector } from '../../hooks/redux'
 import { setTheme } from '../../stores/dashboard/dashboardSlice'
 import { setPreferences } from '../../stores/user/userSlice'
+import { READING_PACE, moodsForPace, paceForMoods } from '../../utils/readingPace'
 
 interface SettingsModalProps {
     open: boolean
@@ -31,6 +32,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose }) => {
     const profile = useAppSelector((state) => state.user.profile)
     const readingState = useAppSelector((state) => state.reading)
     const [goalInput, setGoalInput] = useState(String(preferences.readingGoal))
+    const pace = paceForMoods(preferences.preferredMoods)
 
     // `aria-modal` is only honest when Tab cannot escape the dialog.
     // Declared before any early return — a hook after a conditional
@@ -167,6 +169,40 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose }) => {
                                     >
                                         Set
                                     </button>
+                                </div>
+                            </div>
+
+                            {/* The pace question onboarding asks, revisitable.
+                                Without this the answer was frozen forever: a reader
+                                who picked "Quick reads" once could never say
+                                otherwise, and the preference silently ranked every
+                                recommendation they saw. */}
+                            <div>
+                                <span className="block text-sm text-gray-700 dark:text-gray-200 mb-1.5">
+                                    Reading pace
+                                </span>
+                                <div className="grid grid-cols-3 gap-2" role="group" aria-label="Reading pace">
+                                    {READING_PACE.map((option) => {
+                                        const active = pace === option.id
+                                        return (
+                                            <button
+                                                key={option.id}
+                                                type="button"
+                                                aria-pressed={active}
+                                                onClick={() => {
+                                                    dispatch(setPreferences({ preferredMoods: moodsForPace(option.id) }))
+                                                    toast.success(`Pace set to ${option.label}`)
+                                                }}
+                                                className={`px-2 py-2.5 rounded-lg border text-center transition-colors ${active
+                                                    ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                                                    : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+                                                    }`}
+                                            >
+                                                <span className="block text-xs font-semibold">{option.label}</span>
+                                                <span className="block text-[10px] opacity-75">{option.blurb}</span>
+                                            </button>
+                                        )
+                                    })}
                                 </div>
                             </div>
 
