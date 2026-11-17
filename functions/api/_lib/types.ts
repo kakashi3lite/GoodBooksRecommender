@@ -29,6 +29,8 @@ export interface PagesEnv {
     DB?: D1DatabaseLike
     /** One-time token for the temporary Supabase audit endpoint. */
     AUDIT_TOKEN?: string
+    /** Salt for hashed rate-limit keys (set as a Pages secret). */
+    RATE_LIMIT_SALT?: string
     SUPABASE_URL?: string
     SUPABASE_SERVICE_ROLE_KEY?: string
     SUPABASE_ANON_KEY?: string

@@ -100,6 +100,7 @@ backend and is not part of the deploy gate.
 | `MINIMAX_API_KEY` / `OPENAI_API_KEY` | Pages secret | ⚠️ **currently empty — AI chat runs the local hybrid engine** |
 | `AI_BASE_URL` / `AI_MODEL` | Pages secret | Set (`https://api.minimax.io/v1`, `MiniMax-M2`) |
 | `DB` (D1 binding) | `wrangler.toml` → `[[d1_databases]]` | `goodbooks-accounts` |
+| `RATE_LIMIT_SALT` | Pages secret | Salt for hashed rate-limit keys (`rate_limits` table) |
 
 Rules learned the hard way (2026-11-17):
 

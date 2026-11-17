@@ -231,12 +231,18 @@ export const syncAccount = (
     return promise
 }
 
-/** Read a profile from D1. Returns null when unconfigured or not found. */
+/**
+ * Read a profile from D1. Owner-only: the request carries this device's
+ * account key, and without one there is nothing the server will return.
+ */
 export const fetchAccount = async (email: string): Promise<ServerAccount | null> => {
     const normalised = email.trim().toLowerCase()
-    if (!normalised || !canReachApi()) return null
+    const key = getAccountKey(normalised)
+    if (!normalised || !key || !canReachApi()) return null
     try {
-        const res = await request(`/api/accounts/${encodeURIComponent(normalised)}`)
+        const res = await request(`/api/accounts/${encodeURIComponent(normalised)}`, {
+            accountKey: key
+        })
         if (!res.ok) return null
         const payload = (await res.json()) as { account?: ServerAccount }
         return payload.account ?? null

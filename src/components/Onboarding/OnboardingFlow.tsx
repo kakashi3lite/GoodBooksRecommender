@@ -83,7 +83,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ initialEmail = '' }) =>
         )
     }
 
-    const handleFinish = () => {
+    const handleFinish = async () => {
         dispatch(register({ name, email }))
         dispatch(
             completeOnboarding({
@@ -95,14 +95,21 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ initialEmail = '' }) =>
             })
         )
         // Persist the account now — a new account must never be swallowed by
-        // the mount-level debounce.
-        dispatch(syncAccountToServer({ force: true }))
+        // the mount-level debounce. Await it so a conflict is visible: creating
+        // an account for an email that already exists is a 409, not a success.
+        const sync = await dispatch(syncAccountToServer({ force: true }))
         try {
             sessionStorage.setItem('goodbooks_onboarded', '1')
         } catch {
             // sessionStorage unavailable — gate simply re-shows next load
         }
-        toast.success(`Welcome, ${name.trim().split(' ')[0]}! Your picks are ready 🎉`)
+        if ((sync.payload as { error?: string } | undefined)?.error === 'email_taken') {
+            toast.error(
+                'That email already has an account. Use a different email to save this profile.'
+            )
+        } else {
+            toast.success(`Welcome, ${name.trim().split(' ')[0]}! Your picks are ready 🎉`)
+        }
     }
 
     /**

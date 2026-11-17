@@ -98,7 +98,12 @@ describe('userRepository → /api/accounts (D1)', () => {
     })
 
     it('maps a stored account into the legacy snake_case profile shape', async () => {
-        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ account })))
+        localStorage.setItem(
+            'goodbooks_account_key',
+            JSON.stringify({ 'ada@example.com': 'a'.repeat(64) })
+        )
+        const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ account }))
+        vi.stubGlobal('fetch', fetchMock)
 
         await expect(fetchUserAccount('ada@example.com')).resolves.toEqual({
             email: 'ada@example.com',
@@ -108,12 +113,41 @@ describe('userRepository → /api/accounts (D1)', () => {
             reading_level: 'novice',
             updated_at: account.updatedAt
         })
+        const [url, init] = fetchMock.mock.calls[0]
+        expect(url).toContain('/api/accounts/ada%40example.com')
+        expect(init.headers['X-Account-Key']).toBe('a'.repeat(64))
     })
 
-    it('returns null when the account does not exist', async () => {
-        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ error: 'not_found' }, 404)))
-
+    it('returns null for a profile this device cannot prove ownership of', async () => {
+        // No key on device → no request at all (the endpoint is owner-only).
+        const fetchMock = vi.fn()
+        vi.stubGlobal('fetch', fetchMock)
         await expect(fetchUserAccount('nobody@example.com')).resolves.toBeNull()
+        expect(fetchMock).not.toHaveBeenCalled()
+
+        // Key present but rejected → still null.
+        localStorage.setItem(
+            'goodbooks_account_key',
+            JSON.stringify({ 'nobody@example.com': 'b'.repeat(64) })
+        )
+        vi.stubGlobal(
+            'fetch',
+            vi.fn().mockResolvedValue(jsonResponse({ error: 'invalid_key' }, 401))
+        )
+        await expect(fetchUserAccount('nobody@example.com')).resolves.toBeNull()
+    })
+
+    it('surfaces a 409 email conflict instead of pretending the account synced', async () => {
+        vi.stubGlobal(
+            'fetch',
+            vi.fn().mockResolvedValue(jsonResponse({ error: 'email_taken' }, 409))
+        )
+
+        const result = await syncUserAccount(syncInput)
+
+        expect(result).toMatchObject({ synced: false, error: 'email_taken' })
+        // A conflict must not suppress the retry the way a success does.
+        expect(localStorage.getItem('goodbooks_sync_marker')).toBeNull()
     })
 
     it('deletes the account, forgets the local key and clears the sync marker', async () => {

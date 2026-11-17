@@ -31,8 +31,8 @@ D1 database goodbooks-accounts  →  accounts + account_events
 | Method | Path | Auth | Purpose |
 |---|---|---|---|
 | `GET` | `/api/accounts` | — | Health probe: `{ database: "d1", count }` |
-| `POST` | `/api/accounts` | optional `X-Account-Key` | Create (201, returns `accountKey` once) or update (200) |
-| `GET` | `/api/accounts/:email` | — | Public profile (`?email=` also accepted) |
+| `POST` | `/api/accounts` | optional `X-Account-Key` | Create (201, returns `accountKey` once) or update (200); existing email without a key → **409** |
+| `GET` | `/api/accounts/:email` | `X-Account-Key` | Owner-only profile (`?email=` also accepted) |
 | `PATCH` | `/api/accounts/:email` | `X-Account-Key` | Update profile fields |
 | `DELETE` | `/api/accounts/:email` | `X-Account-Key` | Delete the account |
 
@@ -50,8 +50,29 @@ Payload (camelCase; snake_case `favorite_genres`, `preferred_moods`,
 }
 ```
 
-Status codes: `201` created · `200` exists/updated · `400 invalid_email` ·
-`401 missing_key` / `invalid_key` · `404 not_found` · `503 database_not_configured`.
+Status codes: `201` created · `200` updated · `400 invalid_email` ·
+`401 missing_key` / `invalid_key` (also used for an unknown account, so the
+endpoint cannot confirm whether an address exists) · `409 email_taken` ·
+`429 rate_limited` · `503 database_not_configured`.
+
+### Rate limits (enforced in the edge function)
+
+Cloudflare's zone rate-limit rule does not reliably enforce on the current plan,
+so the Functions keep their own fixed-window counter in D1 (`rate_limits`), keyed
+by `sha256(salt | CF-Connecting-IP)` — **no raw IP is stored**.
+
+| Scope | Limit | Window |
+|---|---|---|
+| `POST /api/accounts` | 20 | 10 min |
+| `GET`/`HEAD /api/accounts*` | 60 | 1 min |
+| `PATCH`/`DELETE /api/accounts*` | 30 | 1 min |
+| `POST /api/ai/*` | 10 | 1 min |
+
+Over the limit → `429 {"error":"rate_limited","retryAfter":N}` with a
+`Retry-After` header. `OPTIONS` preflights are never counted. The limiter fails
+**open** if D1 is unavailable (availability over abuse control). Salt:
+`RATE_LIMIT_SALT` Pages secret. Zone-level WAF additionally blocks bursts above
+30 requests/10s on `/api/*`.
 
 ### Ownership without a password
 Onboarding collects a name and an email only, so there is no password to check.
@@ -64,13 +85,13 @@ never held the key can read the public profile but cannot modify it.
 ### Verified live (2026-11-17, `books.dalecabra.com`)
 ```
 POST   /api/accounts                 → 201 {created:true, accountKey:"<64 hex>"}
-GET    /api/accounts/<encoded email> → 200 {account:{…}}
+GET    /api/accounts/<encoded email> → 401 {error:"missing_key"}        (owner-only)
+GET    /api/accounts/<email> + key   → 200 {account:{…}}
+PATCH  /api/accounts/<email> no key  → 401 {error:"invalid_key"}
 PATCH  /api/accounts/<email> + key   → 200 {account:{… updated …}}
-PATCH  /api/accounts/<email> no key  → 401 {error:"missing_key"}
-PATCH  /api/accounts/<email> bad key → 401 {error:"invalid_key"}
-POST   /api/accounts (same email)    → 200 {created:false, exists:true}   (idempotent)
+POST   /api/accounts (existing, no key) → 409 {error:"email_taken"}
 DELETE /api/accounts/<email> + key   → 200 {deleted:true}
-GET    /api/accounts/<email>         → 404 {error:"not_found"}
+GET    /api/accounts/<email> + key   → 401 {error:"invalid_key"}        (after delete)
 ```
 Durability was proven by reading a row back from a *later* deployment with its
 original `created_at`, and by querying D1 directly with

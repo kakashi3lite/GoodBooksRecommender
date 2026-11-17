@@ -38,10 +38,10 @@ describe('OnboardingFlow', () => {
         vi.stubGlobal(
             'fetch',
             vi.fn().mockResolvedValue(
-                new Response(JSON.stringify({ created: false, exists: true }), {
-                    status: 200,
-                    headers: { 'Content-Type': 'application/json' }
-                })
+                new Response(
+                    JSON.stringify({ created: true, accountKey: 'k'.repeat(64) }),
+                    { status: 201, headers: { 'Content-Type': 'application/json' } }
+                )
             )
         )
     })

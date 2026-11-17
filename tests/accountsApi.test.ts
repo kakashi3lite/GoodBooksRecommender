@@ -180,11 +180,19 @@ describe('/api/accounts (D1 CRUD)', () => {
         expect(db.state.events).toEqual(['created'])
     })
 
-    it('reads the account back by email (case-insensitive)', async () => {
-        await onRequestPost(makeContext(db, post(newAccount)))
+    it('reads the account back by email for the key holder (case-insensitive)', async () => {
+        const created = (await (
+            await onRequestPost(makeContext(db, post(newAccount)))
+        ).json()) as { accountKey: string }
 
         const res = await onRequestGet(
-            makeContext(db, new Request('https://books.example/api/accounts'), ['ADA@example.com'])
+            makeContext(
+                db,
+                new Request('https://books.example/api/accounts', {
+                    headers: { 'X-Account-Key': created.accountKey }
+                }),
+                ['ADA@example.com']
+            )
         )
         const body = (await res.json()) as { account: { name: string; readingGoal: number } }
 
@@ -193,15 +201,52 @@ describe('/api/accounts (D1 CRUD)', () => {
         expect(body.account.readingGoal).toBe(36)
     })
 
-    it('treats a repeat create as an idempotent success without minting a key', async () => {
+    it('refuses an unauthenticated profile read (and does not reveal existence)', async () => {
+        const created = (await (
+            await onRequestPost(makeContext(db, post(newAccount)))
+        ).json()) as { accountKey: string }
+
+        const noKey = await onRequestGet(
+            makeContext(db, new Request('https://books.example/api/accounts'), ['ada@example.com'])
+        )
+        expect(noKey.status).toBe(401)
+        expect((await noKey.json()).error).toBe('missing_key')
+
+        const wrongKey = await onRequestGet(
+            makeContext(
+                db,
+                new Request('https://books.example/api/accounts', {
+                    headers: { 'X-Account-Key': 'wrong' }
+                }),
+                ['ada@example.com']
+            )
+        )
+        expect(wrongKey.status).toBe(401)
+        expect((await wrongKey.json()).error).toBe('invalid_key')
+
+        // Unknown address + wrong key answers exactly like a real one.
+        const unknown = await onRequestGet(
+            makeContext(
+                db,
+                new Request('https://books.example/api/accounts', {
+                    headers: { 'X-Account-Key': created.accountKey }
+                }),
+                ['nobody@example.com']
+            )
+        )
+        expect(unknown.status).toBe(401)
+        expect((await unknown.json()).error).toBe('invalid_key')
+    })
+
+    it('rejects a key-less create for an existing email with 409 (no profile leak)', async () => {
         await onRequestPost(makeContext(db, post(newAccount)))
 
         const res = await onRequestPost(makeContext(db, post(newAccount)))
-        const body = (await res.json()) as { created: boolean; exists: boolean; accountKey?: string }
+        const body = (await res.json()) as { error?: string; account?: unknown }
 
-        expect(res.status).toBe(200)
-        expect(body).toMatchObject({ created: false, exists: true })
-        expect(body.accountKey).toBeUndefined()
+        expect(res.status).toBe(409)
+        expect(body.error).toBe('email_taken')
+        expect(body.account).toBeUndefined()
         expect(db.state.rows.size).toBe(1)
     })
 
@@ -221,7 +266,7 @@ describe('/api/accounts (D1 CRUD)', () => {
         )
 
         expect(res.status).toBe(401)
-        expect((await res.json()).error).toBe('missing_key')
+        expect((await res.json()).error).toBe('invalid_key')
     })
 
     it('rejects an update with the wrong account key', async () => {
@@ -323,16 +368,45 @@ describe('/api/accounts (D1 CRUD)', () => {
         expect(db.state.rows.size).toBe(0)
 
         const after = await onRequestGet(makeContext(db, new Request(url), ['ada@example.com']))
-        expect(after.status).toBe(404)
+        expect(after.status).toBe(401)
+    })
+
+    it('answers 401 (not 404) when the account does not exist', async () => {
+        const url = 'https://books.example/api/accounts/ghost@example.com'
+        const patch = await onRequestPatch(
+            makeContext(
+                db,
+                new Request(url, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', 'X-Account-Key': 'k' },
+                    body: JSON.stringify({ name: 'x' })
+                }),
+                ['ghost@example.com']
+            )
+        )
+        expect(patch.status).toBe(401)
+
+        const del = await onRequestDelete(
+            makeContext(db, new Request(url, { method: 'DELETE', headers: { 'X-Account-Key': 'k' } }), [
+                'ghost@example.com'
+            ])
+        )
+        expect(del.status).toBe(401)
     })
 
     it('decodes a percent-encoded email in the path (what the browser sends)', async () => {
-        await onRequestPost(makeContext(db, post(newAccount)))
+        const created = (await (
+            await onRequestPost(makeContext(db, post(newAccount)))
+        ).json()) as { accountKey: string }
 
         const res = await onRequestGet(
-            makeContext(db, new Request('https://books.example/api/accounts'), [
-                'ada%40example.com'
-            ])
+            makeContext(
+                db,
+                new Request('https://books.example/api/accounts', {
+                    headers: { 'X-Account-Key': created.accountKey }
+                }),
+                ['ada%40example.com']
+            )
         )
         const body = (await res.json()) as { account: { email: string } }
 

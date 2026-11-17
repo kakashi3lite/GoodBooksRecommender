@@ -45,3 +45,15 @@ create table if not exists account_events (
 
 create index if not exists account_events_created_at_idx
   on account_events (created_at desc);
+
+-- ─── Rate limiting ─────────────────────────────────────────────────────────
+-- Cloudflare's zone rate-limit rule does not enforce on the Free plan, so the
+-- edge functions keep their own fixed-window counter. The bucket key is a hash
+-- of (scope, client IP, window) — raw IPs are never stored.
+create table if not exists rate_limits (
+  bucket_key   text primary key,
+  window_start integer not null,
+  count        integer not null default 0
+);
+
+create index if not exists rate_limits_window_idx on rate_limits (window_start);

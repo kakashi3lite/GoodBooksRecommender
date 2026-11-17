@@ -31,6 +31,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   *Local only* and offers a two-tap **Delete my account**; Sign Out relinquishes
   this device's key (shared-browser safety) while the row survives.
 
+### 🔒 Security hardening (accounts + AI)
+- **Owner-only profile reads.** `GET /api/accounts/:email` now requires
+  `X-Account-Key`; an unknown address answers exactly like a wrong key (`401`),
+  so the endpoint no longer confirms whether an email has an account. This
+  removes the unauthenticated read oracle and makes the profile private by
+  default (the Settings "visibility" toggle was misleading and no longer exists
+  in the read path).
+- **Email conflicts are explicit.** A key-less `POST` for an existing address
+  answers `409 {"error":"email_taken"}` (no profile in the body) instead of a
+  success-shaped `200`, and onboarding shows an error instead of pretending the
+  account was saved. Previously anyone could pre-claim another reader's email
+  and the real owner's profile silently never persisted.
+- **AI proxy abuse guards** (`/api/ai/*`): cross-origin callers get `403`,
+  non-JSON bodies `415`, payloads over 64 KB and messages over 2000 chars `413`,
+  history is capped at 6 turns × 1000 chars, and `shown` at 50 ids. `text/plain`
+  was previously accepted as a CORS-"simple" request from any page.
+- **Rate limiting that actually enforces.** The zone ruleset rule does not
+  reliably block on the current plan (80 rapid requests all returned 200), so
+  the Functions keep a fixed-window counter in D1 (`rate_limits`, hashed IPs,
+  `RATE_LIMIT_SALT`): 20 creates/10 min, 60 reads/min, 30 mutations/min,
+  10 AI turns/min → `429` + `Retry-After`. Verified live: 38×200 then 32×429.
+- **Uniform 401 for unknown accounts** on `PATCH`/`DELETE` (was `404`), closing
+  the same enumeration oracle on the write paths.
+- Dependency audit: **0 production vulnerabilities** (`npm audit --omit=dev`).
+
 ### 🧹 Repository hygiene & Cloudflare environment
 - Deleted generated artifacts that had been committed: 7
   `kindle_dashboard_validation_*.json` reports and an empty

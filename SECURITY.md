@@ -15,7 +15,8 @@ server to compromise.
 | Security headers | `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `Permissions-Policy` — set via `_headers` and the API JSON helper |
 | Secrets | All provider keys (Supabase service-role, AI/LLM keys) live **only** as Cloudflare Pages secrets. Never in the repo, never in the browser bundle. `VITE_*` public keys are the only values baked at build time |
 | Data | Shelf, notes and progress live in `localStorage` on the device. The **account profile** (email, name, genres, pace, goal) is stored in **Cloudflare D1**; only a SHA-256 hash of the device's account key is kept. No telemetry/tracking |
-| Account writes | `PATCH`/`DELETE /api/accounts/:email` require `X-Account-Key` (256-bit, constant-time hash compare). `GET` exposes only public profile fields. Responses are `Cache-Control: no-store` |
+| Account access | Reads **and** writes require `X-Account-Key` (256-bit, constant-time hash compare); an unknown account answers exactly like a wrong key (401), so the API cannot confirm whether an address exists. Responses are `Cache-Control: no-store` |
+| Abuse / cost control | Per-client fixed-window limits in D1 for `/api/accounts` and `/api/ai/*` (hashed IPs, `Retry-After`, fails open) plus a zone WAF rule on `/api/*`. `/api/ai/*` also rejects cross-origin callers, non-JSON bodies and payloads over 64 KB |
 | Guest isolation | The shared guest identity `reader@goodbooks.app` is never written to the database |
 | AI | LLM calls are server-side via Pages Functions; the browser never sees provider keys |
 | Dependencies | `npm audit --omit=dev` reports **0 vulnerabilities** in production deps; remaining advisories are dev-only tooling (vite/vitest/eslint/wrangler), not shipped |

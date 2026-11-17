@@ -24,6 +24,7 @@
  *   credentials, no pool, no cold start, and lives in the same colo as the
  *   request. See docs/DATA_LAYER.md → "Customer accounts".
  */
+import { enforceRateLimit } from '../_lib/rateLimit'
 import { type D1DatabaseLike, type PagesEnv, type PagesFunction } from '../_lib/types'
 
 const json = (data: unknown, status = 200, extra: Record<string, string> = {}): Response =>
@@ -287,9 +288,11 @@ const createOrUpdate = async (request: Request, db: D1DatabaseLike): Promise<Res
 
     if (existing) {
         if (!providedKey) {
-            // Persisted already — the client treats this as success and keeps
-            // its local copy. No write, no key disclosure.
-            return json({ created: false, exists: true, account: toPublic(existing) })
+            // The address already has an account. Returning the profile here
+            // would turn a write endpoint into an unauthenticated read oracle,
+            // and answering 200 would hide the conflict from the reader (their
+            // profile would silently never persist).
+            return json({ error: 'email_taken' }, 409)
         }
         if (!(await ownsRow(existing, providedKey))) {
             return json({ error: 'invalid_key' }, 401)
@@ -354,7 +357,7 @@ const createOrUpdate = async (request: Request, db: D1DatabaseLike): Promise<Res
         // Racing creates: the unique email index is the arbiter.
         const raced = await findRow(db, email)
         if (raced) {
-            return json({ created: false, exists: true, account: toPublic(raced) })
+            return json({ error: 'email_taken' }, 409)
         }
         console.error('[accounts] insert failed:', error)
         return json({ error: 'db_error' }, 500)
@@ -407,8 +410,15 @@ const handleGet = async (
     const email = normaliseEmail(rawEmail)
     if (!email) return json({ error: 'invalid_email' }, 400)
 
+    // Owner-only read. A missing row and a wrong key both answer 401 so the
+    // endpoint cannot be used to confirm whether an address has an account.
+    const providedKey = accountKeyHeader(request)
+    if (!providedKey) return json({ error: 'missing_key' }, 401)
+
     const row = await findRow(db, email)
-    if (!row) return json({ error: 'not_found' }, 404)
+    if (!row || !(await ownsRow(row, providedKey))) {
+        return json({ error: 'invalid_key' }, 401)
+    }
     return json({ account: toPublic(row) })
 }
 
@@ -422,11 +432,11 @@ const handlePatch = async (
     if (!email) return json({ error: 'invalid_email' }, 400)
 
     const existing = await findRow(db, email)
-    if (!existing) return json({ error: 'not_found' }, 404)
-
     const providedKey = accountKeyHeader(request)
-    if (!providedKey) return json({ error: 'missing_key' }, 401)
-    if (!(await ownsRow(existing, providedKey))) return json({ error: 'invalid_key' }, 401)
+    if (!existing || !providedKey || !(await ownsRow(existing, providedKey))) {
+        // Same shape for "no such account" and "wrong key".
+        return json({ error: 'invalid_key' }, 401)
+    }
 
     const body = await readJson(request)
     if (!body) return json({ error: 'invalid', message: 'Expected a JSON body' }, 400)
@@ -466,11 +476,10 @@ const handleDelete = async (
     if (!email) return json({ error: 'invalid_email' }, 400)
 
     const existing = await findRow(db, email)
-    if (!existing) return json({ error: 'not_found' }, 404)
-
     const providedKey = accountKeyHeader(request)
-    if (!providedKey) return json({ error: 'missing_key' }, 401)
-    if (!(await ownsRow(existing, providedKey))) return json({ error: 'invalid_key' }, 401)
+    if (!existing || !providedKey || !(await ownsRow(existing, providedKey))) {
+        return json({ error: 'invalid_key' }, 401)
+    }
 
     await db.prepare('delete from accounts where id = ?1').bind(existing.id).run()
     await audit(db, 'deleted', existing.id, email)
@@ -484,6 +493,23 @@ const onRequest: PagesFunction<PagesEnv> = async (context) => {
     if (!db) return dbMissing()
 
     const segments = pathSegments(params.route)
+
+    // Preflights carry no cost and must not consume a caller's quota.
+    if (request.method === 'OPTIONS') {
+        return new Response(null, {
+            status: 204,
+            headers: { Allow: 'GET, HEAD, POST, PATCH, DELETE, OPTIONS' }
+        })
+    }
+
+    const limit =
+        request.method === 'POST'
+            ? { scope: 'accounts-write', limit: 20, windowSeconds: 600 }
+            : request.method === 'GET' || request.method === 'HEAD'
+              ? { scope: 'accounts-read', limit: 60, windowSeconds: 60 }
+              : { scope: 'accounts-mutate', limit: 30, windowSeconds: 60 }
+    const limited = await enforceRateLimit(env, request, limit)
+    if (limited) return limited
 
     switch (request.method) {
         case 'GET':
