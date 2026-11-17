@@ -57,6 +57,11 @@ jobs:
       - name: Test
         run: npm test
 
+      # Documentation is part of the product: a moved/renamed file must not
+      # leave dead links behind.
+      - name: Docs links
+        run: npm run docs:check
+
       - name: Build
         run: npm run build
 

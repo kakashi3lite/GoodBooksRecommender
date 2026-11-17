@@ -9,13 +9,20 @@
  * All changes persist immediately (Redux → localStorage).
  */
 
-import { BookOpen, Download, Eye, Moon, Palette, Shield, Sun, User, X } from 'lucide-react'
+import { BookOpen, Download, Eye, Moon, Palette, Shield, Sun, Trash2, User, X } from 'lucide-react'
 import { useFocusTrap } from '../../hooks/useFocusTrap'
 import React, { useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAppDispatch, useAppSelector } from '../../hooks/redux'
+import { getAccountKey } from '../../lib/accountApi'
+import { deleteUserAccount } from '../../lib/userRepository'
 import { setTheme } from '../../stores/dashboard/dashboardSlice'
-import { setPreferences } from '../../stores/user/userSlice'
+import {
+    logout,
+    setPreferences,
+    syncAccountToServer,
+    type UserPreferences
+} from '../../stores/user/userSlice'
 import { READING_PACE, moodsForPace, paceForMoods } from '../../utils/readingPace'
 
 interface SettingsModalProps {
@@ -39,13 +46,46 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose }) => {
     // return would break React's hook order when the modal toggles.
     const dialogRef = useFocusTrap<HTMLDivElement>(open, onClose)
 
+    const [confirmDelete, setConfirmDelete] = useState(false)
+
+    // A D1 row is only writable from this device while its account key is
+    // present; without one the account is local-only and there is nothing to
+    // sync (and no server copy to delete).
+    const hasServerAccount = Boolean(getAccountKey(profile.email))
+
     if (!open) return null
+
+    /**
+     * Apply a preference and mirror it to D1 immediately — a reader who sets a
+     * new goal must not lose it because the 5-minute mount debounce swallowed
+     * the write.
+     */
+    const persistPreferences = (patch: Partial<UserPreferences>) => {
+        dispatch(setPreferences(patch))
+        if (hasServerAccount) dispatch(syncAccountToServer({ force: true }))
+    }
 
     const setGoal = (value: number) => {
         const goal = Math.max(1, Math.min(365, Math.round(value)))
         setGoalInput(String(goal))
-        dispatch(setPreferences({ readingGoal: goal }))
+        persistPreferences({ readingGoal: goal })
         toast.success(`Reading goal set to ${goal} books/year 🎯`)
+    }
+
+    const deleteMyAccount = async () => {
+        if (!confirmDelete) {
+            setConfirmDelete(true)
+            return
+        }
+        const removedFromServer = await deleteUserAccount(profile.email)
+        dispatch(logout())
+        setConfirmDelete(false)
+        onClose()
+        toast.success(
+            removedFromServer
+                ? 'Account deleted from Cloudflare'
+                : 'Local account cleared'
+        )
     }
 
     const exportData = () => {
@@ -190,7 +230,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose }) => {
                                                 type="button"
                                                 aria-pressed={active}
                                                 onClick={() => {
-                                                    dispatch(setPreferences({ preferredMoods: moodsForPace(option.id) }))
+                                                    persistPreferences({ preferredMoods: moodsForPace(option.id) })
                                                     toast.success(`Pace set to ${option.label}`)
                                                 }}
                                                 className={`px-2 py-2.5 rounded-lg border text-center transition-colors ${active
@@ -264,7 +304,23 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose }) => {
                             <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                                 Reading level: {profile.readingLevel}
                             </p>
+                            <p
+                                className={`text-xs mt-2 ${hasServerAccount ? 'text-green-700 dark:text-green-400' : 'text-amber-700 dark:text-amber-400'}`}
+                                data-testid="account-persistence"
+                            >
+                                {hasServerAccount
+                                    ? 'Saved to Cloudflare — survives clearing this browser.'
+                                    : 'Local only — complete onboarding with a valid email to save it to Cloudflare.'}
+                            </p>
                         </div>
+                        <button
+                            type="button"
+                            onClick={deleteMyAccount}
+                            className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-red-300 dark:border-red-800 text-red-700 dark:text-red-400 text-sm font-medium hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                        >
+                            <Trash2 className="w-4 h-4" />
+                            {confirmDelete ? 'Tap again to confirm deletion' : 'Delete my account'}
+                        </button>
                     </section>
 
                     {/* Data */}
@@ -280,7 +336,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose }) => {
                             <Download className="w-4 h-4" /> Export my reading library
                         </button>
                         <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
-                            Everything lives in your browser (localStorage) — export to keep a personal copy.
+                            Your library lives in this browser (localStorage) and your account is mirrored
+                            to Cloudflare. Export to keep a personal copy.
                         </p>
                     </section>
                 </div>

@@ -1,221 +1,122 @@
-# 📚 GoodBooksRecommender - Master Documentation Index
+# 📚 Documentation Index
 
-*Complete navigation guide for all project documentation*
+Single map of the repository's documentation. **Verified 2026-11-17** against the
+live deployment (`https://books.dalecabra.com`).
 
----
-
-## ⭐ START HERE — Canonical Docs (verified 2026-08-06)
-
-> Many legacy docs below are **stale/aspirational** (they claim production readiness the code
-> does not support). Trust these three first:
-
-| Document | Why read it |
-|----------|-------------|
-| [**HANDOFF.md**](HANDOFF.md) | ✅ Onboarding: current state, gotchas, first tasks. Read this first. |
-| [**Project Status**](docs/PROJECT_STATUS.md) | ✅ Honest single-source status (what works / what's broken). |
-| [**Deployment Plan**](docs/DEPLOYMENT_PLAN.md) | ✅ Robust P0–P4 roadmap to a deployable system. |
+> Rule: if a document disagrees with the code or the live API, the document is
+> wrong — fix it in the same change. Historical reports live in
+> [`docs/archive/`](docs/archive/README.md) and are never authoritative.
 
 ---
 
-## 🚀 Quick Start Paths
+## ⭐ Start here
 
-### For New Users
-1. [**Getting Started**](README.md) - Project overview and basic setup
-2. [**User Guide**](docs/USER_GUIDE.md) - How to use the recommendation API
-3. [**API Reference**](docs/API_REFERENCE.md) - Complete API documentation
-
-### For Developers
-1. [**Developer Guide**](docs/DEVELOPER_GUIDE.md) - Development environment setup
-2. [**Architecture Overview**](docs/ARCHITECTURE.md) - System design and components
-3. [**Testing Guide**](docs/TESTING_GUIDE.md) - Testing strategies and requirements
-
-### For DevOps/SRE
-1. [**Deployment Guide**](docs/DEPLOYMENT_GUIDE.md) - Production deployment instructions
-2. [**Security Guide**](docs/SECURITY_GUIDE.md) - Security implementation details
-3. [**Troubleshooting**](docs/TROUBLESHOOTING.md) - Common issues and solutions
+| Audience | Document | Why |
+|---|---|---|
+| Humans joining the project | [**HANDOFF.md**](HANDOFF.md) | Current state, architecture in one diagram, first tasks, landmines |
+| AI agents / contributors | [**AGENTS.md**](AGENTS.md) | Golden rules, commands, change recipes, testing expectations |
+| Anyone touching production | [**docs/LIVE_ARCHITECTURE_RUNBOOK.md**](docs/LIVE_ARCHITECTURE_RUNBOOK.md) | Deploy runbook, endpoint tables, verification logs |
+| Anyone asking "does it work?" | [**docs/PROJECT_STATUS.md**](docs/PROJECT_STATUS.md) | Honest status: live vs partial vs legacy |
+| Customer accounts / data | [**docs/ACCOUNTS.md**](docs/ACCOUNTS.md) | D1 contract, security model, upgrade context, dead ends |
 
 ---
 
-## 📖 Complete Documentation Map
+## 🎯 By task
 
-### 🏗️ System Architecture & Design
-
-| Document | Description | Audience | Last Updated |
-|----------|-------------|----------|--------------|
-| [**Architecture Overview**](docs/ARCHITECTURE.md) | High-level system design and component interaction | All | 2024-01-15 |
-| [**Pipeline Architecture**](docs/PIPELINE_ARCHITECTURE.md) | ML pipeline design and data flow | ML Engineers, Developers | 2024-01-10 |
-| [**Repository Governance**](REPOSITORY_GOVERNANCE.md) | Repository standards and management guidelines | All Contributors | 2024-01-15 |
-
-### 🔍 False News Detection System
-
-| Document | Description | Audience | Status |
-|----------|-------------|----------|--------|
-| [**System Overview**](docs/FALSE_NEWS_DETECTION_SYSTEM.md) | Complete architecture and module design | All | ✅ Complete |
-| [**Development Tasks**](docs/FALSE_NEWS_DETECTION_TASKS.md) | Step-by-step implementation roadmap | Developers | ✅ Complete |
-| [**Implementation Plan**](docs/FALSE_NEWS_DETECTION_PLAN.md) | Modular development and integration strategy | Technical Leads | ✅ Complete |
-| [**Quick Start Guide**](docs/FALSE_NEWS_DETECTION_QUICKSTART.md) | Fast setup and basic usage | Developers | ✅ Complete |
-| [**Integration Examples**](docs/FALSE_NEWS_DETECTION_INTEGRATION_EXAMPLE.md) | Practical integration code examples | Developers | ✅ Complete |
-
-### 📡 API Documentation
-
-| Document | Description | Coverage | Format |
-|----------|-------------|----------|--------|
-| [**API Reference**](docs/API_REFERENCE.md) | Complete endpoint documentation | All APIs | OpenAPI 3.0 |
-| [**Authentication Guide**](docs/SECURITY_GUIDE.md#authentication) | OAuth2/JWT implementation details | Auth APIs | Detailed |
-| [**Rate Limiting**](docs/SECURITY_GUIDE.md#rate-limiting) | Rate limiting configuration and usage | All APIs | Implementation |
-
-### 🛠️ Development & Setup
-
-| Document | Purpose | Prerequisites | Complexity |
-|----------|---------|---------------|------------|
-| [**Developer Guide**](docs/DEVELOPER_GUIDE.md) | Complete development environment setup | Python 3.10+, Docker | Intermediate |
-| [**Testing Guide**](docs/TESTING_GUIDE.md) | Testing strategies and framework usage | Development setup | Intermediate |
-| [**CI/CD Pipeline Guide**](docs/CICD_PIPELINE_GUIDE.md) | Continuous integration and deployment | DevOps knowledge | Advanced |
-
-### 🚀 Deployment & Operations
-
-| Document | Environment | Complexity | Dependencies |
-|----------|-------------|------------|--------------|
-| [**Deployment Guide**](docs/DEPLOYMENT_GUIDE.md) | Production deployment with Docker/K8s | Advanced | Docker, Kubernetes |
-| [**Load Balancer Guide**](docs/LOAD_BALANCER_GUIDE.md) | High availability setup | Advanced | Nginx, HAProxy |
-| [**Redis Cluster Guide**](docs/REDIS_CLUSTER_GUIDE.md) | Distributed caching setup | Intermediate | Redis Cluster |
-
-### 🔒 Security & Compliance
-
-| Document | Focus Area | Compliance | Implementation |
-|----------|------------|------------|----------------|
-| [**Security Guide**](docs/SECURITY_GUIDE.md) | Complete security implementation | OWASP Top 10 | Detailed |
-| [**Security Matrix**](docs/SECURITY_MATRIX.md) | Security controls mapping | SOC 2, ISO 27001 | Compliance |
-| [**Security Pipeline Checklist**](docs/SECURITY_PIPELINE_CHECKLIST.md) | Automated security validation | DevSecOps | Checklist |
-
-### 📊 Performance & Monitoring
-
-| Document | Metrics | Tools | Audience |
-|----------|---------|-------|----------|
-| [**ML Pipeline Enhancements**](docs/ML_PIPELINE_ENHANCEMENTS.md) | Performance optimization strategies | MLflow, Prometheus | ML Engineers |
-| [**Monitoring Setup**](monitoring/) | Production monitoring configuration | Grafana, Prometheus | DevOps |
-
-### 🔧 Troubleshooting & Support
-
-| Document | Issue Type | Complexity | Solutions |
-|----------|------------|------------|-----------|
-| [**Troubleshooting Guide**](docs/TROUBLESHOOTING.md) | Common runtime issues | All levels | Step-by-step |
-| [**Performance Issues**](docs/TROUBLESHOOTING.md#performance) | Performance degradation | Intermediate | Diagnostic |
-| [**Security Issues**](docs/TROUBLESHOOTING.md#security) | Security-related problems | Advanced | Incident response |
+| I want to… | Read |
+|---|---|
+| Run the app locally | [HANDOFF.md § In 5 minutes](HANDOFF.md), [docs/DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md) |
+| Deploy | [docs/LIVE_ARCHITECTURE_RUNBOOK.md](docs/LIVE_ARCHITECTURE_RUNBOOK.md), [docs/DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md) |
+| Understand the API | [API_CATALOG.md](API_CATALOG.md) (live), [docs/ACCOUNTS.md](docs/ACCOUNTS.md), [docs/API_REFERENCE.md](docs/API_REFERENCE.md) (legacy FastAPI) |
+| Change accounts or the D1 schema | [docs/ACCOUNTS.md](docs/ACCOUNTS.md), [AGENTS.md § Recipes](AGENTS.md) |
+| Understand the data layer | [docs/DATA_LAYER.md](docs/DATA_LAYER.md) |
+| Change the recommender | [docs/DATA_LAYER.md](docs/DATA_LAYER.md), [ARCHITECTURE.md § 4](ARCHITECTURE.md) |
+| Find a file | [CODEMAP.md](CODEMAP.md) |
+| Write tests | [docs/TESTING_GUIDE.md](docs/TESTING_GUIDE.md), [TEST_MATRIX.md](TEST_MATRIX.md) |
+| Ship a change safely | [AGENTS.md § Recipes](AGENTS.md), [CONTRIBUTING.md](CONTRIBUTING.md) |
+| Understand security controls | [SECURITY.md](SECURITY.md), [docs/SECURITY_GUIDE.md](docs/SECURITY_GUIDE.md) |
+| See what changed | [CHANGELOG.md](CHANGELOG.md) |
+| Find the old "mission complete" reports / roadmap | [docs/archive/](docs/archive/README.md) |
 
 ---
 
-## 🎯 Documentation by User Role
+## 🟢 Living documents (authoritative)
 
-### 👤 End Users (API Consumers)
-**Primary Path**: User Guide → API Reference → Examples
-- [User Guide](docs/USER_GUIDE.md)
-- [API Reference](docs/API_REFERENCE.md)
-- [Authentication Setup](docs/SECURITY_GUIDE.md#api-authentication)
-- [Rate Limiting Info](docs/SECURITY_GUIDE.md#rate-limiting)
+| Document | Covers | Verified |
+|---|---|---|
+| [HANDOFF.md](HANDOFF.md) | Human onboarding, current state, landmines | 2026-11-17 |
+| [AGENTS.md](AGENTS.md) | Agent handbook: rules, commands, recipes | 2026-11-17 |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Deployed topology, state model, security boundaries | 2026-11-17 |
+| [CODEMAP.md](CODEMAP.md) | What every directory is and whether it deploys | 2026-11-17 |
+| [docs/LIVE_ARCHITECTURE_RUNBOOK.md](docs/LIVE_ARCHITECTURE_RUNBOOK.md) | Operations, endpoints, incidents, verification logs | 2026-11-17 |
+| [docs/ACCOUNTS.md](docs/ACCOUNTS.md) | Accounts on D1: API, schema, client, upgrade context | 2026-11-17 |
+| [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md) | Honest status by dimension | 2026-11-17 |
+| [docs/DATA_LAYER.md](docs/DATA_LAYER.md) | Data flow, recommender rationale, catalog sync | 2026-11-17 |
+| [API_CATALOG.md](API_CATALOG.md) | Short endpoint catalogue | 2026-08 |
+| [CHANGELOG.md](CHANGELOG.md) | Release notes (Keep a Changelog) | per release |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Contribution workflow | 2026-08 |
+| [SECURITY.md](SECURITY.md) | Security policy + controls | 2026-08 |
+| [PROJECT_BRIEF.md](PROJECT_BRIEF.md) | One-page product brief | 2026-08 |
+| [DATA_MODEL.md](DATA_MODEL.md) | Book/user data shapes | 2026-08 |
+| [TEST_MATRIX.md](TEST_MATRIX.md) | Test coverage by area | 2026-08 |
+| [BENCHMARKS.md](BENCHMARKS.md) | Performance targets | 2026-08 |
+| [REPOSITORY_GOVERNANCE.md](REPOSITORY_GOVERNANCE.md) | Repo conventions | 2026-08 |
 
-### 👨‍💻 Frontend/Mobile Developers
-**Primary Path**: API Reference → Integration Examples → Authentication
-- [API Reference](docs/API_REFERENCE.md)
-- [Integration Examples](docs/FALSE_NEWS_DETECTION_INTEGRATION_EXAMPLE.md)
-- [Authentication Guide](docs/SECURITY_GUIDE.md#authentication)
-- [Error Handling](docs/API_REFERENCE.md#error-handling)
+## 🟡 Guides for the optional/legacy stack
 
-### 🔬 ML Engineers
-**Primary Path**: Architecture → Pipeline → Enhancement Guides
-- [Architecture Overview](docs/ARCHITECTURE.md)
-- [Pipeline Architecture](docs/PIPELINE_ARCHITECTURE.md)
-- [ML Pipeline Enhancements](docs/ML_PIPELINE_ENHANCEMENTS.md)
-- [False News Detection System](docs/FALSE_NEWS_DETECTION_SYSTEM.md)
+These describe the Python/ML infrastructure that is **not** in the deploy path.
+Read them only if you are reviving that stack.
 
-### 🏗️ Backend Developers
-**Primary Path**: Developer Guide → Architecture → Testing
-- [Developer Guide](docs/DEVELOPER_GUIDE.md)
-- [Architecture Overview](docs/ARCHITECTURE.md)
-- [Testing Guide](docs/TESTING_GUIDE.md)
-- [Security Implementation](docs/SECURITY_GUIDE.md)
+[docs/API_REFERENCE.md](docs/API_REFERENCE.md) ·
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) ·
+[docs/TECHNICAL_ARCHITECTURE.md](docs/TECHNICAL_ARCHITECTURE.md) ·
+[docs/PIPELINE_ARCHITECTURE.md](docs/PIPELINE_ARCHITECTURE.md) ·
+[docs/DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md) ·
+[docs/DEPLOYMENT_PLAN.md](docs/DEPLOYMENT_PLAN.md) ·
+[docs/DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md) ·
+[docs/TESTING_GUIDE.md](docs/TESTING_GUIDE.md) ·
+[docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) ·
+[docs/SECURITY_GUIDE.md](docs/SECURITY_GUIDE.md) ·
+[docs/SECURITY_MATRIX.md](docs/SECURITY_MATRIX.md) ·
+[docs/SECURITY_PIPELINE_CHECKLIST.md](docs/SECURITY_PIPELINE_CHECKLIST.md) ·
+[docs/LOAD_BALANCER_GUIDE.md](docs/LOAD_BALANCER_GUIDE.md) ·
+[docs/REDIS_CLUSTER_GUIDE.md](docs/REDIS_CLUSTER_GUIDE.md) ·
+[docs/ML_PIPELINE_ENHANCEMENTS.md](docs/ML_PIPELINE_ENHANCEMENTS.md) ·
+[docs/CICD_PIPELINE_GUIDE.md](docs/CICD_PIPELINE_GUIDE.md) ·
+[docs/TYPESCRIPT_ARCHITECTURE.md](docs/TYPESCRIPT_ARCHITECTURE.md) ·
+[docs/IMPLEMENTATION_GUIDE.md](docs/IMPLEMENTATION_GUIDE.md) ·
+[docs/USER_GUIDE.md](docs/USER_GUIDE.md) ·
+[docs/USER_GROWTH.md](docs/USER_GROWTH.md) ·
+[docs/SOCIAL_LAUNCH.md](docs/SOCIAL_LAUNCH.md) ·
+[docs/UX_PREMIUM_UPGRADE.md](docs/UX_PREMIUM_UPGRADE.md) ·
+[docs/NEWSLETTER_ARCHITECTURE.md](docs/NEWSLETTER_ARCHITECTURE.md) ·
+[docs/NEWS_EXPANSION_ARCHITECTURE.md](docs/NEWS_EXPANSION_ARCHITECTURE.md) ·
+[docs/ENHANCED_FEATURES_GUIDE.md](docs/ENHANCED_FEATURES_GUIDE.md) ·
+[docs/KINDLE_DASHBOARD_GUIDE.md](docs/KINDLE_DASHBOARD_GUIDE.md) ·
+[docs/AI_NEWS_ENGINE_ARCHITECTURE.md](docs/AI_NEWS_ENGINE_ARCHITECTURE.md) ·
+[docs/AI_NEWS_ENGINE_IMPLEMENTATION.md](docs/AI_NEWS_ENGINE_IMPLEMENTATION.md) ·
+[docs/AI_NEWS_ENGINE_WIREFRAMES.md](docs/AI_NEWS_ENGINE_WIREFRAMES.md) ·
+[docs/FALSE_NEWS_DETECTION_SYSTEM.md](docs/FALSE_NEWS_DETECTION_SYSTEM.md) ·
+[docs/FALSE_NEWS_DETECTION_PLAN.md](docs/FALSE_NEWS_DETECTION_PLAN.md) ·
+[docs/FALSE_NEWS_DETECTION_TASKS.md](docs/FALSE_NEWS_DETECTION_TASKS.md) ·
+[docs/FALSE_NEWS_DETECTION_QUICKSTART.md](docs/FALSE_NEWS_DETECTION_QUICKSTART.md) ·
+[docs/FALSE_NEWS_DETECTION_INTEGRATION_EXAMPLE.md](docs/FALSE_NEWS_DETECTION_INTEGRATION_EXAMPLE.md)
 
-### 🚀 DevOps/SRE Engineers
-**Primary Path**: Deployment → Security → Monitoring
-- [Deployment Guide](docs/DEPLOYMENT_GUIDE.md)
-- [Security Guide](docs/SECURITY_GUIDE.md)
-- [Load Balancer Setup](docs/LOAD_BALANCER_GUIDE.md)
-- [Monitoring Configuration](monitoring/)
+## 🗄️ Historical
 
-### 👨‍💼 Technical Leads/Architects
-**Primary Path**: Architecture → Governance → Planning
-- [Architecture Overview](docs/ARCHITECTURE.md)
-- [Repository Governance](REPOSITORY_GOVERNANCE.md)
-- [False News Detection Plan](docs/FALSE_NEWS_DETECTION_PLAN.md)
-- [Security Matrix](docs/SECURITY_MATRIX.md)
-
----
-
-## 🔍 Documentation Search & Navigation
-
-### Quick Reference Links
-- **🚨 Emergency**: [Troubleshooting](docs/TROUBLESHOOTING.md) | [Security Incidents](docs/SECURITY_GUIDE.md#incident-response)
-- **🔧 Setup**: [Developer Guide](docs/DEVELOPER_GUIDE.md) | [Deployment](docs/DEPLOYMENT_GUIDE.md)
-- **📋 Reference**: [API Docs](docs/API_REFERENCE.md) | [Architecture](docs/ARCHITECTURE.md)
-- **🧪 Testing**: [Testing Guide](docs/TESTING_GUIDE.md) | [CI/CD](docs/CICD_PIPELINE_GUIDE.md)
-
-### Navigation Tips
-1. **Use Ctrl+F** to search within documents
-2. **Check Table of Contents** at the beginning of each document
-3. **Follow cross-references** for related information
-4. **Check "Last Updated"** dates for document freshness
-5. **Use GitHub's search** for repository-wide content search
-
-### Documentation Feedback
-Found an issue or gap in documentation? Please:
-1. **Check existing issues** for similar problems
-2. **Create a detailed issue** with specific feedback
-3. **Suggest improvements** with concrete examples
-4. **Contribute fixes** via pull requests
-
----
-
-## 📈 Documentation Health Dashboard
-
-### Coverage Status
-- ✅ **Core Features**: 100% documented
-- ✅ **API Endpoints**: 100% documented
-- ✅ **Security Features**: 100% documented
-- 🔄 **False News Detection**: 90% documented (in progress)
-- ✅ **Deployment**: 100% documented
-
-### Recent Updates
-- **2024-01-15**: Added Repository Governance standards
-- **2024-01-14**: Completed False News Detection documentation
-- **2024-01-10**: Updated CI/CD pipeline documentation
-- **2024-01-08**: Enhanced security implementation guides
-
-### Planned Improvements
-- [ ] Interactive API documentation with Swagger UI
-- [ ] Video tutorials for complex setup procedures
-- [ ] Automated documentation testing and validation
-- [ ] Multi-language documentation support
-- [ ] Enhanced search and filtering capabilities
+[docs/archive/](docs/archive/README.md) — progress reports, "mission complete"
+announcements, wireframes and plans that are finished, superseded, or were never
+deployed. **Never cite them as current behaviour.**
 
 ---
 
-## 🤝 Contributing to Documentation
+## 🧹 Documentation rules
 
-### Documentation Standards
-All documentation follows the [Repository Governance](REPOSITORY_GOVERNANCE.md) standards:
-- **Clear structure** with table of contents
-- **Practical examples** for all concepts
-- **Cross-references** to related documentation
-- **Regular updates** with version tracking
-- **Accessibility compliance** for all users
-
-### How to Contribute
-1. **Read the governance standards** before starting
-2. **Follow the documentation templates** in `.github/templates/`
-3. **Test all code examples** before submitting
-4. **Request review** from documentation maintainers
-5. **Update the index** when adding new documents
-
----
-
-*Last Updated: 2024-01-15 | Maintained by: Senior Technical Documentation Team*
+1. **One canonical file per topic.** If two documents describe the same thing,
+   merge them and leave a pointer.
+2. **No new root-level reports.** Progress goes in [CHANGELOG.md](CHANGELOG.md);
+   living docs go in `docs/`; history goes to `docs/archive/`.
+3. **Update this index** whenever a document is added, moved, or retired.
+4. **Links must resolve** — run `npm run docs:check` (CI-friendly, exits 1 on a
+   broken relative link).
+5. **State the verification date** in any document that describes production.

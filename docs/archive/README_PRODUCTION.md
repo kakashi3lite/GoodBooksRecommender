@@ -345,11 +345,11 @@ kubectl apply -f k8s/
 
 ## 📚 Documentation
 
-- **[API Reference](docs/API_REFERENCE.md)** - Complete API documentation
-- **[Architecture Guide](docs/ARCHITECTURE.md)** - System architecture details
-- **[Deployment Guide](docs/DEPLOYMENT_GUIDE.md)** - Production deployment
-- **[Developer Guide](docs/DEVELOPER_GUIDE.md)** - Development setup
-- **[Testing Guide](docs/TESTING_GUIDE.md)** - Testing strategies
+- **[API Reference](../API_REFERENCE.md)** - Complete API documentation
+- **[Architecture Guide](../ARCHITECTURE.md)** - System architecture details
+- **[Deployment Guide](../DEPLOYMENT_GUIDE.md)** - Production deployment
+- **[Developer Guide](../DEVELOPER_GUIDE.md)** - Development setup
+- **[Testing Guide](../TESTING_GUIDE.md)** - Testing strategies
 
 ## 🐛 Troubleshooting
 
@@ -368,7 +368,7 @@ python -m uvicorn src.api.main:app --reload
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](../../LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 

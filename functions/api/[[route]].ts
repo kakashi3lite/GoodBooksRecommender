@@ -14,7 +14,7 @@ export const onRequest: PagesFunction = async () =>
         JSON.stringify({
             error: 'not_found',
             message:
-                'This endpoint does not exist. Known API groups: /api/books, /api/ai. The database layer activates when SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY are set.'
+                'This endpoint does not exist. Known API groups: /api/books, /api/accounts, /api/ai, /api/reading.'
         }),
         {
             status: 404,

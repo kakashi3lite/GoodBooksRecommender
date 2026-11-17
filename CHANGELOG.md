@@ -5,6 +5,79 @@ All notable changes to the GoodBooks Recommender Dashboard will be documented in
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.7.0] - 2026-11-17
+
+### 👤 Customer accounts now persist in Cloudflare D1
+- **Root cause:** onboarding never left the browser. `syncUserAccount()` returned
+  `{ synced: false }` unconditionally because `VITE_SUPABASE_URL` was not set at
+  build time and the Pages project had **no `SUPABASE_URL`** — and even wired up,
+  the `profiles` table could not accept the payload (`id uuid → auth.users`,
+  `display_name`, no insert policy). Accounts were 100% localStorage.
+- **New durable store:** Cloudflare **D1** database `goodbooks-accounts`
+  (binding `DB`, `[[d1_databases]]` in `wrangler.toml`), schema in `d1/schema.sql`
+  — `accounts` (unique case-insensitive email, profile fields, SHA-256 of the
+  account key) plus `account_events` for audit. No external credentials, no pool,
+  no cold start; the email lookup uses `accounts_email_uidx`
+  (`EXPLAIN QUERY PLAN` verified).
+- **New edge API** `functions/api/accounts/[[route]].ts`:
+  `GET /api/accounts` (health: `{database:"d1",count}`), `POST` (create → 201 +
+  one-time 256-bit key, idempotent on repeat), `GET/PATCH/DELETE /api/accounts/:email`
+  (writes require `X-Account-Key`, constant-time hash compare), `405 + Allow` for
+  unsupported verbs, `503` when the binding is missing, `Cache-Control: no-store`.
+- **Client:** `src/lib/accountApi.ts` (same-origin, 6 s timeout, never throws,
+  account-key storage, shared email rule) behind `src/lib/userRepository.ts` and
+  the `syncAccountToServer` thunk. `localStorage` remains the offline copy.
+- **Product surfaces:** Settings → Account shows *Saved to Cloudflare* or
+  *Local only* and offers a two-tap **Delete my account**; Sign Out relinquishes
+  this device's key (shared-browser safety) while the row survives.
+
+### 🧹 Repository hygiene & Cloudflare environment
+- Deleted generated artifacts that had been committed: 7
+  `kindle_dashboard_validation_*.json` reports and an empty
+  `.env.monitoring.example`.
+- Removed the dead browser Supabase client (`src/lib/supabaseClient.ts`) and the
+  `@supabase/supabase-js` dependency — nothing imported it after accounts moved
+  to D1.
+- `docs/supabase/schema.sql` no longer duplicates DDL; it documents the apply
+  order for `supabase/migrations/*.sql` (the single source of truth).
+- Non-secret runtime config now lives in `wrangler.toml [vars]` (`SUPABASE_URL`):
+  a var added only in the dashboard did not reach the Functions runtime on a
+  `wrangler pages deploy`. Documented, with the "never PATCH
+  `deployment_configs`" rule, in `AGENTS.md` §3b.
+- ⚠️ While adding that var, the existing secret values were overwritten with
+  empty strings. **Account creation, the catalog, D1 and the UI are unaffected**;
+  AI chat now uses the local hybrid engine until `MINIMAX_API_KEY` (or
+  `OPENAI_API_KEY`) and `SUPABASE_SERVICE_ROLE_KEY` are re-entered with
+  `wrangler pages secret put`.
+
+### 🐞 Defects found while verifying (all fixed)
+- Percent-encoded emails (`encodeURIComponent` → `%40`) were rejected by the API.
+- `PUT /api/accounts` fell through to the `/api/*` catch-all → misleading 404.
+- Onboarding fired **two** concurrent creates (201 + 200 race) → per-email
+  in-flight dedupe.
+- Sign Out / Delete never returned to the onboarding gate: the session flag was
+  memoised at mount and not cleared on logout.
+- Settings changes (goal, pace) were swallowed by the 5-minute mount debounce →
+  `syncAccountToServer({ force: true })`.
+- Delete → re-signup with the same email was suppressed by a stale sync marker.
+
+### ✅ Verified
+Headless Chromium against `https://books.dalecabra.com`: gate → onboarding →
+exactly one `POST` (201) → reload restores the reader → Settings reports
+*Saved to Cloudflare* → delete (200) → signed out → gate returns. Mobile
+390×844: skip-as-guest, hamburger, all routes, live search. API: concurrent
+creates collapse to one row, `+`-addressing, uppercase normalisation, 401/404/405/503.
+Suite: 29 files / 183 tests. Full contract and upgrade context:
+`docs/ACCOUNTS.md`.
+
+### 📚 Documentation reorganised
+- New `docs/ACCOUNTS.md` (contract, security model, upgrade context, dead ends).
+- 38 historical root reports moved to `docs/archive/` (history preserved via
+  `git mv`); `HANDOFF.md`, `AGENTS.md`, `CODEMAP.md`, `ARCHITECTURE.md` and
+  `DOCUMENTATION_INDEX.md` rewritten against the deployed system.
+- `npm run docs:check` (`scripts/check-docs-links.cjs`) verifies every relative
+  link — 111 files / 204 links, all resolving.
+
 ## [2.6.0] - 2026-11-17
 
 ### 📰 Book News actually has news

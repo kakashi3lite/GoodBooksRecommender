@@ -1,31 +1,136 @@
 /**
- * 🗄️ User Repository Tests (real module, unconfigured)
- * Chain-of-Thought: Without Supabase env vars, the repository must degrade to
- * { synced: false } / null — never throw, never touch the network.
+ * 🗄️ User Repository Tests — Cloudflare D1 account persistence
+ *
+ * Chain-of-Thought: the repository must (1) mirror the local account into D1
+ * through the same-origin `/api/accounts` function, (2) remember the account
+ * key so later writes update the same row instead of duplicating it, and
+ * (3) degrade to `{ synced: false }` / `null` when the network or the binding
+ * is unavailable — never throw into a reducer.
  */
 
-import { describe, expect, it } from 'vitest'
-import { isSupabaseConfigured } from '../src/lib/supabaseClient'
-import { fetchUserAccount, syncUserAccount } from '../src/lib/userRepository'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { getAccountKey } from '../src/lib/accountApi'
+import {
+    deleteUserAccount,
+    fetchUserAccount,
+    syncUserAccount
+} from '../src/lib/userRepository'
 
-describe('userRepository (unconfigured)', () => {
-    it('is not configured when env vars are absent', () => {
-        expect(isSupabaseConfigured()).toBe(false)
+const jsonResponse = (body: unknown, status = 200): Response =>
+    new Response(JSON.stringify(body), {
+        status,
+        headers: { 'Content-Type': 'application/json' }
     })
 
-    it('syncUserAccount returns { synced: false } without throwing', async () => {
-        const result = await syncUserAccount({
-            email: 'a@b.co',
-            name: 'Ada',
+const account = {
+    id: 'acc-1',
+    email: 'ada@example.com',
+    name: 'Ada',
+    favoriteGenres: ['Fiction'],
+    preferredMoods: ['cozy'],
+    readingGoal: 12,
+    readingLevel: 'novice',
+    createdAt: '2026-11-17T00:00:00.000Z',
+    updatedAt: '2026-11-17T00:00:00.000Z'
+}
+
+const syncInput = {
+    email: 'ada@example.com',
+    name: 'Ada',
+    favoriteGenres: ['Fiction'],
+    preferredMoods: ['cozy'],
+    readingGoal: 12,
+    readingLevel: 'novice'
+}
+
+describe('userRepository → /api/accounts (D1)', () => {
+    beforeEach(() => {
+        localStorage.clear()
+    })
+
+    afterEach(() => {
+        vi.unstubAllGlobals()
+        vi.restoreAllMocks()
+    })
+
+    it('creates the account and remembers the returned account key', async () => {
+        const fetchMock = vi
+            .fn()
+            .mockResolvedValue(jsonResponse({ created: true, accountKey: 'key-123', account }, 201))
+        vi.stubGlobal('fetch', fetchMock)
+
+        const result = await syncUserAccount(syncInput)
+
+        expect(result).toMatchObject({ synced: true, email: 'ada@example.com', created: true })
+        expect(fetchMock).toHaveBeenCalledTimes(1)
+        const [url, init] = fetchMock.mock.calls[0]
+        expect(url).toBe('/api/accounts')
+        expect(init.method).toBe('POST')
+        expect(JSON.parse(init.body)).toMatchObject({
+            email: 'ada@example.com',
             favoriteGenres: ['Fiction'],
-            readingGoal: 12,
-            readingLevel: 'novice'
+            preferredMoods: ['cozy'],
+            readingGoal: 12
         })
-        expect(result.synced).toBe(false)
+        expect(getAccountKey('ada@example.com')).toBe('key-123')
     })
 
-    it('fetchUserAccount returns null without throwing', async () => {
-        const result = await fetchUserAccount('nobody@example.com')
-        expect(result).toBeNull()
+    it('proves ownership with the stored key when syncing again', async () => {
+        const fetchMock = vi
+            .fn()
+            .mockResolvedValueOnce(jsonResponse({ created: true, accountKey: 'key-123', account }, 201))
+            .mockResolvedValueOnce(jsonResponse({ created: false, account }))
+        vi.stubGlobal('fetch', fetchMock)
+
+        await syncUserAccount(syncInput)
+        // The mount-level debounce must not hide a genuine update.
+        localStorage.removeItem('goodbooks_sync_marker')
+        await syncUserAccount({ ...syncInput, name: 'Ada Lovelace' })
+
+        const [, secondInit] = fetchMock.mock.calls[1]
+        expect(secondInit.headers['X-Account-Key']).toBe('key-123')
+    })
+
+    it('returns { synced: false } when the network is unreachable', async () => {
+        vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')))
+
+        await expect(syncUserAccount(syncInput)).resolves.toMatchObject({ synced: false })
+    })
+
+    it('maps a stored account into the legacy snake_case profile shape', async () => {
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ account })))
+
+        await expect(fetchUserAccount('ada@example.com')).resolves.toEqual({
+            email: 'ada@example.com',
+            name: 'Ada',
+            favorite_genres: ['Fiction'],
+            reading_goal: 12,
+            reading_level: 'novice',
+            updated_at: account.updatedAt
+        })
+    })
+
+    it('returns null when the account does not exist', async () => {
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ error: 'not_found' }, 404)))
+
+        await expect(fetchUserAccount('nobody@example.com')).resolves.toBeNull()
+    })
+
+    it('deletes the account, forgets the local key and clears the sync marker', async () => {
+        vi.stubGlobal(
+            'fetch',
+            vi
+                .fn()
+                .mockResolvedValueOnce(jsonResponse({ created: true, accountKey: 'key-123', account }, 201))
+                .mockResolvedValueOnce(jsonResponse({ deleted: true }))
+        )
+
+        await syncUserAccount(syncInput)
+        expect(localStorage.getItem('goodbooks_sync_marker')).not.toBeNull()
+
+        await expect(deleteUserAccount('ada@example.com')).resolves.toBe(true)
+        expect(getAccountKey('ada@example.com')).toBeNull()
+        // A re-signup with the same email must not be debounced away.
+        expect(localStorage.getItem('goodbooks_sync_marker')).toBeNull()
     })
 })

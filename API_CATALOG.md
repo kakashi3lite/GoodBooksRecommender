@@ -6,20 +6,52 @@
 
 ## Live API (Cloudflare Pages Functions — deployed on books.dalecabra.com)
 
+All routes are same-origin, return `application/json`, and are safe to call
+without a key. Full contracts: [`docs/ACCOUNTS.md`](docs/ACCOUNTS.md),
+[`docs/DATA_LAYER.md`](docs/DATA_LAYER.md),
+[`docs/LIVE_ARCHITECTURE_RUNBOOK.md`](docs/LIVE_ARCHITECTURE_RUNBOOK.md).
+
 | Method | Path | Description | Auth |
 |--------|------|-------------|------|
-| GET | `/api/books` | Curated catalog (24 books) | None |
-| GET | `/api/books/search?q=` | Catalog search | None |
-| GET | `/api/books/recommend` | Profile recommendations | None |
-| GET | `/api/books/trending` | Open Library trending (TTL-cached) | None |
-| GET | `/api/books/web-search?q=` | Web book search (Google Books + Open Library) | None |
+| GET | `/api/books` | Full catalog (`{data, source, count}`) | None |
+| GET | `/api/books/search?q=` | Catalog text search | None |
+| GET | `/api/books/web-search?q=&limit=` | Live web search (Open Library + Google Books) | None |
+| GET | `/api/books/recommend` | Recommendations (`prefs`, `genres`, `q`, `similar_to`, `limit`, `exclude`) | None |
+| GET | `/api/books/trending?limit=` | Trending from the web (TTL-cached) | None |
 | GET | `/api/books/resolve?isbn=\|key=` | Resolve a book by ISBN / OL key | None |
 | GET | `/api/books/insights?isbn=\|id=` | Real book facts + genre expectation | None |
-| GET | `/api/news` | Book news from Google News RSS | None |
-| POST | `/api/ai/chat` | Conversational reading companion | None |
+| GET | `/api/books/:id` | Single catalog book | None |
+| GET | `/api/books/:id/similar` | "More like this" (TF-IDF cosine) | None |
+| GET | `/api/news`, `/api/news/*` | Latest book news (publisher RSS, merged newest-first) | None |
+| POST | `/api/ai/chat` | Conversational companion (see below) | None |
 | POST | `/api/ai/insight` | Reading reflection from real stats | None |
-| GET | `/api/analytics/dashboard` | Analytics overview | None |
-| GET | `/api/analytics/reading` | Reading analytics | None |
+| GET | `/api/analytics/dashboard` | Performance-panel contract | None |
+| GET | `/api/analytics/reading` | Catalog-derived reading metrics | None |
+| POST | `/api/reading` | Mirror a reading event (`stored:false` while Supabase is unset) | None |
+| GET | `/api/reading` | **405 by design** — reading data is write-only | — |
+| GET | `/api/accounts` | Accounts health: `{database:"d1", count}` | None |
+| POST | `/api/accounts` | Create account → `201` + one-time `accountKey`; repeat → `200 {created:false,exists:true}` | None |
+| GET | `/api/accounts/:email` | Public profile (never the key/hash) | None |
+| PATCH | `/api/accounts/:email` | Update profile | `X-Account-Key` |
+| DELETE | `/api/accounts/:email` | Delete account | `X-Account-Key` |
+| * | `/api/*` (anything else) | JSON `404 {error:"not_found"}` | — |
+
+Account payload (camelCase; snake_case also accepted):
+
+```jsonc
+{
+  "email": "reader@example.com",
+  "name": "Ada",
+  "favoriteGenres": ["Science Fiction"],
+  "preferredMoods": ["cozy"],
+  "readingGoal": 24,
+  "readingLevel": "novice"   // novice | intermediate | expert
+}
+```
+
+Account status codes: `201` created · `200` exists/updated · `400 invalid_email`
+/ `invalid_name` / `invalid` · `401 missing_key` / `invalid_key` · `404
+not_found` · `405 method_not_allowed` (+ `Allow`) · `503 database_not_configured`.
 
 ### POST /api/ai/chat — personalized conversational recommendations
 

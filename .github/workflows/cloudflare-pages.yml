@@ -1,7 +1,8 @@
 # 🚀 Cloudflare Pages — the single authoritative pipeline
 # Pushes to `main` build the app and deploy it to Cloudflare Pages.
 # Required repo secrets:
-#   CLOUDFLARE_API_TOKEN   (Pages:Edit permission)
+#   CLOUDFLARE_API_TOKEN   (Pages:Edit + D1:Edit — the D1 binding for
+#                           /api/accounts is read from wrangler.toml at deploy time)
 #   CLOUDFLARE_ACCOUNT_ID  (Cloudflare account id)
 #
 # Chain-of-Thought: this workflow is the ONLY pipeline for the deployed
@@ -64,6 +65,9 @@ jobs:
       - name: Test
         run: npm test
 
+      - name: Docs links
+        run: npm run docs:check
+
       - name: Build
         run: npm run build
 
@@ -123,6 +127,11 @@ jobs:
           # 2. Its edge API answers with real JSON.
           assert_serves "$target/api/books" "deployment api" '"data":' /tmp/books.json
           head -c 140 /tmp/books.json; echo
+
+          # 2b. The D1 binding for customer accounts is live (a missing binding
+          # answers 503 "database_not_configured" instead of this payload).
+          assert_serves "$target/api/accounts" "accounts api" '"database":"d1"' /tmp/accounts.json
+          head -c 140 /tmp/accounts.json; echo
 
           # 3. The canonical custom domain serves the promoted build.
           assert_serves "$PRODUCTION_URL/" "custom domain" 'id="root"' /tmp/prod.html

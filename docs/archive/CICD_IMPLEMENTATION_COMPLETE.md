@@ -223,11 +223,11 @@ kubectl get pods -n goodbooks
 
 ## 📚 Documentation Library
 
-1. **[CI/CD Pipeline Guide](docs/CICD_PIPELINE_GUIDE.md)** - Comprehensive pipeline documentation
-2. **[Security Checklist](docs/SECURITY_PIPELINE_CHECKLIST.md)** - OWASP/GDPR compliance checklist
-3. **[Pipeline Architecture](docs/PIPELINE_ARCHITECTURE.md)** - Visual architecture diagrams
-4. **[Security Matrix](docs/SECURITY_MATRIX.md)** - Security controls mapping
-5. **[Deployment Guide](docs/DEPLOYMENT_GUIDE.md)** - Step-by-step deployment procedures
+1. **[CI/CD Pipeline Guide](../CICD_PIPELINE_GUIDE.md)** - Comprehensive pipeline documentation
+2. **[Security Checklist](../SECURITY_PIPELINE_CHECKLIST.md)** - OWASP/GDPR compliance checklist
+3. **[Pipeline Architecture](../PIPELINE_ARCHITECTURE.md)** - Visual architecture diagrams
+4. **[Security Matrix](../SECURITY_MATRIX.md)** - Security controls mapping
+5. **[Deployment Guide](../DEPLOYMENT_GUIDE.md)** - Step-by-step deployment procedures
 
 ## 🎉 Project Success Metrics
 

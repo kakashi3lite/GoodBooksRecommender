@@ -7,6 +7,8 @@ import { configureStore } from '@reduxjs/toolkit'
 import { describe, expect, it } from 'vitest'
 import reducer, {
     addGoal,
+    logout,
+    register,
     toggleFavorite,
     updateGoalProgress,
     type UserSliceState
@@ -55,5 +57,19 @@ describe('userSlice', () => {
         expect((store.getState().user as UserSliceState).favorites).toContain('book-1')
         store.dispatch(toggleFavorite('book-1'))
         expect((store.getState().user as UserSliceState).favorites).not.toContain('book-1')
+    })
+
+    it('sign-out returns the reader to the gate (session flag cleared)', () => {
+        const store = createStore()
+        store.dispatch(register({ name: 'Ada', email: 'ada@example.com' }))
+        sessionStorage.setItem('goodbooks_onboarded', '1')
+
+        store.dispatch(logout())
+
+        const state = store.getState().user as UserSliceState
+        expect(state.isAuthenticated).toBe(false)
+        expect(state.hasCompletedOnboarding).toBe(false)
+        expect(localStorage.getItem('goodbooks_user')).toBeNull()
+        expect(sessionStorage.getItem('goodbooks_onboarded')).toBeNull()
     })
 })

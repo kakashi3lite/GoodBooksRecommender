@@ -28,27 +28,41 @@ The GoodBooksRecommender repository serves as a production-grade example of mode
 
 ## 🏗️ Documentation Standards
 
-### 1. Document Hierarchy
+### 1. Document Hierarchy (as of 2026-11-17)
+
+Root holds the canonical, frequently-read documents; everything else lives in
+`docs/`; history lives in `docs/archive/`.
+
 ```
-docs/
-├── README.md                    # Master documentation index
-├── ARCHITECTURE.md              # High-level system design
-├── API_REFERENCE.md             # Complete API documentation
-├── USER_GUIDE.md               # End-user documentation
-├── DEVELOPER_GUIDE.md          # Development setup and standards
-├── DEPLOYMENT_GUIDE.md         # Production deployment
-├── SECURITY_GUIDE.md           # Security implementation
-├── TESTING_GUIDE.md            # Testing strategies
-├── TROUBLESHOOTING.md          # Common issues and solutions
-├── modules/                    # Module-specific documentation
-│   ├── recommendation/         # Core ML system docs
-│   ├── fakenews/              # False news detection docs
-│   └── authentication/        # Auth system docs
-└── standards/                  # Coding and process standards
-    ├── CODING_STANDARDS.md
-    ├── REVIEW_PROCESS.md
-    └── RELEASE_PROCESS.md
+.
+├── README.md                  # Product overview + quick start
+├── HANDOFF.md                 # Human onboarding: current state, landmines
+├── AGENTS.md                  # Agent/contributor handbook: rules, commands, recipes
+├── ARCHITECTURE.md            # Deployed topology (Cloudflare Pages + D1)
+├── CODEMAP.md                 # What every directory is, and whether it deploys
+├── DOCUMENTATION_INDEX.md     # Every document, grouped by task
+├── API_CATALOG.md             # Live API surface (legacy API is a separate section)
+├── DATA_MODEL.md              # D1 tables + browser state + legacy models
+├── SECURITY.md                # Security policy and controls
+├── CONTRIBUTING.md            # Setup, gates, change recipes
+├── CHANGELOG.md               # Release notes (Keep a Changelog)
+├── PROJECT_BRIEF.md           # One-page brief
+├── TEST_MATRIX.md             # Test coverage map
+├── BENCHMARKS.md              # Performance targets + measurement
+└── docs/
+    ├── LIVE_ARCHITECTURE_RUNBOOK.md   # Operations (canonical runbook)
+    ├── ACCOUNTS.md                    # Accounts on D1 + upgrade context
+    ├── DATA_LAYER.md                  # Data flow + recommender rationale
+    ├── PROJECT_STATUS.md              # Honest status
+    ├── API_REFERENCE.md               # ⚠️ legacy FastAPI reference
+    ├── ARCHITECTURE.md                # ⚠️ legacy Python/ML architecture
+    ├── …guides for the legacy stack…
+    ├── supabase/                      # Optional Postgres catalog schema
+    └── archive/                       # Historical reports (never authoritative)
 ```
+
+Canonical index: [`DOCUMENTATION_INDEX.md`](DOCUMENTATION_INDEX.md). Broken-link
+gate: `npm run docs:check`.
 
 ### 2. Documentation Quality Standards
 

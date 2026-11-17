@@ -5,7 +5,7 @@
 
 import { AnimatePresence, motion } from 'framer-motion'
 import { Menu, Moon, Sun, X } from 'lucide-react'
-import React, { Suspense, lazy, useEffect, useMemo } from 'react'
+import React, { Suspense, lazy, useEffect } from 'react'
 import { Toaster } from 'react-hot-toast'
 import { Route, Routes, useLocation } from 'react-router-dom'
 
@@ -43,6 +43,19 @@ const CurrentlyReading = lazy(() => import('./components/Features/CurrentlyReadi
 const Wishlist = lazy(() => import('./components/Features/Wishlist'))
 const BookDetail = lazy(() => import('./components/Features/BookDetail'))
 const OnboardingFlow = lazy(() => import('./components/Onboarding/OnboardingFlow'))
+
+/**
+ * Read live, never memoised: `logout()` clears this flag and the onboarding
+ * gate must come back in the same session — a value captured at mount would
+ * leave a signed-out reader browsing as a guest with no way back.
+ */
+const readOnboardedThisSession = (): boolean => {
+  try {
+    return sessionStorage.getItem('goodbooks_onboarded') === '1'
+  } catch {
+    return false
+  }
+}
 
 // Animation variants
 const fadeInOut = {
@@ -163,13 +176,7 @@ const AppShell: React.FC = () => {
   const hasCompletedOnboarding = useAppSelector(
     (state) => state.user.hasCompletedOnboarding
   )
-  const onboardedThisSession = useMemo(() => {
-    try {
-      return sessionStorage.getItem('goodbooks_onboarded') === '1'
-    } catch {
-      return false
-    }
-  }, [])
+  const onboardedThisSession = readOnboardedThisSession()
   const showOnboarding =
     (!isAuthenticated || !hasCompletedOnboarding) && !onboardedThisSession
 

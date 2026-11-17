@@ -1,4 +1,25 @@
-# GoodBooks Recommender - Complete Documentation
+# docs/ — Documentation
+
+> ⚠️ Most files in this folder document the **legacy Python/FastAPI stack**, which is
+> **not deployed**. For the live product start at
+> [`../HANDOFF.md`](../HANDOFF.md), [`../ARCHITECTURE.md`](../ARCHITECTURE.md) and
+> [`LIVE_ARCHITECTURE_RUNBOOK.md`](LIVE_ARCHITECTURE_RUNBOOK.md).
+
+**Every document, grouped by task → [`../DOCUMENTATION_INDEX.md`](../DOCUMENTATION_INDEX.md).**
+
+Live-system documents in this folder:
+
+| Document | Purpose |
+|---|---|
+| [`LIVE_ARCHITECTURE_RUNBOOK.md`](LIVE_ARCHITECTURE_RUNBOOK.md) | Operations, endpoints, incidents, verification logs |
+| [`ACCOUNTS.md`](ACCOUNTS.md) | Customer accounts on D1 — contract + upgrade context |
+| [`DATA_LAYER.md`](DATA_LAYER.md) | Data flow and recommender rationale |
+| [`PROJECT_STATUS.md`](PROJECT_STATUS.md) | Honest status |
+| [`archive/`](archive/README.md) | Historical reports (never authoritative) |
+
+The legacy reference material follows.
+
+---
 
 A sophisticated book recommendation engine that combines content-based and collaborative filtering approaches to provide personalized book recommendations.
 

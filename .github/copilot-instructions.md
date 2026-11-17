@@ -4,12 +4,15 @@ This document provides essential knowledge to help AI coding agents become produ
 
 ## 🏛️ Architecture Overview
 
-The project is a full-stack book recommendation platform with React/TypeScript frontend and Python/FastAPI backend, structured as:
+The project is a full-stack book recommendation platform. **Only the edge stack is deployed:**
 
-- **Frontend**: React 18 + TypeScript + Vite, follows a "Futuristic Dashboard" design
-- **Backend**: Python FastAPI with hybrid ML recommendation system
-- **Data**: PostgreSQL for persistent storage, Redis for caching
-- **Deployment**: Docker and Kubernetes for container orchestration
+- **Frontend**: React 18 + TypeScript + Vite ("Futuristic Dashboard"), served by Cloudflare Pages
+- **Backend**: Cloudflare **Pages Functions** in `functions/api/**` — the only live API
+- **Durable data**: Cloudflare **D1** (`goodbooks-accounts`, binding `DB`) for customer accounts; `localStorage` for reader state
+- **Optional**: Supabase Postgres for the book catalog (`SUPABASE_URL` currently unset → embedded catalog)
+- **Legacy (not deployed)**: Python FastAPI (`src/api`), PostgreSQL, Redis, Docker, Kubernetes, Terraform
+
+Live URL: <https://books.dalecabra.com> · Deploy: `npm run deploy` (Cloudflare Pages).
 
 ### Project Philosophy
 
@@ -61,10 +64,10 @@ Use the integrated VS Code tasks for common operations:
 
 ### Backend Architecture
 
-- `src/api/`: FastAPI routes and endpoints
-- `src/core/`: Core business logic and recommendation engine
-- `src/models/`: Data models and schemas
-- `src/fakenews/`: False news detection system (new feature)
+- `functions/api/`: **live** Pages Functions — `books`, `accounts`, `ai`, `reading`, `analytics`, `news`, JSON 404 catch-all
+- `functions/api/_lib/`: shared edge code — `recommender` (TF-IDF + profile scoring + MMR), `catalog`, `db`, `rss`, `ai`, `types`
+- `d1/schema.sql`: D1 schema for accounts + audit events
+- `src/api/`, `src/core/`, `src/models/`, `src/fakenews/`: **legacy** FastAPI/ML stack, not deployed
 
 ## 🧩 Project Conventions
 
@@ -102,11 +105,13 @@ Use the integrated VS Code tasks for common operations:
 
 ## 🚀 Deployment Process
 
-### Docker Workflow
+### Cloudflare Pages (the only production pipeline)
 
-- `docker-compose up` for local development
-- Production deployment uses Kubernetes with separate services
-- CI/CD pipeline runs tests before deployment
+- `npm run build` → `npm run deploy` (`wrangler pages deploy dist`)
+- CI (`.github/workflows/cloudflare-pages.yml`): type-check → lint → test → build →
+  purge Apple-Double files → deploy → live smoke test
+- Database: `npm run db:schema` (D1, idempotent) · `npm run db:inspect`
+- Docker/Kubernetes/Terraform exist for the legacy stack and are **not** in the deploy path
 
 ### Performance Considerations
 
@@ -118,12 +123,14 @@ Use the integrated VS Code tasks for common operations:
 
 1. **Theme handling**: Always consider both light/dark themes in UI components
 2. **State persistence**: Use the store's persistence helpers, not raw localStorage
-3. **API typing**: Ensure proper TypeScript interfaces match Python models
+3. **API typing**: match the JSON contracts of the Pages Functions (`functions/api/**`), not the legacy Python models
 4. **Performance**: Large book lists should use virtualization
 5. **Security**: Never expose API keys in frontend code
 
 ## 📦 Additional Context
-- See `PROJECT_BRIEF.md`, `CODEMAP.md`, and `ARCHITECTURE.md` for repository overview.
-- Consult `AGENTS.md` for structure, coding standards, and commands.
-- Run `npm test` and `python -m pytest` before committing.
+- Read `AGENTS.md` first: golden rules, commands, change recipes, known gaps.
+- `HANDOFF.md` — current state; `CODEMAP.md` — file map; `ARCHITECTURE.md` — deployed topology.
+- `docs/LIVE_ARCHITECTURE_RUNBOOK.md` — operations; `docs/ACCOUNTS.md` — accounts/D1 contract + upgrade context.
+- `DOCUMENTATION_INDEX.md` — every document; `docs/archive/` is historical only.
+- Run `npm run type-check && npm test && npm run lint` before committing; `npm run docs:check` after moving docs.
 - Use commit style `type(scope): summary`.

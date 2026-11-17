@@ -1,7 +1,7 @@
 {
   "name": "goodbooks-recommender-dashboard",
   "version": "2.6.0",
-  "description": "\ud83e\udd16 AI-First Futuristic Book Recommendation Dashboard",
+  "description": "🤖 AI-First Futuristic Book Recommendation Dashboard",
   "type": "module",
   "main": "dashboard/index.html",
   "scripts": {
@@ -9,6 +9,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "deploy": "npm run build && node scripts/purge-apple-double.cjs && wrangler pages deploy dist --project-name goodbooks-recommender",
+    "db:schema": "wrangler d1 execute goodbooks-accounts --remote --file=d1/schema.sql",
+    "db:inspect": "wrangler d1 execute goodbooks-accounts --remote --command \"select email, name, reading_goal, created_at, updated_at from accounts order by created_at desc;\"",
+    "docs:check": "node scripts/check-docs-links.cjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
@@ -22,7 +25,6 @@
   },
   "dependencies": {
     "@reduxjs/toolkit": "^1.9.7",
-    "@supabase/supabase-js": "^2.119.0",
     "axios": "^1.21.1",
     "framer-motion": "^10.18.0",
     "lucide-react": "^1.72.0",

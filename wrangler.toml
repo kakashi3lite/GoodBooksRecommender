@@ -7,6 +7,24 @@ compatibility_date = "2025-01-01"
 # The Vite build output directory (public/ contents are merged into dist/)
 pages_build_output_dir = "./dist"
 
+# ═════════════════════════════════════════════════════════════════════════════
+# Non-secret runtime vars. Declaring them here (not only in the dashboard)
+# guarantees every `wrangler pages deploy` ships them to the Functions runtime.
+# Secrets (API keys, service-role keys) are set with `wrangler pages secret put`.
+# ═════════════════════════════════════════════════════════════════════════════
+[vars]
+SUPABASE_URL = "https://rqorywqrimcsgekmsxmj.supabase.co"
+
+# ═════════════════════════════════════════════════════════════════════════════
+# Customer accounts — Cloudflare D1 (see d1/schema.sql, docs/DATA_LAYER.md)
+# Bound to Pages Functions as `env.DB`. Apply the schema with:
+#   npx wrangler d1 execute goodbooks-accounts --remote --file=d1/schema.sql
+# ═════════════════════════════════════════════════════════════════════════════
+[[d1_databases]]
+binding = "DB"
+database_name = "goodbooks-accounts"
+database_id = "1e12a45a-6514-48df-ab1b-dcd3d1dff5cb"
+
 # NOTE: there is intentionally no [env.production] block. Cloudflare Pages
 # reads production settings (branch, env vars, project name) from the Pages
 # project itself; an empty `[env.production]` table is a no-op that only

@@ -1,5 +1,10 @@
 # API Reference Guide
 
+> ⚠️ **Scope:** this file documents the **legacy FastAPI** (`http://localhost:8000`)
+> API. The deployed API is the Cloudflare Pages Functions surface in
+> [`../API_CATALOG.md`](../API_CATALOG.md) (§ Live API) and
+> [`ACCOUNTS.md`](ACCOUNTS.md) for customer accounts.
+
 ## Overview
 
 The GoodBooks Recommender API provides RESTful endpoints for generating personalized book recommendations using hybrid machine learning algorithms.

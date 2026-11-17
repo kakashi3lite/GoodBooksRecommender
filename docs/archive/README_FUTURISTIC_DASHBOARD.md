@@ -246,7 +246,7 @@ The dashboard supports extensive theming through CSS custom properties:
 
 ## 📝 License
 
-MIT License - see [LICENSE](LICENSE) file for details.
+MIT License - see [LICENSE](../../LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 

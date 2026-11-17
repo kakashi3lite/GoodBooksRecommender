@@ -62,6 +62,9 @@ export interface UserSliceState {
 
 const STORAGE_KEY = 'goodbooks_user'
 
+/** Reserved identity for "explore as guest" — never persisted to the server. */
+const GUEST_EMAIL = 'reader@goodbooks.app'
+
 interface PersistedUser {
   profile: UserProfile
   preferences: UserPreferences
@@ -186,23 +189,31 @@ export const updatePreferences = createAsyncThunk(
 
 /**
  * Push the local account to the database (best-effort).
- * No-op when Supabase isn't configured — the app stays fully local.
- * Chain-of-Thought: dynamically import the repository so the Supabase SDK only
- * ships to the browser when an account actually syncs (keeps the main bundle lean).
+ * Chain-of-Thought: the account must outlive the browser, so every mount (and
+ * every onboarding completion) mirrors it into D1 through /api/accounts. The
+ * import stays dynamic so the network/client code is not in the initial bundle.
  */
 export const syncAccountToServer = createAsyncThunk(
   'user/syncAccountToServer',
-  async (_, { getState }) => {
+  async (arg: { force?: boolean } | undefined, { getState }) => {
     const { user } = getState() as { user: UserSliceState }
     if (!user.isAuthenticated) return { synced: false }
+    // Guests share the reserved `reader@goodbooks.app` identity — persisting it
+    // would write one row for every anonymous visitor and let them collide.
+    const email = user.profile.email.trim().toLowerCase()
+    if (!email || email === GUEST_EMAIL) return { synced: false }
     const { syncUserAccount } = await import('../../lib/userRepository')
-    return syncUserAccount({
-      email: user.profile.email,
-      name: user.profile.name,
-      favoriteGenres: user.preferences.favoriteGenres,
-      readingGoal: user.preferences.readingGoal,
-      readingLevel: user.profile.readingLevel
-    })
+    return syncUserAccount(
+      {
+        email,
+        name: user.profile.name,
+        favoriteGenres: user.preferences.favoriteGenres,
+        preferredMoods: user.preferences.preferredMoods,
+        readingGoal: user.preferences.readingGoal,
+        readingLevel: user.profile.readingLevel
+      },
+      { force: arg?.force === true }
+    )
   }
 )
 
@@ -290,6 +301,11 @@ const userSlice = createSlice({
       state.favorites = []
       try {
         localStorage.removeItem(STORAGE_KEY)
+        // The "gate shows once per session" flag exists to stop a storage-less
+        // browser from re-gating on every reload — it must not survive an
+        // explicit sign-out, or "Sign Out" would silently drop the reader into
+        // the app as a guest.
+        sessionStorage.removeItem('goodbooks_onboarded')
       } catch (error) {
         console.warn('[User] Failed to clear persisted user:', error)
       }

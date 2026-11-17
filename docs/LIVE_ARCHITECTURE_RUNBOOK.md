@@ -16,12 +16,14 @@
 |---|---|---|
 | Frontend | React 18.3 + Vite 5.4 + TypeScript (strict) | 10 lazy routes, Tailwind + custom CSS, framer-motion, Redux Toolkit |
 | API | **Cloudflare Pages Functions** (`functions/api/**`) | The live backend — there is **no Python server** in production |
-| Database | Supabase `rqorywqrimcsgekmsxmj` | Schema **not yet applied** — API currently serves the embedded catalog (`source: "catalog"`) |
+| Database | **Cloudflare D1** `goodbooks-accounts` | Customer accounts — durable CRUD via `/api/accounts` (see `docs/ACCOUNTS.md`) |
+| Catalog DB | Supabase `rqorywqrimcsgekmsxmj` | Optional; `SUPABASE_URL` is unset, so `/api/books` serves the embedded catalog (`source: "catalog"`) |
 | Live data | Open Library + Google Books | Trending, ISBN/key resolution, book covers (all key-less) |
 | News | Google News RSS → JSON | `functions/api/news/[[route]].ts` |
 | AI chat | OpenAI-compatible (env-gated) | MiniMax: `MINIMAX_API_KEY`, `AI_BASE_URL`, `AI_MODEL` as Cloudflare secrets |
 
 ### Env vars on the Pages project
+- **Binding**: `DB` → D1 `goodbooks-accounts` (declared in `wrangler.toml`, read at deploy time)
 - Plain: `SUPABASE_URL`, `SUPABASE_ANON_KEY` (publishable), `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `AI_PROVIDER`
 - **Secret**: `SUPABASE_SERVICE_ROLE_KEY`, `MINIMAX_API_KEY`, `AI_BASE_URL` (`https://api.minimax.io/v1`), `AI_MODEL` (`MiniMax-M2`)
 - `VITE_*` vars are baked at **build time** (see runbook §8). Never commit secrets.
@@ -35,6 +37,11 @@ All under `functions/api/`, all `GET` unless noted. Every route returns JSON.
 | Endpoint | Purpose |
 |---|---|
 | `GET /api/books` | Full catalog (`{data, source, count}`) |
+| `GET /api/accounts` | **Accounts health** — `{database:"d1", count}` |
+| `POST /api/accounts` | **Create account** → 201 + one-time `accountKey` (idempotent on repeat) |
+| `GET /api/accounts/:email` | Public profile (`?email=` also accepted) |
+| `PATCH /api/accounts/:email` | Update profile — requires `X-Account-Key` |
+| `DELETE /api/accounts/:email` | Delete account — requires `X-Account-Key` |
 | `GET /api/books/search?q=` | Real text search over the catalog |
 | `GET /api/books/recommend` | Hybrid recommender (`genres=`, `prefs=` JSON, `q=`, `similar_to=`, `limit=`, `exclude=`) |
 | `GET /api/books/:id` | Single catalog book |
@@ -177,7 +184,7 @@ real book, even if it was never in the curated catalog.
 | 4 | **Series detection** | `similar` endpoint + Google Books `series` metadata; render "Next in series" on `/book/:id`. |
 | 5 | **Reading goals progress on dashboard** | `finishedCount / readingGoal` already computed; add a visual progress ring tied to `user.preferences.readingGoal`. |
 | 6 | **Offline queue for trending/news** | Cache last `/trending` + news JSON in `localStorage` with a timestamp; show stale-while-revalidate. |
-| 7 | **Supabase sync** | Apply `docs/supabase/schema.sql`; `/api/books` flips to `source: "database"`; then persist shelf/notes to the `reading_sessions`/`notes` tables. |
+| 7 | **Catalog + reading-event persistence** | Accounts are already durable in **D1** (`docs/ACCOUNTS.md`). Remaining: move `reading_events` to D1 (recommended) or apply `supabase/migrations/*.sql` so `/api/books` flips to `source: "database"` and shelf/notes can persist. |
 
 **Guardrails for every new feature**: persist to the Redux slice (never raw
 `localStorage` directly), add a `Chain-of-Thought` comment, cover both
@@ -239,9 +246,11 @@ curl -s -X POST https://books.dalecabra.com/api/ai/chat -H 'Content-Type: applic
 
 ## 9. Known Limitations / Next Actions
 
-1. **Supabase schema not applied** — run `docs/supabase/schema.sql` in the
-   Supabase SQL editor (`rqorywqrimcsgekmsxmj`). Until then `/api/books`
-   reports `source: "catalog"` and account sync's profile lookup 404s.
+1. **Catalog database not configured** — `SUPABASE_URL` is unset on the Pages
+   project, so `/api/books` reports `source: "catalog"` and `/api/reading`
+   answers `{"stored":false,"reason":"not_configured"}`. Accounts are **not**
+   affected (they live in D1). Either set `SUPABASE_URL` + `SUPABASE_ANON_KEY`
+   and apply `supabase/migrations/*.sql`, or delete the Supabase path.
 2. **GitHub Actions** was down during this session (githubstatus.com incident);
    CI should self-heal on the next push.
 3. **Recommended**: a fresh-device (real iPhone) visual pass — all server-side
@@ -250,6 +259,12 @@ curl -s -X POST https://books.dalecabra.com/api/ai/chat -H 'Content-Type: applic
 4. **Secrets hygiene**: all provider keys (Supabase service-role, AI/LLM keys)
    live only as Cloudflare Pages secrets — never in the repo, never in the
    browser bundle. Rotate them periodically as good practice.
+   ⚠️ **2026-11-17:** `SUPABASE_SERVICE_ROLE_KEY`, `MINIMAX_API_KEY` and
+   `OPENAI_API_KEY` are currently **empty** (the names exist, the values do
+   not). Account creation and the catalog are unaffected; AI chat falls back to
+   the local hybrid engine. Re-enter them with `wrangler pages secret put` —
+   see `AGENTS.md` §3b. `AI_BASE_URL` / `AI_MODEL` and `SUPABASE_URL` (in
+   `wrangler.toml [vars]`) are set.
 5. `src/news/ai/*.py` + `src/news/master/*` are a **Python** subsystem not
    deployed to Cloudflare; leave them unless the Python backend is revived.
 
@@ -394,7 +409,9 @@ around the standard mobile pattern:
   - **Appearance**: Light / Dark / Auto theme (`dashboardSlice.setTheme`)
   - **Reading**: yearly goal presets (5/12/24/52) + custom, notifications toggle,
     profile privacy (`userSlice.setPreferences`)
-  - **Account**: signed-in reader info
+  - **Account**: signed-in reader info, **persistence status** ("Saved to
+    Cloudflare" vs "Local only") and a two-tap **Delete my account**
+    (`docs/ACCOUNTS.md`)
   - **Data**: export the whole reading library as JSON (reader-owned data)
 
 ### Phone search bar now works with a nice format

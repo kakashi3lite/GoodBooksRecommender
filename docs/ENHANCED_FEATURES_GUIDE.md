@@ -613,7 +613,7 @@ logging.getLogger('src.core.enhanced_health').setLevel(logging.DEBUG)
 
 - [API Reference Documentation](./API_REFERENCE.md)
 - [Architecture Overview](./ARCHITECTURE.md)
-- [Performance Testing Guide](./PERFORMANCE_TESTING.md)
+- Performance benchmarking: `scripts/performance_benchmark.py` + [BENCHMARKS.md](../BENCHMARKS.md)
 - [Deployment Guide](./DEPLOYMENT_GUIDE.md)
 
 ## 🤝 Contributing

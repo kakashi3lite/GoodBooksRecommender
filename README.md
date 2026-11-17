@@ -133,10 +133,14 @@ GoodBooks isn't just a list of features — it's designed around the psychology 
 
 ## 🔒 Your reading stays yours
 
-- Your taste profile and shelf live **on your device** — the app is local-first.
-- When a database is configured, reading *events* (a random device id, book id, pages,
-  progress) are mirrored so your progress can survive a device change. No email, no name,
-  no fingerprints, and **no public read path** — see [docs/DATA_LAYER.md](docs/DATA_LAYER.md).
+- Your shelf, streak and notes live **on your device** — the app is local-first and works offline.
+- Your **account profile** (the email and name you type at onboarding, plus your genres,
+  pace and reading goal) is also saved to **Cloudflare D1**, so it survives clearing the
+  browser or switching devices. Writes need a device-held key; nobody can edit your account
+  without it. Details: [docs/ACCOUNTS.md](docs/ACCOUNTS.md).
+- Reading *events* (a random device id, book id, pages, progress) are mirrored only when a
+  catalog database is configured. No fingerprints and **no public read path** —
+  see [docs/DATA_LAYER.md](docs/DATA_LAYER.md).
 - No tracking pixels, no spam, no credit card, no dark patterns.
 - Export your whole reading library anytime — it's your data.
 - Optional sync keeps things in your control.
@@ -154,8 +158,8 @@ GoodBooks is a modern, fully-tested frontend with a serverless edge backend
 | State | Redux Toolkit (8 slices) + localStorage persistence |
 | Backend | Cloudflare Pages Functions (`/api/*`) — recommendations, AI chat, live web catalog |
 | AI | OpenAI-compatible chat (MiniMax-M2), grounded in real reader data |
-| Data | Supabase-ready schema + Open Library / Google Books live catalog |
-| Tests | 100+ Vitest tests passing · `tsc` clean · ESLint 0 errors |
+| Data | **Cloudflare D1** for customer accounts · Open Library / Google Books for the live catalog · Supabase schema optional |
+| Tests | 183 Vitest tests (29 files) passing · `tsc` clean · ESLint 0 errors |
 
 ```bash
 npm install
@@ -172,10 +176,13 @@ the included GitHub Actions workflow.
 - `src/components/` — React feature components (Dashboard, Discover, AI, Shelf…)
 - `src/stores/` — Redux slices (user, reading, books, ai, analytics…) + reading sync middleware
 - `src/utils/` — recommendation engine, personalization, shared book filters, chat context
-- `functions/api/` — serverless edge API (catalog, search, trending, reading events, AI chat/insight)
+- `functions/api/` — serverless edge API (catalog, search, trending, **accounts**, reading events, AI chat/insight)
+- `d1/` — D1 schema for customer accounts (`npm run db:schema`)
 - `dashboard/css/materials.css` — premium material/elevation/motion layer
 - `tests/` — unit + component tests
-- `docs/` — architecture, runbook, data layer, **UX research & rationale** (`docs/UX_PREMIUM_UPGRADE.md`)
+- `src/lib/accountApi.ts` — same-origin account client (create/update/delete, key storage)
+- `docs/` — architecture, runbook, data layer, accounts, **UX research & rationale** (`docs/UX_PREMIUM_UPGRADE.md`)
+- New here? Start with [HANDOFF.md](HANDOFF.md); agents start with [AGENTS.md](AGENTS.md)
 
 ### Keyboard shortcuts
 
@@ -199,14 +206,14 @@ at 375/393/430/744/820/834/1194/1280/1440/1920px with zero horizontal overflow.
 
 Contributing conventions: Chain-of-Thought comments, JSDoc on every export,
 `type(scope): summary` commits, and run `npm test` + `npm run type-check` +
-`npm run lint` before pushing.
+`npm run lint` before pushing. After moving documentation, run `npm run docs:check`.
 
 ### CI/CD
 
 | Workflow | Trigger | What it does |
 |---|---|---|
 | `CI` | every pull request | `npm ci` → type-check → lint → test → build → purge → **build-output assertions**. Required to merge. |
-| `Deploy to Cloudflare Pages` | push to `main`, manual | the same gates, then `wrangler pages deploy dist`, then a **live smoke test**: app shell `200` + `#root`, `/api/books` returns JSON `200`, custom domain serves. |
+| `Deploy to Cloudflare Pages` | push to `main`, manual | the same gates, then `wrangler pages deploy dist`, then a **live smoke test**: app shell `200` + `#root`, `/api/books` returns JSON `200`, `/api/accounts` reports `"database":"d1"`, custom domain serves. |
 | Dependabot | weekly (Mon 06:00 IST) | grouped npm + GitHub Actions updates, each verified by `CI / verify`. |
 
 `main` is protected: `verify` must pass, force-pushes and deletions are blocked, and

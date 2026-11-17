@@ -5,9 +5,9 @@
  */
 
 import { configureStore } from '@reduxjs/toolkit'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { Provider } from 'react-redux'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import OnboardingFlow from '../../src/components/Onboarding/OnboardingFlow'
 import userReducer from '../../src/stores/user/userSlice'
 
@@ -33,6 +33,21 @@ const renderFlow = () => {
 describe('OnboardingFlow', () => {
     beforeEach(() => {
         localStorage.clear()
+        // jsdom's fetch cannot resolve a relative URL; stub it so the
+        // best-effort account sync never touches the real network.
+        vi.stubGlobal(
+            'fetch',
+            vi.fn().mockResolvedValue(
+                new Response(JSON.stringify({ created: false, exists: true }), {
+                    status: 200,
+                    headers: { 'Content-Type': 'application/json' }
+                })
+            )
+        )
+    })
+
+    afterEach(() => {
+        vi.unstubAllGlobals()
     })
 
     it('renders the welcome step first', () => {
@@ -84,6 +99,50 @@ describe('OnboardingFlow', () => {
             target: { value: 'a@b.co' }
         })
         expect(screen.getByRole('button', { name: /Continue/i })).not.toBeDisabled()
+    })
+
+    it('writes the new account to /api/accounts when onboarding completes', async () => {
+        const fetchMock = vi.fn().mockResolvedValue(
+            new Response(
+                JSON.stringify({ created: true, accountKey: 'k'.repeat(64) }),
+                { status: 201, headers: { 'Content-Type': 'application/json' } }
+            )
+        )
+        vi.stubGlobal('fetch', fetchMock)
+        renderFlow()
+
+        fireEvent.click(screen.getByRole('button', { name: /Continue/i }))
+        fireEvent.change(await screen.findByPlaceholderText('Ada Lovelace'), {
+            target: { value: 'Durable Reader' }
+        })
+        fireEvent.change(await screen.findByPlaceholderText('ada@example.com'), {
+            target: { value: 'Durable@Example.com' }
+        })
+        fireEvent.click(screen.getByRole('button', { name: /Continue/i }))
+        fireEvent.click(await screen.findByText('Fantasy'))
+        fireEvent.click(await screen.findByRole('button', { name: /Show me my books/i }))
+
+        await waitFor(() => expect(fetchMock).toHaveBeenCalled())
+        const [url, init] = fetchMock.mock.calls[0]
+        expect(url).toBe('/api/accounts')
+        expect(init.method).toBe('POST')
+        expect(JSON.parse(init.body)).toMatchObject({
+            email: 'durable@example.com',
+            name: 'Durable Reader',
+            favoriteGenres: ['Fantasy']
+        })
+    })
+
+    it('does not require a dot-less address (server parity on validation)', async () => {
+        renderFlow()
+        fireEvent.click(screen.getByRole('button', { name: /Continue/i }))
+        fireEvent.change(await screen.findByPlaceholderText('Ada Lovelace'), {
+            target: { value: 'Ada' }
+        })
+        fireEvent.change(await screen.findByPlaceholderText('ada@example.com'), {
+            target: { value: 'ada@localhost' }
+        })
+        expect(screen.getByRole('button', { name: /Continue/i })).toBeDisabled()
     })
 
     it('supports going back from the account step', () => {

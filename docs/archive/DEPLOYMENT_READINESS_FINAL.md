@@ -210,11 +210,11 @@ The **GoodBooks Recommender** project has been successfully cleaned, enhanced, a
 ## 📞 SUPPORT & NEXT STEPS
 
 ### 📚 Documentation Available
-- **[API Reference](docs/API_REFERENCE.md)** - Complete API documentation
-- **[Deployment Guide](docs/DEPLOYMENT_GUIDE.md)** - Production deployment
-- **[Developer Guide](docs/DEVELOPER_GUIDE.md)** - Development setup
-- **[Enhanced Features Guide](docs/ENHANCED_FEATURES_GUIDE.md)** - Advanced features
-- **[Troubleshooting Guide](docs/TROUBLESHOOTING.md)** - Issue resolution
+- **[API Reference](../API_REFERENCE.md)** - Complete API documentation
+- **[Deployment Guide](../DEPLOYMENT_GUIDE.md)** - Production deployment
+- **[Developer Guide](../DEVELOPER_GUIDE.md)** - Development setup
+- **[Enhanced Features Guide](../ENHANCED_FEATURES_GUIDE.md)** - Advanced features
+- **[Troubleshooting Guide](../TROUBLESHOOTING.md)** - Issue resolution
 
 ### 🎯 Immediate Deployment Actions
 1. **Start Redis Server**: For full feature activation

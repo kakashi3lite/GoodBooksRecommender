@@ -441,7 +441,7 @@ secrets:
 4. **Level 4**: CTO/CISO
 
 ### Documentation Links
-- [Security Policies](docs/SECURITY_GUIDE.md)
-- [Deployment Guide](docs/DEPLOYMENT_GUIDE.md)
-- [Troubleshooting Guide](docs/TROUBLESHOOTING.md)
-- [API Reference](docs/API_REFERENCE.md)
+- [Security Policies](SECURITY_GUIDE.md)
+- [Deployment Guide](DEPLOYMENT_GUIDE.md)
+- [Troubleshooting Guide](TROUBLESHOOTING.md)
+- [API Reference](API_REFERENCE.md)

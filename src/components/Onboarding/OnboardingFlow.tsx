@@ -22,6 +22,7 @@ import toast from 'react-hot-toast'
 import { BOOK_GENRES } from '../../data/bookCatalog'
 import { useFocusTrap } from '../../hooks/useFocusTrap'
 import { useAppDispatch } from '../../hooks/redux'
+import { isValidAccountEmail } from '../../lib/accountApi'
 import { completeOnboarding, register, syncAccountToServer } from '../../stores/user/userSlice'
 import { READING_PACE, moodsForPace } from '../../utils/readingPace'
 
@@ -71,7 +72,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ initialEmail = '' }) =>
     const dialogRef = useFocusTrap<HTMLDivElement>(true)
 
     const canContinue = useMemo(() => {
-        if (step === 1) return name.trim().length > 0 && email.includes('@')
+        if (step === 1) return name.trim().length > 0 && isValidAccountEmail(email)
         if (step === 2) return genres.length > 0
         return true
     }, [step, name, email, genres])
@@ -93,8 +94,9 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ initialEmail = '' }) =>
                 preferredMoods: moodsForPace(pace)
             })
         )
-        // Best-effort: persist the account to the database when configured
-        dispatch(syncAccountToServer())
+        // Persist the account now — a new account must never be swallowed by
+        // the mount-level debounce.
+        dispatch(syncAccountToServer({ force: true }))
         try {
             sessionStorage.setItem('goodbooks_onboarded', '1')
         } catch {
@@ -120,7 +122,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ initialEmail = '' }) =>
                 preferredFormats: ['ebook', 'print']
             })
         )
-        dispatch(syncAccountToServer())
+        dispatch(syncAccountToServer({ force: true }))
         try {
             sessionStorage.setItem('goodbooks_onboarded', '1')
         } catch {

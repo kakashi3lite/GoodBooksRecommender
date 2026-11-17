@@ -29,6 +29,7 @@ import React, { useState } from 'react'
 import toast from 'react-hot-toast'
 import { NavLink } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../../hooks/redux'
+import { forgetAccountKey } from '../../lib/accountApi'
 import { toggleAssistant } from '../../stores/ai/aiSlice'
 import { setTheme, toggleSidebar } from '../../stores/dashboard/dashboardSlice'
 import { logout } from '../../stores/user/userSlice'
@@ -238,6 +239,10 @@ const NavigationSidebar: React.FC<NavigationSidebarProps> = ({ className = '' })
         setSettingsOpen(true)
         break
       case 'logout':
+        // Signing out relinquishes this device's write credential — on a
+        // shared browser the next person must not inherit the ability to
+        // rewrite the account just by typing the same email.
+        forgetAccountKey(userProfile.email)
         dispatch(logout())
         toast.success('Signed out — see you soon!')
         break

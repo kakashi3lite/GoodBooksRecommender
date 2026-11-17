@@ -1,16 +1,30 @@
 /**
- * 🗄️ User Repository — database-backed accounts with local fallback
- * Chain-of-Thought:
- *   - Local-only (default): accounts live in localStorage (works everywhere).
- *   - Database-backed (when Supabase env vars are configured): accounts are
- *     real rows in the `profiles` table + a Supabase Auth identity.
+ * 🗄️ User Repository — database-backed accounts on Cloudflare D1
  *
- * This keeps the app fully functional with zero config, and upgrades to real
- * DB accounts the moment `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` are set.
+ * Chain-of-Thought
+ *   - The durable store is the `accounts` table in the Pages project's D1
+ *     database, reached through the same-origin `/api/accounts` function (see
+ *     `functions/api/accounts/[[route]].ts` and `d1/schema.sql`).
+ *   - `localStorage` stays the source of truth for instant UX; this repository
+ *     mirrors the account to D1 so it survives a browser wipe or a device
+ *     change. Every failure is non-fatal by design.
+ *   - Supabase is no longer involved in accounts: its service-role key was
+ *     never set as `SUPABASE_URL`/anon on the project, its `profiles` table
+ *     contract did not match this payload, and its signup path was
+ *     rate-limited. The Supabase REST layer remains for the book catalog only
+ *     (`functions/api/_lib/db.ts`).
  */
 
-import { getSupabaseClient } from './supabaseClient'
+import {
+    deleteAccount,
+    fetchAccount,
+    syncAccount,
+    updateAccount,
+    type AccountSyncResult,
+    type ServerAccount
+} from './accountApi'
 
+/** Shape kept for callers that still speak snake_case (server payload). */
 export interface ServerProfile {
     email: string
     name: string
@@ -20,134 +34,64 @@ export interface ServerProfile {
     updated_at: string
 }
 
-export interface SyncResult {
-    synced: boolean
-    email?: string
-    error?: string
-}
+export type SyncResult = AccountSyncResult
 
-// Deterministic local id generator (never shipped to the DB)
-const makeLocalId = () => `u-${Date.now().toString(36)}`
-
-// ─── Sync guard ─────────────────────────────────────────────────────────────
-// Chain-of-Thought: syncAccountToServer fires on every app mount. Attempting
-// `auth.signUp` on every mount (even for accounts that already exist) trips
-// Supabase's signup rate limiter (HTTP 429). Persist a marker so we attempt
-// the server sync at most once per hour per account — the app still works
-// fully locally in between, and retries hourly so accounts catch up as soon
-// as the DB schema exists.
-
-const SYNC_MARKER_KEY = 'goodbooks_sync_marker'
-const SYNC_INTERVAL_MS = 60 * 60 * 1000 // 1 hour
-
-const wasRecentlySynced = (email: string): boolean => {
-    try {
-        const raw = localStorage.getItem(SYNC_MARKER_KEY)
-        if (!raw) return false
-        const marker = JSON.parse(raw) as { email: string; ts: number }
-        return marker.email === email && Date.now() - marker.ts < SYNC_INTERVAL_MS
-    } catch {
-        return false
-    }
-}
-
-const markSynced = (email: string): void => {
-    try {
-        localStorage.setItem(
-            SYNC_MARKER_KEY,
-            JSON.stringify({ email, ts: Date.now() })
-        )
-    } catch {
-        // localStorage unavailable — best-effort guard only.
-    }
-}
+const toServerProfile = (account: ServerAccount): ServerProfile => ({
+    email: account.email,
+    name: account.name,
+    favorite_genres: account.favoriteGenres,
+    reading_goal: account.readingGoal,
+    reading_level: account.readingLevel,
+    updated_at: account.updatedAt
+})
 
 /**
- * Push the local account to the database (upsert).
- * No-op (returns { synced: false }) when Supabase isn't configured or the
- * account synced within the last hour.
+ * Push the local account to D1 (create, or update when this device holds the
+ * account key). Never throws; returns `{ synced: false }` when unreachable.
  */
-export const syncUserAccount = async (input: {
-    email: string
-    name: string
-    favoriteGenres: string[]
-    readingGoal: number
-    readingLevel: string
-}): Promise<SyncResult> => {
-    const supabase = getSupabaseClient()
-    if (!supabase) return { synced: false }
-    if (wasRecentlySynced(input.email)) return { synced: false }
-
-    try {
-        // 1) Ensure a real auth identity exists (random password — email confirm off
-        //    in dev; a proper password/magic-link flow can be layered later).
-        const { error: signUpError } = await supabase.auth.signUp({
-            email: input.email,
-            password: makeLocalId().replace('u-', '') + '!GoodBooks'
-        })
-        if (signUpError) {
-            const message = signUpError.message.toLowerCase()
-            // Account already exists → treat as synced and move on.
-            if (message.includes('already registered')) {
-                markSynced(input.email)
-                return { synced: true, email: input.email }
-            }
-            // Rate-limited → back off so we stop hammering the endpoint.
-            if (signUpError.status === 429 || message.includes('rate')) {
-                markSynced(input.email)
-                return { synced: false, email: input.email }
-            }
-            return { synced: false, email: input.email, error: signUpError.message }
-        }
-
-        // 2) Upsert the public profile row.
-        const profile: ServerProfile = {
+export const syncUserAccount = async (
+    input: {
+        email: string
+        name: string
+        favoriteGenres: string[]
+        preferredMoods?: string[]
+        readingGoal: number
+        readingLevel: string
+    },
+    options: { force?: boolean } = {}
+): Promise<SyncResult> =>
+    syncAccount(
+        {
             email: input.email,
             name: input.name,
-            favorite_genres: input.favoriteGenres,
-            reading_goal: input.readingGoal,
-            reading_level: input.readingLevel,
-            updated_at: new Date().toISOString()
-        }
-        const { error: upsertError } = await supabase
-            .from('profiles')
-            .upsert(profile, { onConflict: 'email' })
+            favoriteGenres: input.favoriteGenres,
+            preferredMoods: input.preferredMoods ?? [],
+            readingGoal: input.readingGoal,
+            readingLevel: input.readingLevel
+        },
+        options
+    )
 
-        if (upsertError) {
-            // Table may not exist yet (schema not applied) — still back off so
-            // we don't spam; the hourly retry will pick it up once it exists.
-            markSynced(input.email)
-            return { synced: false, email: input.email, error: upsertError.message }
-        }
-        markSynced(input.email)
-        return { synced: true, email: input.email }
-    } catch (error) {
-        console.warn('[User] Database sync failed (continuing locally):', error)
-        return { synced: false, email: input.email }
-    }
-}
+/** Update the account's persisted profile fields. Requires the account key. */
+export const updateUserAccount = async (
+    input: Partial<{
+        name: string
+        favoriteGenres: string[]
+        preferredMoods: string[]
+        readingGoal: number
+        readingLevel: string
+    }> & { email: string }
+): Promise<SyncResult> => updateAccount(input)
 
 /**
- * Fetch a user's profile from the database.
- * Returns null when unconfigured or not found.
+ * Fetch a user's persisted profile. Returns null when the account does not
+ * exist (or the API is unreachable).
  */
-export const fetchUserAccount = async (
-    email: string
-): Promise<ServerProfile | null> => {
-    const supabase = getSupabaseClient()
-    if (!supabase) return null
-
-    try {
-        const { data, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('email', email)
-            .maybeSingle()
-
-        if (error || !data) return null
-        return data as ServerProfile
-    } catch (error) {
-        console.warn('[User] Failed to fetch account from database:', error)
-        return null
-    }
+export const fetchUserAccount = async (email: string): Promise<ServerProfile | null> => {
+    const account = await fetchAccount(email)
+    return account ? toServerProfile(account) : null
 }
+
+/** Delete the account from D1 (client-side "delete my data"). */
+export const deleteUserAccount = async (email: string): Promise<boolean> =>
+    deleteAccount(email)

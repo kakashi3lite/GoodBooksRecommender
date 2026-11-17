@@ -1,5 +1,10 @@
 # User Guide
 
+> ⚠️ **Scope:** this guide documents the **legacy Python/FastAPI stack**, which is
+> **not deployed**. The live product runs on Cloudflare Pages Functions — start at
+> [`../HANDOFF.md`](../HANDOFF.md), [`../ARCHITECTURE.md`](../ARCHITECTURE.md) and
+> [`LIVE_ARCHITECTURE_RUNBOOK.md`](LIVE_ARCHITECTURE_RUNBOOK.md).
+
 Complete guide for using the GoodBooks Recommender API to get personalized book recommendations.
 
 ## 📚 Table of Contents

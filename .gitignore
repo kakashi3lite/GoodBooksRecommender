@@ -221,3 +221,7 @@ logs/
 *.log
 .tmp/
 *.tmp
+
+
+# Generated validation reports (test_kindle_dashboard.py writes these)
+kindle_dashboard_validation_*.json

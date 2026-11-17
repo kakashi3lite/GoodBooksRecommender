@@ -12,6 +12,7 @@ import reducer, {
     register,
     syncAccountToServer
 } from '../src/stores/user/userSlice'
+import { syncUserAccount } from '../src/lib/userRepository'
 
 // File-scoped mock: only this file uses it (hoisted, so no real imports here)
 vi.mock('../src/lib/userRepository', () => ({
@@ -44,5 +45,28 @@ describe('syncAccountToServer thunk', () => {
         const result = (await store.dispatch(syncAccountToServer() as any)) as any
         expect(result.payload.synced).toBe(true)
         expect(result.payload.email).toBe('ada@example.com')
+    })
+
+    it('forwards an explicit force flag (settings changes must not be debounced away)', async () => {
+        const store = createStore()
+        store.dispatch(register({ name: 'Ada', email: 'ada@example.com' }))
+        store.dispatch(completeOnboarding({ favoriteGenres: ['Science Fiction'] }))
+
+        await store.dispatch(syncAccountToServer({ force: true }) as any)
+
+        expect(syncUserAccount).toHaveBeenCalledWith(
+            expect.objectContaining({ email: 'ada@example.com' }),
+            { force: true }
+        )
+    })
+
+    it('never persists the shared guest identity', async () => {
+        const store = createStore()
+        store.dispatch(register({ name: '', email: '' }))
+        store.dispatch(completeOnboarding({ favoriteGenres: ['Fiction'] }))
+
+        const result = (await store.dispatch(syncAccountToServer() as any)) as any
+        expect(result.payload).toEqual({ synced: false })
+        expect(syncUserAccount).not.toHaveBeenCalled()
     })
 })

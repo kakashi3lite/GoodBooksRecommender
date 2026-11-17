@@ -15,7 +15,8 @@
 | Frontend UI & state | 🟢 **Good** | All routes render, Redux + localStorage, dark/light themes, mobile nav, ⌘K command palette, premium materials layer, **111 vitest tests** |
 | Frontend ↔ Backend | 🟢 **Live** | All `/api/*` served by Pages Functions; live sweep **27/27** (runbook §18) |
 | AI chat + reading insight | 🟢 **Live** | Context-aware chat + "AI Reading Insight" on Analytics, personalized from the reader's **real** data (runbook §19) |
-| Data layer | 🟡 **Partial** | Supabase env vars configured; **schema not applied** → catalog fallback (`source: "catalog"`). New `reading_events` + `recommendations_log` tables are ready in `supabase/migrations/` |
+| Customer accounts | 🟢 **Live** | Cloudflare **D1** `goodbooks-accounts` (binding `DB`): create/read/update/delete through `/api/accounts`, browser-verified end to end. See `docs/ACCOUNTS.md` |
+| Book catalog DB | 🟡 **Optional** | `SUPABASE_URL` is **not** set, so `/api/books` serves the embedded catalog (`source: "catalog"`). `reading_events` + `recommendations_log` remain a no-op until it is configured |
 | Security | 🟢 **Good** | Security headers (frame/nosniff/referrer/permissions), CSP, secrets only via Cloudflare |
 | Reproducibility | 🟢 **Good** | npm + wrangler; documented deploy; `.env.example` + `wrangler.toml` |
 | Deployment | 🟢 **Live** | Production branch auto-deploys; `npx wrangler pages deploy dist` |
@@ -68,7 +69,7 @@
 
 ## Open Items (priority order)
 
-1. **Apply Supabase schema** — run `docs/supabase/schema.sql` in the Supabase SQL editor, then
+1. **Apply Supabase schema** — run `supabase/migrations/*.sql` in filename order, then
    `/api/books` reports `source: "database"` instead of the catalog. This now also creates
    `reading_events` + `recommendations_log` (see `supabase/migrations/20261117090000_reader_data.sql`).
 2. **LLM provider key (optional)** — the AI features already degrade to honest fallbacks when the
@@ -100,9 +101,9 @@ None of these affect the live product.
 | `docs/UX_PREMIUM_UPGRADE.md` | ✅ canonical | Research + design rationale for the UI |
 | `CHANGELOG.md` | 🟡 real history | Continue appending (needs an entry for the AI v2 release) |
 | `API_CATALOG.md` | 🟡 partial | Verify/refresh against `functions/api/**` |
-| `PROJECT_STATUS.md` (root) | 🔴 aspirational | Superseded by this file |
-| `TEST_MATRIX.md` | 🟡 legacy | Reflects old Python-era numbers; frontend suite is 71 tests |
-| ~35 × `*COMPLETE*` / `MISSION*` / `*REPORT*` | 🔴 historical | Move to `docs/archive/` |
+| `docs/archive/PROJECT_STATUS.md` | 🔴 aspirational | Archived — superseded by this file |
+| `TEST_MATRIX.md` | ✅ current | Rewritten against the live suite (29 files / 183 tests); legacy pytest listed separately |
+| ~38 × `*COMPLETE*` / `MISSION*` / `*REPORT*` | 🗄️ historical | **Moved** to `docs/archive/` on 2026-11-17 |
 
 ---
 

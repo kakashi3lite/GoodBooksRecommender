@@ -203,10 +203,10 @@ The GoodBooks Recommender has been **successfully transformed** into a cutting-e
 ## 📚 DOCUMENTATION DELIVERED
 
 ### **Technical Documentation**
-- ✅ [`NEWSLETTER_ARCHITECTURE.md`](docs/NEWSLETTER_ARCHITECTURE.md) - System architecture
-- ✅ [`IMPLEMENTATION_GUIDE.md`](docs/IMPLEMENTATION_GUIDE.md) - Implementation details
-- ✅ [`API_REFERENCE.md`](docs/API_REFERENCE.md) - API documentation  
-- ✅ [`SECURITY_GUIDE.md`](docs/SECURITY_GUIDE.md) - Security implementation
+- ✅ [`NEWSLETTER_ARCHITECTURE.md`](../NEWSLETTER_ARCHITECTURE.md) - System architecture
+- ✅ [`IMPLEMENTATION_GUIDE.md`](../IMPLEMENTATION_GUIDE.md) - Implementation details
+- ✅ [`API_REFERENCE.md`](../API_REFERENCE.md) - API documentation  
+- ✅ [`SECURITY_GUIDE.md`](../SECURITY_GUIDE.md) - Security implementation
 
 ### **Business Documentation**
 - ✅ [`10X_UPLIFT_ACHIEVEMENT_REPORT.md`](10X_UPLIFT_ACHIEVEMENT_REPORT.md) - Achievement summary

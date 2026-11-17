@@ -88,8 +88,8 @@ So the best testing platforms are where *high-intent readers already ask for rec
 3. Try Discover → is the "Personalized for you" badge showing? Do the top picks match your taste?
 4. Open the AI assistant (`⌘K`) → ask "recommend me a book" → do the suggestion cards render?
 5. Toggle dark mode, save a book to your wishlist, and check the Wishlist page.
-6. Reload the page — are you still signed in? (accounts persist in the browser; a database-backed
-   sync is active when Supabase is configured — see `docs/SUPABASE_ACCOUNTS.md`.)
+6. Reload the page — are you still signed in? (localStorage is the instant copy; the account is
+   also written to Cloudflare D1, so it survives a browser wipe — see `docs/ACCOUNTS.md`.)
 
 ## 5. Feedback capture
 

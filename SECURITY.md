@@ -14,7 +14,9 @@ server to compromise.
 | Transport | HTTPS only (Cloudflare, HSTS-friendly headers) |
 | Security headers | `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `Permissions-Policy` — set via `_headers` and the API JSON helper |
 | Secrets | All provider keys (Supabase service-role, AI/LLM keys) live **only** as Cloudflare Pages secrets. Never in the repo, never in the browser bundle. `VITE_*` public keys are the only values baked at build time |
-| Data | Reader taste profile + shelf live in `localStorage` on the device (or optional Supabase with RLS). No telemetry/tracking |
+| Data | Shelf, notes and progress live in `localStorage` on the device. The **account profile** (email, name, genres, pace, goal) is stored in **Cloudflare D1**; only a SHA-256 hash of the device's account key is kept. No telemetry/tracking |
+| Account writes | `PATCH`/`DELETE /api/accounts/:email` require `X-Account-Key` (256-bit, constant-time hash compare). `GET` exposes only public profile fields. Responses are `Cache-Control: no-store` |
+| Guest isolation | The shared guest identity `reader@goodbooks.app` is never written to the database |
 | AI | LLM calls are server-side via Pages Functions; the browser never sees provider keys |
 | Dependencies | `npm audit --omit=dev` reports **0 vulnerabilities** in production deps; remaining advisories are dev-only tooling (vite/vitest/eslint/wrangler), not shipped |
 | Malicious input | All edge APIs validate/coerce inputs (400 on bad JSON, empty payloads, unknown ids) |
@@ -52,6 +54,11 @@ made public.
 - Keep `mlruns/`, `.env*`, local logs, and machine-specific paths out of git
   (`.gitignore` covers these).
 - Rotate service-role/LLM keys periodically and after any suspected leak.
+- **Accounts**: never re-introduce a raw account key in logs, responses or the
+  database. If the `X-Account-Key` contract changes, update
+  [`docs/ACCOUNTS.md`](docs/ACCOUNTS.md) and `tests/accountsApi.test.ts` together.
+- Consider a Cloudflare WAF rate-limit rule on `/api/accounts` (creation is open
+  by design; see [`docs/ACCOUNTS.md` § 6.6](docs/ACCOUNTS.md)).
 
 ## Scope
 
