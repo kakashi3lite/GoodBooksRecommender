@@ -101,8 +101,9 @@ learn from. Rationale and the comparison table: [`docs/DATA_LAYER.md`](docs/DATA
 |---|---|
 | Browser → API | Same-origin relative URLs, strict CSP (`connect-src 'self'`), no CORS grant |
 | Secrets | Pages secrets only (`SUPABASE_SERVICE_ROLE_KEY`, `MINIMAX_API_KEY`, `OPENAI_API_KEY`); `VITE_*` is public by definition |
-| Account writes | 256-bit key, SHA-256 at rest, constant-time compare, `Cache-Control: no-store` |
-| Account reads | Public profile fields only (name, genres, moods, goal, level) — never key/hash |
+| Account writes | 256-bit key, SHA-256 at rest, constant-time compare, `Cache-Control: no-store`, `409` on an existing email without a key |
+| Abuse control | Per-client fixed-window limits in D1 (hashed IPs) on `/api/accounts` and `/api/ai/*`; AI also rejects cross-origin, non-JSON and >64 KB bodies |
+| Account reads | **Owner-only** (`X-Account-Key`); unknown account answers like a wrong key (401), so existence is not observable |
 | Headers | HSTS, `X-Frame-Options: DENY`, `nosniff`, referrer + permissions policy |
 | Edge misconfiguration | CI smoke test fails the deploy if `/api/accounts` is not `{"database":"d1",…}` |
 

@@ -38,10 +38,11 @@ All under `functions/api/`, all `GET` unless noted. Every route returns JSON.
 |---|---|
 | `GET /api/books` | Full catalog (`{data, source, count}`) |
 | `GET /api/accounts` | **Accounts health** — `{database:"d1", count}` |
-| `POST /api/accounts` | **Create account** → 201 + one-time `accountKey` (idempotent on repeat) |
-| `GET /api/accounts/:email` | Public profile (`?email=` also accepted) |
-| `PATCH /api/accounts/:email` | Update profile — requires `X-Account-Key` |
-| `DELETE /api/accounts/:email` | Delete account — requires `X-Account-Key` |
+| `POST /api/accounts` | **Create account** → 201 + one-time `accountKey`; existing email without a key → 409 |
+| `GET /api/accounts/:email` | **Owner-only** profile (`X-Account-Key`; `?email=` also accepted) |
+| `PATCH /api/accounts/:email` | Update profile — `X-Account-Key` |
+| `DELETE /api/accounts/:email` | Delete account — `X-Account-Key` |
+| `POST /api/ai/*` | Chat/insight — same-origin JSON only; 10/min per client |
 | `GET /api/books/search?q=` | Real text search over the catalog |
 | `GET /api/books/recommend` | Hybrid recommender (`genres=`, `prefs=` JSON, `q=`, `similar_to=`, `limit=`, `exclude=`) |
 | `GET /api/books/:id` | Single catalog book |

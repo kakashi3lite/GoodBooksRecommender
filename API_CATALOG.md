@@ -30,8 +30,8 @@ without a key. Full contracts: [`docs/ACCOUNTS.md`](docs/ACCOUNTS.md),
 | POST | `/api/reading` | Mirror a reading event (`stored:false` while Supabase is unset) | None |
 | GET | `/api/reading` | **405 by design** — reading data is write-only | — |
 | GET | `/api/accounts` | Accounts health: `{database:"d1", count}` | None |
-| POST | `/api/accounts` | Create account → `201` + one-time `accountKey`; repeat → `200 {created:false,exists:true}` | None |
-| GET | `/api/accounts/:email` | Public profile (never the key/hash) | None |
+| POST | `/api/accounts` | Create → `201` + one-time `accountKey`; existing email without a key → **`409 {error:"email_taken"}`** | None |
+| GET | `/api/accounts/:email` | **Owner-only** profile (never the key/hash); unknown account → `401` like a wrong key | `X-Account-Key` |
 | PATCH | `/api/accounts/:email` | Update profile | `X-Account-Key` |
 | DELETE | `/api/accounts/:email` | Delete account | `X-Account-Key` |
 | * | `/api/*` (anything else) | JSON `404 {error:"not_found"}` | — |
@@ -49,9 +49,11 @@ Account payload (camelCase; snake_case also accepted):
 }
 ```
 
-Account status codes: `201` created · `200` exists/updated · `400 invalid_email`
-/ `invalid_name` / `invalid` · `401 missing_key` / `invalid_key` · `404
-not_found` · `405 method_not_allowed` (+ `Allow`) · `503 database_not_configured`.
+Account status codes: `201` created · `200` updated · `400 invalid_email` /
+`invalid_name` / `invalid` · `401 missing_key` / `invalid_key` (also returned for an
+unknown account, so existence is not observable) · `409 email_taken` ·
+`429 rate_limited` (+ `Retry-After`) · `405 method_not_allowed` (+ `Allow`) ·
+`503 database_not_configured`.
 
 ### POST /api/ai/chat — personalized conversational recommendations
 

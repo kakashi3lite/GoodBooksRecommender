@@ -116,7 +116,8 @@ Browser → POST/GET/PATCH/DELETE /api/accounts → Pages Function (env.DB) → 
   email; profile fields; SHA-256 of the account key) + `account_events` (audit).
 - Binding: `[[d1_databases]] binding = "DB"` in [`wrangler.toml`](../wrangler.toml).
 - API: `GET /api/accounts` (health/count), `POST` (create → one-time account key),
-  `GET/PATCH/DELETE /api/accounts/:email` (writes require `X-Account-Key`).
+  `GET/PATCH/DELETE /api/accounts/:email` — **all of them require `X-Account-Key`**
+  except create; an existing email without a key answers `409`.
 - Client: `src/lib/accountApi.ts` → `src/lib/userRepository.ts` →
   `syncAccountToServer` thunk (app mount + onboarding completion).
 - Offline-first: `localStorage` stays the instant copy; an unreachable API

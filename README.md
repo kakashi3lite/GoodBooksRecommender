@@ -136,8 +136,9 @@ GoodBooks isn't just a list of features — it's designed around the psychology 
 - Your shelf, streak and notes live **on your device** — the app is local-first and works offline.
 - Your **account profile** (the email and name you type at onboarding, plus your genres,
   pace and reading goal) is also saved to **Cloudflare D1**, so it survives clearing the
-  browser or switching devices. Writes need a device-held key; nobody can edit your account
-  without it. Details: [docs/ACCOUNTS.md](docs/ACCOUNTS.md).
+  browser or switching devices. Both reading and changing it require the device-held key,
+  and nobody can probe whether an address has an account. Details:
+  [docs/ACCOUNTS.md](docs/ACCOUNTS.md).
 - Reading *events* (a random device id, book id, pages, progress) are mirrored only when a
   catalog database is configured. No fingerprints and **no public read path** —
   see [docs/DATA_LAYER.md](docs/DATA_LAYER.md).

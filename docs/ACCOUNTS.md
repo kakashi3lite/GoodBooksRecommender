@@ -237,13 +237,16 @@ any of it. Everything below was established on **2026-11-17**.
 ### 6.3 Invariants (tests will fail if broken)
 
 1. `EMAIL_RE` in the function and `isValidAccountEmail` in the client are identical.
-2. `POST` with no key and an existing email → `200 { created: false, exists: true }`
-   and **no write**.
-3. `PATCH`/`DELETE` without a valid key → `401`; with a valid key → `200`.
+2. `GET`/`PATCH`/`DELETE` without a valid key → `401`; an **unknown** account
+   answers exactly like a wrong key (never `404`), so existence is not observable.
+3. `POST` with no key and an existing email → `409 { error: "email_taken" }`,
+   **no write and no profile in the body**.
 4. Responses never contain `account_key_hash` or `accountKey` (except the single
    201 create response).
 5. Exactly **one** in-flight sync per email (`inFlightSyncs`).
 6. Guest email never leaves the browser.
+7. `/api/accounts` and `/api/ai/*` are rate limited per hashed client
+   (`rate_limits`); over the limit → `429` + `Retry-After`.
 
 ### 6.4 Verification recipe (≈2 minutes)
 
@@ -259,13 +262,25 @@ KEY=$(curl -s -X POST https://books.dalecabra.com/api/accounts \
   -H 'Content-Type: application/json' \
   -d "{\"email\":\"$EMAIL\",\"name\":\"Check\",\"favoriteGenres\":[\"Fantasy\"],\"readingGoal\":12}" \
   | python3 -c "import sys,json;print(json.load(sys.stdin)['accountKey'])")
-curl -s "https://books.dalecabra.com/api/accounts/$ENC"                 # 200 profile
+curl -s -o /dev/null -w '%{http_code}\n' \
+  "https://books.dalecabra.com/api/accounts/$ENC"                       # 401 (owner-only)
+curl -s "https://books.dalecabra.com/api/accounts/$ENC" -H "X-Account-Key: $KEY"  # 200 profile
+curl -s -o /dev/null -w '%{http_code}\n' -X POST \
+  https://books.dalecabra.com/api/accounts -H 'Content-Type: application/json' \
+  -d "{\"email\":\"$EMAIL\",\"name\":\"x\",\"favoriteGenres\":[]}"       # 409 email_taken
 curl -s -X PATCH "https://books.dalecabra.com/api/accounts/$ENC" \
   -H 'Content-Type: application/json' -H "X-Account-Key: $KEY" -d '{"readingGoal":24}'   # 200
 curl -s -o /dev/null -w '%{http_code}\n' -X PATCH \
   "https://books.dalecabra.com/api/accounts/$ENC" -H 'X-Account-Key: wrong' -d '{}'      # 401
 curl -s -X DELETE "https://books.dalecabra.com/api/accounts/$ENC" -H "X-Account-Key: $KEY"  # 200
-curl -s -o /dev/null -w '%{http_code}\n' "https://books.dalecabra.com/api/accounts/$ENC"   # 404
+curl -s -o /dev/null -w '%{http_code}\n' \
+  "https://books.dalecabra.com/api/accounts/$ENC" -H "X-Account-Key: $KEY"               # 401
+
+# 2b. Abuse controls
+for i in $(seq 1 70); do curl -s -o /dev/null -w '%{http_code}\n' \
+  https://books.dalecabra.com/api/accounts; done | sort | uniq -c        # → 429s appear
+curl -s -o /dev/null -w '%{http_code}\n' -X POST \
+  https://books.dalecabra.com/api/ai/chat -H 'Content-Type: text/plain' -d '{}'   # 415
 
 # 3. Data at rest
 npm run db:inspect
@@ -287,6 +302,7 @@ hits it, then dispatch `el.click()`.
 | Concern | File |
 |---|---|
 | Edge CRUD + validation + hashing | [`functions/api/accounts/[[route]].ts`](../functions/api/accounts/[[route]].ts) |
+| Rate limiter (D1 fixed window) | [`functions/api/_lib/rateLimit.ts`](../functions/api/_lib/rateLimit.ts) |
 | Binding types (`env.DB`) | [`functions/api/_lib/types.ts`](../functions/api/_lib/types.ts) |
 | Schema + audit table | [`d1/schema.sql`](../d1/schema.sql) |
 | Client: sync/read/update/delete, key storage, email rule | [`src/lib/accountApi.ts`](../src/lib/accountApi.ts) |

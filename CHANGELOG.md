@@ -24,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   one-time 256-bit key, idempotent on repeat), `GET/PATCH/DELETE /api/accounts/:email`
   (writes require `X-Account-Key`, constant-time hash compare), `405 + Allow` for
   unsupported verbs, `503` when the binding is missing, `Cache-Control: no-store`.
+  *Superseded by the Security hardening entry below: reads are now owner-only and a
+  repeat create answers `409`.*
 - **Client:** `src/lib/accountApi.ts` (same-origin, 6 s timeout, never throws,
   account-key storage, shared email rule) behind `src/lib/userRepository.ts` and
   the `syncAccountToServer` thunk. `localStorage` remains the offline copy.

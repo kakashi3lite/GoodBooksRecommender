@@ -46,6 +46,11 @@ If a document claims the FastAPI service serves the frontend, it is stale — se
    `OPENAI_API_KEY`).
 7. **A deploy is not done until `/api/accounts` answers `{"database":"d1", …}`
    and the smoke tests pass** (CI enforces this).
+7b. **Account reads are owner-only.** `GET /api/accounts/:email` requires
+   `X-Account-Key`; an unknown account must answer exactly like a wrong key
+   (`401`), and a key-less `POST` for an existing email must answer `409` —
+   never return a profile from a write path. Keep `tests/accountsApi.test.ts`
+   green when changing any of this.
 8. **Never render a full-screen overlay without an escape path** (the mobile
    "buttons do nothing" incident — see the runbook §3).
 9. **Never PATCH the Pages project's `deployment_configs` to change env vars.**
@@ -214,8 +219,9 @@ root-level `*_COMPLETE.md` report (use `CHANGELOG.md`); run `npm run docs:check`
 
 ## 8. Known gaps / next upgrades
 
-1. **Account restore on a new device** — read-only today (public profile, no
-   write key). Needs an explicit restore flow or password/magic-link auth.
+1. **Account restore on a new device** — impossible by design today: reads and
+   writes both require the device's key, and there is no recovery flow. Needs an
+   explicit restore (emailed one-time token or password/magic-link).
 2. **Rate limiting** on `/api/accounts` — creation is open; add a WAF rule.
 3. **Reading events** (`/api/reading`) still target Supabase and are a no-op
    while `SUPABASE_URL` is unset. Moving them to D1 is the next data milestone.
