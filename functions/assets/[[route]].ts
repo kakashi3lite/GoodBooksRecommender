@@ -13,7 +13,7 @@
  * 404 — so a stale index.html fails fast with a normal error instead of
  * poisoning the cache, and the next (correct) index.html works.
  */
-import { type PagesFunction } from '../_lib/types'
+import { type PagesFunction } from '../api/_lib/types'
 
 export const onRequestGet: PagesFunction = async (context) => {
     // Try the real static file (next() → static assets, then _redirects).

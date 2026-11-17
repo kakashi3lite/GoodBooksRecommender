@@ -1,7 +1,7 @@
 {
   "name": "goodbooks-recommender-dashboard",
   "version": "2.6.0",
-  "description": "🤖 AI-First Futuristic Book Recommendation Dashboard",
+  "description": "\ud83e\udd16 AI-First Futuristic Book Recommendation Dashboard",
   "type": "module",
   "main": "dashboard/index.html",
   "scripts": {
@@ -15,10 +15,11 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
-    "lint": "eslint src",
+    "lint": "eslint src --max-warnings 67",
     "lint:fix": "eslint src --fix",
     "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,md}\"",
     "type-check": "tsc --noEmit",
+    "type-check:functions": "tsc -p tsconfig.functions.json",
     "ai-assist": "node scripts/ai-assistant-server.js",
     "performance": "python scripts/performance_analytics.py",
     "start": "npm run dev"

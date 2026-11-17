@@ -272,9 +272,13 @@ export const resolveByIsbn = async (isbn: string): Promise<Book | null> => {
             cover_url: rec.cover?.large ?? rec.cover?.medium ?? '',
             rating: 4,
             ratingsCount: 0,
-            genres: (rec.subjects ?? []).map((s) => s.name).slice(0, 4).length
-                ? (rec.subjects ?? []).map((s) => s.name).slice(0, 4)
-                : ['Fiction'],
+            genres: (() => {
+                const subjects = (rec.subjects ?? [])
+                    .map((s) => s.name)
+                    .filter((name): name is string => typeof name === 'string' && name.length > 0)
+                    .slice(0, 4)
+                return subjects.length > 0 ? subjects : ['Fiction']
+            })(),
             moods: [],
             published_year: Number.isFinite(year) ? year : new Date().getFullYear(),
             page_count: rec.number_of_pages ?? 0,

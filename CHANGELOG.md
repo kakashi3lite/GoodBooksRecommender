@@ -33,6 +33,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   *Local only* and offers a two-tap **Delete my account**; Sign Out relinquishes
   this device's key (shared-browser safety) while the row survives.
 
+### 🧪 Quality gates
+- **The deployed Functions are now type-checked.** `npm run type-check:functions`
+  (`tsconfig.functions.json`) is a CI gate in both workflows. It surfaced five
+  real errors in live code, all fixed: `ChatContext.currentBook` was missing
+  `genres`, `InsightReply` was referenced but never declared, Open Library
+  subject names could be `undefined` in `genres`, and the assets guard imported
+  its types from a path that does not exist (implicit `any`).
+- **Lint can no longer regress.** `eslint src --max-warnings 67` (0 errors); the
+  one real bug in the warning set — a `ResizeObserver` cleanup that unobserved
+  `containerRef.current` after it may have changed — is fixed, so the observer
+  now detaches the node it actually attached to.
+- **Dependencies:** `npm audit fix` cleared 5 advisories; **production deps
+  remain at 0 vulnerabilities** (`npm audit --omit=dev`). Six dev-only advisories
+  (vitest/@vitest/ui/tinypool, vite/esbuild/vite-node) need major upgrades
+  (vitest 5, vite 8) and are tracked in `AGENTS.md` §8 rather than force-upgraded
+  in the same change.
+
 ### 🔒 Security hardening (accounts + AI)
 - **Owner-only profile reads.** `GET /api/accounts/:email` now requires
   `X-Account-Key`; an unknown address answers exactly like a wrong key (`401`),

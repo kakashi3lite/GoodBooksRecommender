@@ -71,7 +71,8 @@ npm ci
 npm run dev
 
 # Quality gates — all three must be green before a PR
-npm run type-check      # tsc --noEmit (src/, dashboard/, scripts/)
+npm run type-check            # tsc --noEmit (src/, dashboard/, scripts/)
+npm run type-check:functions  # tsc -p tsconfig.functions.json (functions/api/**, deployed code)
 npm test                # vitest, 29 files / 183 tests
 npm run lint            # eslint src (0 errors required; warnings tolerated)
 
@@ -86,9 +87,6 @@ npm run db:inspect      # list accounts (email, name, goal, timestamps)
 # Docs hygiene (run after moving/renaming any .md)
 npm run docs:check
 
-# Functions are not part of tsconfig — type-check them explicitly when edited
-npx tsc --noEmit --strict --skipLibCheck --target ES2022 --module esnext \
-  --moduleResolution bundler --lib es2022,dom "functions/api/accounts/[[route]].ts"
 ```
 
 There is **no** pre-commit hook. `python -m pytest` only covers the legacy
@@ -229,3 +227,7 @@ root-level `*_COMPLETE.md` report (use `CHANGELOG.md`); run `npm run docs:check`
    serves the embedded catalog. Either configure it or delete the path.
 5. **Sidebar layout** — the sidebar is a tall `fixed` column that scrolls with
    the page, so Sign Out sits at the page bottom on desktop.
+6. **Dev-tooling advisories** — `npm audit --omit=dev` is 0, but six dev-only
+   advisories remain until vitest (0.34 → 5), `@vitest/ui`, vite (5 → 8) and
+   `@vitejs/plugin-react` are upgraded together. The suite (31 files) must stay
+   green; do it as its own change, not inside a feature branch.

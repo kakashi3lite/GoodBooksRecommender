@@ -69,6 +69,12 @@ export interface ReaderStats {
 
 /** Real reading context sent by the client — every number comes from the
  * reader's own localStorage log (never fabricated server-side). */
+/** Wire shape of `/api/ai/insight`. */
+export interface InsightReply {
+    insight: string
+    model: string
+}
+
 export interface ChatContext {
     favoriteGenres?: string[]
     readingGoal?: number
@@ -78,6 +84,7 @@ export interface ChatContext {
         authors: string
         progressPct: number
         pageCount?: number
+        genres?: string[]
     }
     stats?: ReaderStats
     recentlyFinished?: Array<{ title: string; authors: string; genres?: string[] }>

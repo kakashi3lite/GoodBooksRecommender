@@ -66,14 +66,15 @@ export const useVirtualizedList = (
     // Set initial size
     updateContainerSize();
 
-    // Setup resize observer
+    // Setup resize observer. The node is captured now: by cleanup time the ref
+    // may point at a different element (or null), and unobserving the wrong one
+    // would leave the observer attached to a detached node.
+    const observedNode = containerRef.current;
     const resizeObserver = new ResizeObserver(updateContainerSize);
-    resizeObserver.observe(containerRef.current);
+    if (observedNode) resizeObserver.observe(observedNode);
 
     return () => {
-      if (containerRef.current) {
-        resizeObserver.unobserve(containerRef.current);
-      }
+      if (observedNode) resizeObserver.unobserve(observedNode);
       resizeObserver.disconnect();
     };
   }, [containerRef, direction]);
