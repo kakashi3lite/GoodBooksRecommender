@@ -293,3 +293,59 @@ hits it, then dispatch `el.click()`.
 
 When any of these lands, update this document, `docs/DATA_LAYER.md`,
 `docs/PROJECT_STATUS.md`, `CHANGELOG.md`, and run `npm run docs:check`.
+
+---
+
+## 7. Legacy Supabase → D1 drain (procedure, currently unproven)
+
+**Status 2026-11-17:** the deployed app has never had a working Supabase path —
+`SUPABASE_URL` was only added to `wrangler.toml [vars]` today, and
+`SUPABASE_SERVICE_ROLE_KEY` is empty — so the product cannot have written rows
+there. The project may still contain rows created another way; this procedure
+proves it and drains anything found **without ever exporting the key**.
+
+### 7.1 Prerequisite
+
+`SUPABASE_SERVICE_ROLE_KEY` must be a non-empty Pages secret:
+
+```bash
+printf '%s' '<service_role key>' | npx wrangler pages secret put SUPABASE_SERVICE_ROLE_KEY --project-name goodbooks-recommender
+npm run deploy          # secrets apply on the next deployment
+```
+
+### 7.2 Audit (read-only)
+
+Add a token-gated function at `functions/api/admin/supabase-audit/[[route]].ts`
+that, for `profiles`, `user_preferences`, `reading_activity`, `reading_events`,
+`recommendations_log` and `books`, calls
+`${SUPABASE_URL}/rest/v1/<table>?select=*&limit=500` with the service-role key
+and returns `{ status, count, rows }`. Guard it with a random `AUDIT_TOKEN`
+secret and answer `404` when the header is missing. Deploy, call it, and read
+the counts. **Delete the function and the token immediately afterwards.**
+
+### 7.3 Migration rules (only if rows exist)
+
+| Source | Target | Mapping |
+|---|---|---|
+| `profiles.email`, `.display_name` | `accounts.email`, `.name` | lowercase the email; skip rows without an email |
+| `user_preferences.favorite_genres`, `.preferred_moods`, `.reading_goal` | `accounts.favorite_genres` (JSON), `.preferred_moods` (JSON), `.reading_goal` | arrays → JSON text; clamp the goal 1–1000 |
+| `profiles.reading_level` | `accounts.reading_level` | `novice` when absent |
+| timestamps | `accounts.created_at`, `.updated_at` | **preserve the original `created_at`** |
+| `reading_events.*` | new D1 `reading_events` table | keep `created_at` / `session_date` |
+
+- Migrated accounts get `account_key_hash = 'migrated:no-device-key'`. They are
+  readable, and they cannot be written until the reader completes a restore
+  flow (see §6.6 item 1). **Never invent a key you did not give the reader.**
+- Use `insert or replace` keyed on `email` so a second run is idempotent.
+- Take a D1 bookmark first (`npx wrangler d1 time-travel info goodbooks-accounts`)
+  so the import can be rolled back.
+
+### 7.4 Verify
+
+```bash
+npm run db:inspect                                   # rows + timestamps
+curl -s https://books.dalecabra.com/api/accounts     # {"database":"d1","count":N}
+```
+
+Then remove the audit function and its token, redeploy, and record the outcome
+here and in `CHANGELOG.md`.
